@@ -1,0 +1,27 @@
+.nivel-menu .menu-item {
+  padding-left: 0 !important;
+}
+.nivel-menu {
+  --nivel-item: 1;
+  padding-left: 16px !important;
+  background-color: #88888810;
+}
+
+.nivel-menu.ativo {
+  border-top: #0001 solid 2px;
+  border-left: #0001 solid 2px;
+  background-color: #88888814;
+  box-shadow: inset 0 0 10px 1px #8881;
+}
+
+.nivel-menu a.menu-item {
+  cursor: pointer;
+}
+
+.nivel-menu .menu-item .icon {
+  margin-right: 4px;
+}
+
+.nivel-menu .menu-item.bold {
+  font-weight: bold;
+}
