@@ -1,10 +1,13 @@
 {
   "name": "estrutura",
-  "version": "0.1.0",
-  "private": true,
+  "version": "0.0.1",
+  "private": false,
+  "main": "dist/src/components/index.js",
+  "module": "dist/src/components/index.js",
+  "types": "dist/src/components/index.d.ts",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "tsc --declaration --emitDeclarationOnly false",
     "start": "next start",
     "lint": "next lint"
   },
@@ -26,5 +29,12 @@
     "eslint-config-next": "15.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/felipevasc/estrutura.git"
+  },
+  "files": [
+    "src/components/index.js"
+  ]
 }

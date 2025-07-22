@@ -15,7 +15,7 @@ export type TableActionsProps<T> = {
     }
 }
 
-export type TableProps<T = any> = {
+export type TableProps<T = unknown> = {
     data: T[];
     children?: React.ReactNode;
     actions?: TableActionsProps<T>;
@@ -25,7 +25,7 @@ const Table = <T,>({ actions, data, children }: TableProps<T>) => {
     const columns = React.Children.toArray(children)
         .filter(child =>
             React.isValidElement(child) &&
-            (child.type as any).displayName === "TableThead"
+            (child.type as { displayName?: string }).displayName === "TableThead"
         )
         .map(child => (child as React.ReactElement<TableTheadProps<T>>).props);
 
