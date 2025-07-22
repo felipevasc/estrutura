@@ -4,6 +4,7 @@ import Accordion from "@/components/Accordion";
 import Button from "@/components/Button";
 import Menu from "@/components/Menu";
 import { MenuItemProps } from "@/components/Menu/MenuItem";
+import Table from "@/components/Table";
 
 
 const menuItems: MenuItemProps[] = [
@@ -31,6 +32,12 @@ const Page = () => {
         <hr />
         <h4>Menu</h4>
         <Menu items={menuItems} />
+        <hr />
+        <h4>Table</h4>
+        <Table data={[{ id: 1, nome: 'Nome 1' }, { id: 2, nome: 'Nome 2' }]} actions={{ editar: { icon: 'edit', title: 'Editar', action: (row) => alert(`Editar ${row?.id}`) }, excluir: { icon: 'trash', title: 'Excluir', action: (row) => alert(`Excluir ${row?.id}`) } }}>
+            <Table.Thead column="id" title="ID" />
+            <Table.Thead column="nome" title="Nome" />
+        </Table>
     </div>
 }
 
