@@ -7,7 +7,7 @@
   "types": "dist/src/components/index.d.ts",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "tsc --declaration --emitDeclarationOnly false",
+    "build": "rm -rf dist && tsc --declaration --emitDeclarationOnly false",
     "start": "next start",
     "lint": "next lint"
   },
