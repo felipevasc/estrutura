@@ -1,10 +1,13 @@
 {
   "name": "estrutura",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "tsc",
     "start": "next start",
     "lint": "next lint"
   },
