@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Projeto {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  createdAt DateTime @default(now()) @map("criacao")
+  updatedAt DateTime @updatedAt @map("atualizacao")
+
+  dominios Dominio[]
+  redes    Rede[]
+
+  @@map("projetos")
+}
+
+model Dominio {
+  id       Int     @id @default(autoincrement())
+  endereco String
+  alias    String?
+
+  projetoId Int
+  projeto   Projeto @relation(fields: [projetoId], references: [id])
+
+  // Relação de auto-referência para subdomínios
+  paiId       Int?
+  pai         Dominio?  @relation("SubDominios", fields: [paiId], references: [id])
+  subDominios Dominio[] @relation("SubDominios")
+
+  @@map("dominios")
+}
+
+model Rede {
+  id    Int     @id @default(autoincrement())
+  cidr  String
+  alias String?
+
+  projetoId Int
+  projeto   Projeto @relation(fields: [projetoId], references: [id])
+
+  // Relação de auto-referência para sub-redes
+  paiId    Int?
+  pai      Rede?    @relation("SubRedes", fields: [paiId], references: [id])
+  subredes Rede[]   @relation("SubRedes")
+
+  @@map("redes")
+}

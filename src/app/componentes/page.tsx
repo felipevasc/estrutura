@@ -1,10 +1,11 @@
 "use client";
 
-import Accordion from "@/components/Accordion";
-import Button from "@/components/Button";
-import Menu from "@/components/Menu";
-import { MenuItemProps } from "@/components/Menu/MenuItem";
-import Table from "@/components/Table";
+import Accordion from "@/common/components/Accordion";
+import Button from "@/common/components/Button";
+import Menu from "@/common/components/Menu";
+import { MenuItemProps } from "@/common/components/Menu/MenuItem";
+import Table from "@/common/components/Table";
+import Terminal from "@/common/components/Terminal";
 
 
 const menuItems: MenuItemProps[] = [
@@ -38,6 +39,11 @@ const Page = () => {
             <Table.Thead column="id" title="ID" />
             <Table.Thead column="nome" title="Nome" />
         </Table>
+        <hr/>
+        <h4>Terminal</h4>
+        <Terminal children="asd" />
+        <hr/>
+        <hr/>
     </div>
 }
 
