@@ -3,7 +3,7 @@ import { StyledMenuEsquerdo } from "./styles";
 
 const MenuEsquerdo = () => {
     return <StyledMenuEsquerdo>
-        <Menu items={[{ title: 'Item 1' }, { title: 'Item 2' }]} />
+        <Menu items={[{ title: 'Item 1', subitems: [{ title: 'Subitem 1' }]}, { title: 'Item 2' }]} />
     </StyledMenuEsquerdo>
 }
 

@@ -2,13 +2,14 @@
 import useApi from "@/api";
 import { StyledTopo } from "./styles";
 import { Button, Menu } from "@/common/components";
+import SelecaoProjetos from "@/components/SelecaoProjetos";
 
 const Topo = () => {
     const api  = useApi();
     const { data, error, isLoading } = api.projeto.getProjetos();
     return <StyledTopo>
-        <div>Topo</div>
-        <div>{data?.map(p => <Button key={p.id} darkMode>{p.nome}</Button>)}</div>
+        <div><b>Projeto:</b> </div>
+        <div><SelecaoProjetos /></div>
     </StyledTopo>
 }
 
