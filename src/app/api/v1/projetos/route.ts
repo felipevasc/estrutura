@@ -1,12 +1,15 @@
 import prisma from "@/database";
+import { ApiResponse } from "@/types/ApiResponse";
+import { ErrorResponse } from "@/types/ErrorResponse";
+import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(): ApiResponse<ProjetoResponse[]> {
     const ret = await prisma.projeto.findMany();
     return NextResponse.json(ret);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: Request): ApiResponse<ProjetoResponse> {
     const body = await request.json();
     console.log(body);
     if (!body.nome) {
