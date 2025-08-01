@@ -19,14 +19,16 @@ export const StyledEstruturaCentro = styled.div`
     flex-grow: 1;
     overflow: hidden;
     width: 100%;
-    gap: 1px;
+    gap: 1rem;
+    padding: 1rem;
 `
 
 export const StyledConteudoPrincipal = styled.main`
     flex-grow: 1;
     padding: 1rem;
     overflow-y: auto;
-    background-color: #010409;
+    background-color: var(--panel-background);
+    border: 1px solid var(--border-color);
 `
 
 export const StyledPainelDireito = styled.aside`
@@ -34,5 +36,6 @@ export const StyledPainelDireito = styled.aside`
     flex-shrink: 0;
     padding: 1rem;
     overflow-y: auto;
-    border-left: 1px solid #30363d;
+    background-color: var(--panel-background);
+    border: 1px solid var(--border-color);
 `
