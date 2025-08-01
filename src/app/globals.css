@@ -1,9 +1,16 @@
 @import "tailwindcss";
 
+:root {
+  --background: #0d1117;
+  --foreground: #c9d1d9;
+  --gov-verde: #28a745;
+  --gov-azul: #007bff;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: 'Ubuntu', Arial, Helvetica, sans-serif;
+  font-family: 'Geist_Mono', monospace;
 }
 
 body,html {

@@ -7,8 +7,8 @@ const Topo = () => {
     const api  = useApi();
     const { data, error, isLoading } = api.projeto.getProjetos();
     return <StyledTopo>
-        <div>Topo</div>
-        <div>{data?.map(p => <Button>{p.nome}</Button>)}</div>
+        <div>Hacker-GovBR</div>
+        <div>{data?.map(p => <Button key={p.id} darkMode>{p.nome}</Button>)}</div>
     </StyledTopo>
 }
 
