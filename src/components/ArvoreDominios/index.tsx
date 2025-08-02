@@ -1,12 +1,15 @@
 "use client"
 import { faBaby } from '@fortawesome/free-solid-svg-icons';
 import { Input, Tree, TreeDataNode } from 'antd';
-import { useMemo, useState } from 'react';
+import { useContext, useMemo, useState } from 'react';
 import { ClusterOutlined, GlobalOutlined, AlertFilled, SendOutlined, DownOutlined, DownCircleFilled, DownSquareTwoTone, PicLeftOutlined, PictureTwoTone } from '@ant-design/icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { StyledTitleDominio, StyledTitleDominioIcon } from './styles';
 import { Button } from '@/common/components';
 import NovoDominio from './NovoDominio';
+import useApi from '@/api';
+import StoreContext from '@/store';
+import { icon } from '@fortawesome/fontawesome-svg-core';
 
 const defaultData: TreeDataNode[] = [{
   key: "0",
@@ -30,6 +33,17 @@ const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
+  const api = useApi();
+  const { projeto } = useContext(StoreContext);
+  const { data: dominiosProjeto } = api.dominios.getDominios(projeto?.get()?.id);
+
+
+  const elementos: TreeDataNode[] | undefined = useMemo(() => {
+    return dominiosProjeto?.map(d => ({
+      key: d.id ?? "",
+      title: <div style={{ color: "#004" }}><GlobalOutlined /> {d.endereco}</div>
+    }))
+  }, [dominiosProjeto])
 
   const onExpand = (newExpandedKeys: React.Key[]) => {
     setExpandedKeys(newExpandedKeys);
@@ -83,7 +97,7 @@ const ArvoreDominios = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={treeData}
+      treeData={elementos}
       showIcon={true}
       showLine={true}
       switcherIcon={<SendOutlined style={{ transform: "rotate(90deg)" }} />}

@@ -1,7 +1,9 @@
-import * as projetos from "./projetos"
-import * as dominios from "./dominios"
+import useDominios from "./dominios";
+import useProjetos from "./projetos";
 
 const useApi = () => {
+    const dominios = useDominios();
+    const projetos = useProjetos();
     return {
         projeto: { ...projetos },
         dominios: { ...dominios }
