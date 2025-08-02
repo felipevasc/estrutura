@@ -1,14 +1,15 @@
 "use client"
-import useApi from "@/api";
 import { StyledTopo } from "./styles";
-import { Button, Menu } from "@/common/components";
 import SelecaoProjetos from "@/components/SelecaoProjetos";
+import { useContext } from "react";
+import StoreContext from "@/store";
 
 const Topo = () => {
-    const api  = useApi();
-    const { data, error, isLoading } = api.projeto.getProjetos();
+    const { projeto } = useContext(StoreContext);
+
     return <StyledTopo>
-        <div><b>Projeto:</b> </div>
+        {!!projeto?.get()?.id && <div><b>Projeto:</b> {projeto?.get()?.nome}</div>}
+        {!projeto?.get()?.id && <div><b>Selecione um projeto</b></div>}
         <div><SelecaoProjetos /></div>
     </StyledTopo>
 }

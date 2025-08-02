@@ -6,8 +6,6 @@ import "@govbr-ds/core/dist/core.min.css";
 import "../common/assets/arquivo-fonte-rawline.css";
 import "../common/assets/arquivo-fonte-raleway.css";
 import Providers from "./providers";
-//importar e aplicar fonte Ubuntu
-
 
 const ubuntu = Ubuntu({
   variable: "--font-ubuntu",

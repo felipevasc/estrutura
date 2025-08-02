@@ -39,3 +39,12 @@ export const StyledPainelDireito = styled.aside`
     background-color: var(--panel-background);
     border: 1px solid var(--border-color);
 `
+
+export const StyledPainelEsquerdo = styled.aside`
+    width: 250px;
+    flex-shrink: 0;
+    padding: 1rem;
+    overflow-y: auto;
+    background-color: var(--panel-background);
+    border: 1px solid var(--border-color);
+`

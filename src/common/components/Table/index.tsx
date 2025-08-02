@@ -1,3 +1,5 @@
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { IconProp } from '@fortawesome/fontawesome-svg-core'
 import React from "react";
 
 export type TableTheadProps<T> = {
@@ -8,32 +10,30 @@ export type TableTheadProps<T> = {
 };
 
 export type TableActionsProps<T> = {
-    [key: string]: {
-        icon: string;
-        title: string;
-        action: (row?: T) => void;
-    }
-}
+    icon: IconProp;
+    title: string;
+    action: (row?: T) => void;
+}[]
 
 export type TableProps<T = unknown> = {
     data: T[];
-    children?: React.ReactNode;
+    children?: React.ReactElement<TableTheadProps<T>>[];
     actions?: TableActionsProps<T>;
 }
 
 const Table = <T,>({ actions, data, children }: TableProps<T>) => {
-    const columns = React.Children.toArray(children)
-        .filter(child =>
+    const columns = children
+        ?.filter(child =>
             React.isValidElement(child) &&
             (child.type as { displayName?: string }).displayName === "TableThead"
         )
-        .map(child => (child as React.ReactElement<TableTheadProps<T>>).props);
+        .map(child => child.props);
 
     return <div className="br-table">
         <table>
             <thead>
                 <tr>
-                    {columns.map((h, idx) => (
+                    {columns?.map((h, idx) => (
                         <th key={idx} colSpan={h.colspan ?? 1}>
                             {h.title ?? h.column}
                         </th>
@@ -44,7 +44,7 @@ const Table = <T,>({ actions, data, children }: TableProps<T>) => {
             <tbody>
                 {data.map((row, i) => (
                     <tr key={i}>
-                        {columns.map((h, idx) => (
+                        {columns?.map((h, idx) => (
                             <td key={idx}>
                                 {h.render ? h.render(row) : h.column ? row[h.column as keyof T] as React.ReactNode : null}
                             </td>
@@ -59,7 +59,7 @@ const Table = <T,>({ actions, data, children }: TableProps<T>) => {
                                         className={`br-table-action ${action.icon}`}
                                     >
                                         <i className={`fas fa-icon-${action.icon}`}></i>
-                                        {action.icon}
+                                        {!!action.icon && <FontAwesomeIcon icon={action.icon} />}
                                     </button>
                                 ))}
                             </td>

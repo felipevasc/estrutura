@@ -1,52 +1,44 @@
-/* Remove default gov.br menu styling that we don't want */
 .br-menu .menu-panel, .br-menu {
   background: none;
   border: none;
   box-shadow: none;
 }
 
-/* Base style for a menu item */
 .nivel-menu a.menu-item {
   padding-left: 1rem !important;
   color: var(--foreground);
   cursor: pointer;
   display: flex;
   align-items: center;
-  border-left: 3px solid transparent; /* Placeholder for selection */
+  border-left: 0px solid transparent;
   transition: all 0.2s ease-in-out;
 }
 
-/* Hover effect for menu items */
 .nivel-menu a.menu-item:hover {
-  background-color: #30363d; /* A dark highlight color */
-  color: #58a6ff; /* A bright blue for text */
-  border-left: 3px solid var(--gov-azul); /* Use the gov.br blue for the marker */
+  background-color: #30363d;
+  color: #58a6ff;
+  border-left: 3px solid var(--gov-azul);
 }
 
-/* Style for the container of sub-items */
 .nivel-menu ul {
   padding-left: 16px !important;
   border-left: 1px solid #30363d;
   margin-left: 1rem;
 }
 
-/* Remove the light background color from the original styles */
 .nivel-menu {
   background-color: transparent !important;
 }
 
-/* Style for an active/open menu folder */
 .nivel-menu.ativo {
-  background-color: #01040920; /* A very subtle background for the active folder */
+  background-color: #01040920;
 }
 
-/* Icon styling */
 .nivel-menu .menu-item .icon {
-  margin-left: auto; /* Push icon to the right */
+  margin-left: auto;
   margin-right: 4px;
 }
 
-/* Bold for parent menu items */
 .nivel-menu .menu-item.bold {
   font-weight: bold;
 }
