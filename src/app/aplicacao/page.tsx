@@ -9,6 +9,8 @@ import Topo from "@/layout/Topo";
 import MenuEsquerdo from "@/layout/MenuEsquerdo";
 import Rodape from "@/layout/Rodape";
 import Explorer from "@/components/Explorer";
+import Visualizador from "@/components/Visualizador";
+import Ferramentas from "@/components/Ferramentas";
 
 export default function Aplicacao() {
   return (
@@ -20,12 +22,10 @@ export default function Aplicacao() {
           <MenuEsquerdo />
         </StyledPainelEsquerdo>
         <StyledConteudoPrincipal>
-          <h1>Área de Conteúdo Principal</h1>
-          <p>Aqui vai o conteúdo da aplicação.</p>
+          <Visualizador />
         </StyledConteudoPrincipal>
         <StyledPainelDireito>
-          <h2>Painel Direito</h2>
-          <p>Informações ou status aqui.</p>
+          <Ferramentas />
         </StyledPainelDireito>
       </StyledEstruturaCentro>
       <Rodape />

@@ -4,10 +4,7 @@ import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { createContext, useState, ReactNode } from "react";
 import { StoreType } from "./types/StoreType";
 import { ExplorerType } from "@/types/ExplorerType";
-
-type ObjetoGenerico = any;
-
-
+import { SelecaoTargetType } from "./types/SelecaoTargetType";
 
 interface StoreProviderProps {
     children: ReactNode;
@@ -18,6 +15,7 @@ const StoreContext = createContext<StoreType>({});
 export const StoreProvider = ({ children }: StoreProviderProps) => {
     const [projeto, setProjeto] = useState<ProjetoResponse>();
     const [explorer, setExplorer] = useState<ExplorerType>("domain");
+    const [selecaoTarget, setSelecaoTarget] = useState<SelecaoTargetType>();
 
     const storeValue: StoreType = {
         projeto: {
@@ -27,6 +25,10 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
         explorer: {
             get: () => explorer,
             set: (e) => setExplorer(e ?? "domain")
+        },
+        selecaoTarget: {
+            get: () => selecaoTarget,
+            set: setSelecaoTarget
         }
     };
 

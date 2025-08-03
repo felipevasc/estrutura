@@ -1,4 +1,4 @@
-import ArvoreDominios from "../ArvoreDominios"
+import ArvoreDominios from "./arvores/ArvoreDominios"
 import MenuExplorer from "./MenuExplorer"
 import { StyledExplorer } from "./styles"
 

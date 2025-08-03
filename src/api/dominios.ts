@@ -31,7 +31,17 @@ const useDominios = () => {
         return data;
     };
 
-    return { getDominios, postDominios };
+    const getDominio = (idDominio?: number) => useQuery({
+        queryKey: ["get-dominio", idDominio],
+        queryFn: async (): Promise<DominioResponse> => {
+            const res = await fetch("/api/v1/dominios/" + idDominio);
+            const data = await res.json();
+            return data;
+        },
+        enabled: !!idDominio
+    });
+
+    return { getDominios, postDominios, getDominio };
 }
 
 export default useDominios

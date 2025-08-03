@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     if (!id)
-        return NextResponse.json({ error: "Id do projeto é obrigatório" }, { status: 400 })
+        return NextResponse.json({ error: "Id do dominio é obrigatório" }, { status: 400 })
 
-    const ret = await prisma.projeto.findFirst({ where: { id: Number(id) } });
+    const ret = await prisma.dominio.findFirst({ where: { id: Number(id) } });
     return NextResponse.json(ret);
 }
 
@@ -15,18 +15,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     console.log(body);
     const { id } = await params
     if (!id)
-        return NextResponse.json({ error: "Id do projeto é obrigatório" }, { status: 400 })
-    if (!body.nome) {
+        return NextResponse.json({ error: "Id do dominio é obrigatório" }, { status: 400 })
+    if (!body.projetoId) {
         return NextResponse.json({ error: "Nome do projeto é obrigatório" }, { status: 400 });
     }
 
-    const ret = await prisma.projeto.update({
+    const ret = await prisma.dominio.update({
         where: {
             id: Number(id)
         },
         data: {
-            nome: body.nome,
-            updatedAt: new Date()
+            endereco: body.endereco,
+            alias: body.alias,
+            projetoId: body.projetoId,
         },
     });
 

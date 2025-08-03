@@ -8,7 +8,7 @@ const Topo = () => {
     const { projeto } = useContext(StoreContext);
 
     return <StyledTopo>
-        {!!projeto?.get()?.id && <div><b>Projeto:</b> {projeto?.get()?.nome}</div>}
+        {!!projeto?.get()?.id && <h2><b>Projeto:</b> {projeto?.get()?.nome}</h2>}
         {!projeto?.get()?.id && <div><b>Selecione um projeto</b></div>}
         <div><SelecaoProjetos /></div>
     </StyledTopo>
