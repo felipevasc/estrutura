@@ -6,6 +6,7 @@ import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from 
 import NovoDominio from './NovoDominio';
 import useApi from '@/api';
 import StoreContext from '@/store';
+import useElementoDominio from '../../target/ElementoDominio';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -14,25 +15,18 @@ const ArvoreDominios = () => {
   const api = useApi();
   const { projeto, selecaoTarget } = useContext(StoreContext);
   const { data: dominiosProjeto } = api.dominios.getDominios(projeto?.get()?.id);
-
+  const elementoDominio = useElementoDominio();
+  
   const selecionado = selecaoTarget?.get()
-
+  
   const elementos: TreeDataNode[] | undefined = useMemo(() => {
     return dominiosProjeto?.map((d) => {
+
       let checked = false;
       if (selecionado?.tipo === "domain" && selecionado?.id === d.id) {
         checked = true;
       }
-      return ({
-        key: d.id ?? "",
-        title: <div onClick={() => {
-          selecaoTarget?.set({ tipo: "domain", id: d.id })
-        }}>
-          <GlobalOutlined />{' '}
-          {d.endereco}
-        </div>,
-        className: "dominio " + (checked ? "checked " : "")
-      })
+      return (elementoDominio.getDominio(d))
     }
     )
   }, [dominiosProjeto, selecionado])

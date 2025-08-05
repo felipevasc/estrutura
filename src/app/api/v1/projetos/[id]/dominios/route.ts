@@ -8,7 +8,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const ret = await prisma.dominio.findMany({
         where: {
             projetoId: Number(p.id),
-            pai: null
+            pai: null,
+        },
+        include: {
+            subDominios: { 
+                include: {
+                    subDominios: {
+                        include: {
+                            subDominios: true
+                        }
+                    },
+                }
+            }
         }
     });
     return NextResponse.json(ret);

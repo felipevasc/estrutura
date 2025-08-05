@@ -18,9 +18,13 @@ export const StyledTitleDominioIcon = styled.div`
 `
 
 export const StyledArvoreDominio = styled.div`
+    & .ant-tree-list-holder-inner {
+        overflow-x: auto;
+    }
     & .ant-tree-list-holder-inner .ant-tree-node-content-wrapper {
         font-weight: bold;
         font-family: 'Roboto', sans-serif;
+        white-space: nowrap;
     }
     & .ant-tree-list-holder-inner .dominio .ant-tree-node-content-wrapper {
         color: #071540;

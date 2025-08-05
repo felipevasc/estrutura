@@ -4,4 +4,5 @@ export type DominioResponse = {
     alias?: string | null;
     projetoId?: number;
     paiId?: number | null;
+    subDominios?: DominioResponse[];
 }
