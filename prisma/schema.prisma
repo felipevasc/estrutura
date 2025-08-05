@@ -50,3 +50,23 @@ model Rede {
 
   @@map("redes")
 }
+
+model Execucao {
+  id              Int      @id @default(autoincrement())
+  projetoId Int
+  projeto   Projeto @relation(fields: [projetoId], references: [id])
+  comando         String
+  argumentos      String 
+  status          StatusExecucao @default(AGUARDANDO)
+  caminho_saida   String?
+  mensagem_erro   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime?
+}
+
+enum StatusExecucao {
+  AGUARDANDO
+  EXECUTANDO
+  CONCLUIDO
+  ERRO
+}
