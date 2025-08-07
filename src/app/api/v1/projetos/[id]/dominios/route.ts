@@ -11,19 +11,49 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             pai: null,
         },
         include: {
-            ips: true,
+            ips: {
+                include: {
+                    dominios: true,
+                    redes: true,
+                    portas: true,
+                }
+            },
             subDominios: {
                 include: {
-                    ips: true,
+                    ips: {
+                        include: {
+                            dominios: true,
+                            redes: true,
+                            portas: true,
+                        }
+                    },
                     subDominios: {
                         include: {
-                            ips: true,
+                            ips: {
+                                include: {
+                                    dominios: true,
+                                    redes: true,
+                                    portas: true,
+                                }
+                            },
                             subDominios: {
                                 include: {
-                                    ips: true,
+                                    ips: {
+                                        include: {
+                                            dominios: true,
+                                            redes: true,
+                                            portas: true,
+                                        }
+                                    },
                                     subDominios: {
                                         include: {
-                                            ips: true,
+                                            ips: {
+                                                include: {
+                                                    dominios: true,
+                                                    redes: true,
+                                                    portas: true,
+                                                }
+                                            },
                                             subDominios: true,
                                         }
                                     }

@@ -5,7 +5,13 @@ import { IpResponse } from "@/types/IpResponse";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(): ApiResponse<IpResponse[]> {
-    const ret = await prisma.ip.findMany();
+    const ret = await prisma.ip.findMany({
+        include: {
+            dominios: true,
+            redes: true,
+            portas: true,
+        }
+    });
     return NextResponse.json(ret);
 }
 
@@ -24,6 +30,11 @@ export async function POST(request: Request): ApiResponse<IpResponse> {
             endereco: body.endereco,
             projetoId: body.projetoId,
         },
+        include: {
+            dominios: true,
+            redes: true,
+            portas: true,
+        }
     });
 
     return NextResponse.json(ret);

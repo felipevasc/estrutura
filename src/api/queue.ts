@@ -1,5 +1,7 @@
+import { CommandArgs } from "@/types/CommandArgs";
+
 const useQueue = () => {
-    const addCommand = async (command: string, args: any[], projectId: number) => {
+    const addCommand = async (command: string, args: CommandArgs, projectId: number) => {
         const res = await fetch('/api/v1/queue/add', {
             method: 'POST',
             headers: {

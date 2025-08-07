@@ -1,12 +1,21 @@
-import ArvoreDominios from "./arvores/ArvoreDominios"
-import MenuExplorer from "./MenuExplorer"
-import { StyledExplorer } from "./styles"
+import { useContext } from "react";
+import StoreContext from "@/store";
+import ArvoreDominios from "./arvores/ArvoreDominios";
+import ArvoreRedes from "./arvores/ArvoreRedes";
+import MenuExplorer from "./MenuExplorer";
+import { StyledExplorer } from "./styles";
 
 const Explorer = () => {
-    return <StyledExplorer>
-        <MenuExplorer />
-        <ArvoreDominios />
-    </StyledExplorer>
-}
+    const { explorer } = useContext(StoreContext);
+    const view = explorer?.get();
 
-export default Explorer
+    return (
+        <StyledExplorer>
+            <MenuExplorer />
+            {view === "domain" && <ArvoreDominios />}
+            {view === "network" && <ArvoreRedes />}
+        </StyledExplorer>
+    );
+};
+
+export default Explorer;

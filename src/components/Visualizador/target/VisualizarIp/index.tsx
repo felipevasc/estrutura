@@ -100,6 +100,22 @@ const VisualizarIp = () => {
                     <p>Nenhuma rede associada encontrada.</p>
                 )}
             </Card>
+
+            <Card>
+                <CardTitle>Portas Abertas</CardTitle>
+                {ip.portas && ip.portas.length > 0 ? (
+                    <List>
+                        {ip.portas.map((porta) => (
+                            <ListItem key={porta.id}>
+                                <strong>{porta.numero}/{porta.protocolo}</strong> - {porta.servico} ({porta.status})
+                                {porta.banner && <p>{porta.banner}</p>}
+                            </ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhuma porta aberta encontrada.</p>
+                )}
+            </Card>
         </DashboardContainer>
     );
 }

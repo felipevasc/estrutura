@@ -1,16 +1,17 @@
 import prisma from '@/database';
 import { CommandStatus } from '@prisma/client';
+import { CommandArgs, NmapArgs, AmassArgs, SubfinderArgs, NslookupArgs } from '@/types/CommandArgs';
 import { iniciarEnumeracaoAmass } from '@/service/tools/domain/amass';
-// I need to find the correct path for the other services
-// Let's assume the exports exist based on my previous analysis
 import { executarSubfinder } from '@/service/tools/domain/subfinder';
 import { executarNslookup } from '@/service/tools/domain/nslookup';
+import { executeNmap } from './nmap';
 
 // A map to associate command names with their service functions.
-const commandServiceMap: { [key: string]: (args: any) => Promise<any> } = {
-    'amass': (args) => iniciarEnumeracaoAmass(args.idDominio),
-    'subfinder': (args) => executarSubfinder(args.idDominio),
-    'nslookup': (args) => executarNslookup(args.idDominio),
+const commandServiceMap: { [key: string]: (args: CommandArgs) => Promise<any> } = {
+    'amass': (args) => iniciarEnumeracaoAmass((args as AmassArgs).idDominio),
+    'subfinder': (args) => executarSubfinder((args as SubfinderArgs).idDominio),
+    'nslookup': (args) => executarNslookup((args as NslookupArgs).idDominio),
+    'nmap': (args) => executeNmap((args as NmapArgs).ipAddress, parseInt((args as NmapArgs).idIp, 10)),
     // findomain is not implemented
 };
 
