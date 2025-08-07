@@ -31,5 +31,19 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     return NextResponse.json(ret);
-    
+}
+
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    if (!id) {
+        return NextResponse.json({ error: "Id do projeto é obrigatório" }, { status: 400 });
+    }
+
+    await prisma.projeto.delete({
+        where: {
+            id: Number(id),
+        },
+    });
+
+    return new Response(null, { status: 204 });
 }

@@ -1,36 +1,70 @@
 import useApi from "@/api";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faGear, faPaperPlane, faPencil, faSpiral } from '@fortawesome/free-solid-svg-icons';
-import { Button, Table } from "@/common/components";
-import Modal from "@/common/components/Modal";
+import { faChevronDown, faEdit, faPlus, faSpiral } from '@fortawesome/free-solid-svg-icons';
+import { Menu, Modal } from "@/common/components";
 import { useContext, useState } from "react";
-import { ProjetoResponse } from "@/types/ProjetoResponse";
-import { TableActionsProps } from "@/common/components/Table";
 import StoreContext from "@/store";
+import ProjetoForm from "./ProjetoForm";
+import { ProjetoRequest } from "@/types/ProjetoRequest";
 
 const SelecaoProjetos = () => {
     const api = useApi();
-    const { data, error, isLoading } = api.projeto.getProjetos();
-    const [open, setOpen] = useState(false);
+    const { data, isLoading, refetch } = api.projeto.getProjetos();
+    const { mutate: postProjeto } = api.projeto.postProjeto();
+    const { mutate: putProjeto } = api.projeto.putProjeto();
     const { projeto } = useContext(StoreContext);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
-    const actions: TableActionsProps<ProjetoResponse> | undefined = [
-        { icon: faPaperPlane, action: (r) => { projeto?.set(r); setOpen(false) }, title: "Selecionar" },
-        { icon: faPencil, action: () => { }, title: "Editar" }
-    ]
+    const handleSave = (data: ProjetoRequest) => {
+        if (isEditing) {
+            putProjeto({ ...projeto.get(), ...data }, {
+                onSuccess: () => {
+                    refetch();
+                    setIsModalOpen(false);
+                }
+            });
+        } else {
+            postProjeto(data, {
+                onSuccess: (newProjeto) => {
+                    refetch();
+                    projeto.set(newProjeto);
+                    setIsModalOpen(false);
+                }
+            });
+        }
+    };
 
     return <>
         {isLoading && <FontAwesomeIcon icon={faSpiral} spin />}
         {!isLoading && <>
-            <Button onClick={() => setOpen(true)}><FontAwesomeIcon icon={faGear} /></Button>
-            <Modal isOpen={open} onClose={() => { setOpen(false) }}>
-                <Table<ProjetoResponse> data={data ?? []} actions={actions}>
-                    <Table.Thead column="nome" title="Nome" />
-                    <Table.Thead<ProjetoResponse> column="createdAt" title="Criado em" render={(r) => new Date(r.createdAt)?.toLocaleString('pt-BR')} />
-                    <Table.Thead<ProjetoResponse> column="updatedAt" title="Atualizado em" render={(r) => new Date(r.updatedAt)?.toLocaleString('pt-BR')} />
-                </Table>
-                <hr />
-                <Button type="secondary">Novo Projeto</Button>
+            <Menu>
+                <Menu.Button>
+                    {projeto?.get()?.nome ?? "Nenhum projeto selecionado"} <FontAwesomeIcon icon={faChevronDown} />
+                </Menu.Button>
+                <Menu.List>
+                    {data?.map(p =>
+                        <Menu.Item key={p.id} onClick={() => projeto?.set(p)}>
+                            {p.nome}
+                        </Menu.Item>
+                    )}
+                    <Menu.Divider />
+                    <Menu.Item onClick={() => { setIsEditing(false); setIsModalOpen(true); }}>
+                        <FontAwesomeIcon icon={faPlus} /> Novo Projeto
+                    </Menu.Item>
+                    {projeto?.get() &&
+                        <Menu.Item onClick={() => { setIsEditing(true); setIsModalOpen(true); }}>
+                            <FontAwesomeIcon icon={faEdit} /> Editar Projeto
+                        </Menu.Item>
+                    }
+                </Menu.List>
+            </Menu>
+            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+                <ProjetoForm
+                    projeto={isEditing ? projeto.get() : undefined}
+                    onSave={handleSave}
+                    onCancel={() => setIsModalOpen(false)}
+                />
             </Modal>
         </>}
     </>
