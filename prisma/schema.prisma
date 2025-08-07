@@ -58,16 +58,142 @@ model Rede {
 }
 
 model Ip {
-  id    Int     @id @default(autoincrement())
-  endereco  String
+  id         Int     @id @default(autoincrement())
+  endereco   String
+  reverseDns String?
 
   projetoId Int
   projeto   Projeto @relation(fields: [projetoId], references: [id])
 
   dominios Dominio[]
   redes    Rede[]
+  portas   Porta[]
+  whois    WhoisInfo[]
+  traceroutes TracerouteHop[]
+  smbShares   SMBShare[]
 
   @@map("ips")
+}
+
+model Porta {
+  id        Int      @id @default(autoincrement())
+  numero    Int
+  protocolo String
+  status    String
+  servico   String?
+  versao    String?
+  createdAt DateTime @default(now()) @map("criacao")
+  updatedAt DateTime @updatedAt @map("atualizacao")
+
+  ipId Int
+  ip   Ip   @relation(fields: [ipId], references: [id])
+
+  vulnerabilidades Vulnerabilidade[]
+  webAppPaths      WebAppPath[]
+  sslCiphers       SSLCipher[]
+  exploits         Exploit[]
+
+  @@unique([numero, protocolo, ipId])
+  @@map("portas")
+}
+
+model Vulnerabilidade {
+  id          Int      @id @default(autoincrement())
+  titulo      String
+  descricao   String
+  severidade  String // Ex: Critical, High, Medium, Low, Informational
+  referencias String // Stored as a newline-separated string
+  createdAt   DateTime @default(now()) @map("criacao")
+  updatedAt   DateTime @updatedAt @map("atualizacao")
+
+  portaId Int
+  porta   Porta @relation(fields: [portaId], references: [id])
+
+  @@unique([titulo, portaId])
+  @@map("vulnerabilidades")
+}
+
+model WhoisInfo {
+  id        Int      @id @default(autoincrement())
+  rawText   String
+  parsed    Json?
+  createdAt DateTime @default(now()) @map("criacao")
+  updatedAt DateTime @updatedAt @map("atualizacao")
+
+  ipId Int
+  ip   Ip   @relation(fields: [ipId], references: [id])
+
+  @@map("whois_info")
+}
+
+model TracerouteHop {
+  id        Int      @id @default(autoincrement())
+  hop       Int
+  ipAddress String
+  hostname  String?
+  rtt1      Float?
+  rtt2      Float?
+  rtt3      Float?
+  createdAt DateTime @default(now()) @map("criacao")
+
+  targetIpId Int
+  targetIp   Ip   @relation(fields: [targetIpId], references: [id])
+
+  @@map("traceroute_hops")
+}
+
+model WebAppPath {
+  id         Int      @id @default(autoincrement())
+  path       String
+  statusCode Int
+  createdAt  DateTime @default(now()) @map("criacao")
+
+  portaId Int
+  porta   Porta @relation(fields: [portaId], references: [id])
+
+  @@unique([path, portaId])
+  @@map("webapp_paths")
+}
+
+model SMBShare {
+  id          Int      @id @default(autoincrement())
+  name        String
+  permissions String
+  comment     String?
+  createdAt   DateTime @default(now()) @map("criacao")
+
+  ipId Int
+  ip   Ip   @relation(fields: [ipId], references: [id])
+
+  @@unique([name, ipId])
+  @@map("smb_shares")
+}
+
+model SSLCipher {
+  id         Int      @id @default(autoincrement())
+  protocol   String // e.g., TLSv1.2
+  name       String // e.g., ECDHE-RSA-AES256-GCM-SHA384
+  bits       Int
+  createdAt  DateTime @default(now()) @map("criacao")
+
+  portaId Int
+  porta   Porta @relation(fields: [portaId], references: [id])
+
+  @@unique([name, portaId])
+  @@map("ssl_ciphers")
+}
+
+model Exploit {
+  id          Int      @id @default(autoincrement())
+  edbId       String   @unique
+  description String
+  path        String
+  createdAt   DateTime @default(now()) @map("criacao")
+
+  portaId Int
+  porta   Porta @relation(fields: [portaId], references: [id])
+
+  @@map("exploits")
 }
 
 model Command {

@@ -5,13 +5,35 @@ import { iniciarEnumeracaoAmass } from '@/service/tools/domain/amass';
 // Let's assume the exports exist based on my previous analysis
 import { executarSubfinder } from '@/service/tools/domain/subfinder';
 import { executarNslookup } from '@/service/tools/domain/nslookup';
+import { executarNmapSv } from '@/service/tools/ip/nmap-sv';
+import { executarWhois } from '@/service/tools/ip/whois';
+import { executarDigRev } from '@/service/tools/ip/dig-rev';
+import { executarTraceroute } from '@/service/tools/ip/traceroute';
+import { executarNmapVuln } from '@/service/tools/ip/nmap-vuln';
+import { executarNikto } from '@/service/tools/ip/nikto';
+import { executarGobuster } from '@/service/tools/ip/gobuster';
+import { executarEnum4linux } from '@/service/tools/ip/enum4linux-ng';
+import { executarSslscan } from '@/service/tools/ip/sslscan';
+import { executarSearchsploit } from '@/service/tools/ip/searchsploit';
 
 // A map to associate command names with their service functions.
 const commandServiceMap: { [key: string]: (args: any) => Promise<any> } = {
+    // Domain tools
     'amass': (args) => iniciarEnumeracaoAmass(args.idDominio),
     'subfinder': (args) => executarSubfinder(args.idDominio),
     'nslookup': (args) => executarNslookup(args.idDominio),
-    // findomain is not implemented
+
+    // IP tools
+    'nmap-sv': (args) => executarNmapSv(args.idIp),
+    'whois': (args) => executarWhois(args.idIp),
+    'dig-rev': (args) => executarDigRev(args.idIp),
+    'traceroute': (args) => executarTraceroute(args.idIp),
+    'nmap-vuln': (args) => executarNmapVuln(args.idIp),
+    'nikto': (args) => executarNikto(args.idIp),
+    'gobuster': (args) => executarGobuster(args.idIp),
+    'enum4linux-ng': (args) => executarEnum4linux(args.idIp),
+    'sslscan': (args) => executarSslscan(args.idIp),
+    'searchsploit': (args) => executarSearchsploit(args.idIp),
 };
 
 class CommandProcessor {

@@ -14,7 +14,16 @@ const useIps = () => {
         enabled: !!idIp
     });
 
-    return { getIp };
+    const getIpDetails = async (idIp?: number): Promise<any> => {
+        if (!idIp) return null;
+        const res = await fetch(`/api/v1/ips/details/${idIp}`);
+        if (!res.ok) {
+            throw new Error('Failed to fetch IP details');
+        }
+        return await res.json();
+    };
+
+    return { getIp, getIpDetails };
 }
 
 export default useIps;
