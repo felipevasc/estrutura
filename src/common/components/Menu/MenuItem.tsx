@@ -1,6 +1,9 @@
 'use client'
 
 import { useState } from "react"
+import { StyledMenuItem, StyledSubMenu } from "./styles";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAngleDown, faAngleLeft } from "@fortawesome/free-solid-svg-icons";
 
 export type MenuItemProps = {
     title: string,
@@ -20,16 +23,16 @@ const MenuItem: React.FC<MenuItemProps> = ({ onClick, subitems, title }) => {
         }
     }
 
-    return <li className={`nivel-menu ${!!subitems?.length && active ? 'ativo' : ''}`}>
-        <a className={`menu-item ${!!subitems?.length ? 'bold' : ''}`} onClick={handleClick}>
+    return <li>
+        <StyledMenuItem className={`${!!subitems?.length ? 'bold' : ''}`} onClick={handleClick}>
             <span className="content">{title}</span>
             {!!subitems?.length && <span className="icon">
-                <i className={`fas ${active ? 'fa-angle-down' : 'fa-angle-left'}`} aria-hidden="true"></i>
+                <FontAwesomeIcon icon={active ? faAngleDown : faAngleLeft} />
             </span>}
-        </a>
-        {!!subitems?.length && active && <ul>
+        </StyledMenuItem>
+        {!!subitems?.length && active && <StyledSubMenu>
             {subitems.map((i, idx) => <MenuItem key={`menu-submenu-${i.title}-${idx}`} {...i} />)}
-        </ul>}
+        </StyledSubMenu>}
     </li>
 }
 

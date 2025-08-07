@@ -8,6 +8,7 @@ const useProjetos = () => {
         queryKey: ["projetos"],
         queryFn: async (): Promise<ProjetoResponse[]> => {
             const res = await fetch("/api/v1/projetos");
+            console.log(await res.text());
             const data = await res.json();
             return data;
         },

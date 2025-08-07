@@ -8,16 +8,4 @@ export const StyledMenuEsquerdo = styled.div`
     margin: 0;
     background-color: var(--panel-background);
     border: 1px solid var(--border-color);
-    
-    & .br-menu, & .menu-container {
-        height: 100%;
-        background-color: var(--panel-background);
-    }
-
-    & .br-item {
-        color: var(--foreground);
-        &:hover {
-            background-color: var(--hover-background);
-        }
-    }
 `

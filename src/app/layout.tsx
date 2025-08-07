@@ -2,9 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Ubuntu } from "next/font/google";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import "@govbr-ds/core/dist/core.min.css";
-import "../common/assets/arquivo-fonte-rawline.css";
-import "../common/assets/arquivo-fonte-raleway.css";
 import Providers from "./providers";
 
 const ubuntu = Ubuntu({
