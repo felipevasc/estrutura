@@ -16,14 +16,14 @@ const ProjetoForm = ({ projeto, onSave, onCancel }: ProjetoFormProps) => {
     });
 
     return (
-        <FormContainer onSubmit={handleSubmit(onSave)}>
+        <FormContainer>
             <div className="field">
                 <label htmlFor="nome">Nome do Projeto</label>
                 <input type="text" {...register("nome", { required: true })} />
             </div>
             <div className="actions">
-                <Button type="submit" >Salvar</Button>
-                <Button type="button" onClick={onCancel}>Cancelar</Button>
+                <Button onClick={handleSubmit(onSave)} type="primary" >Salvar</Button>
+                <Button type="secondary" onClick={onCancel}>Cancelar</Button>
             </div>
         </FormContainer>
     );

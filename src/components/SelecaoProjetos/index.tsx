@@ -7,6 +7,7 @@ import StoreContext from "@/store";
 import ProjetoForm from "./ProjetoForm";
 import { ProjetoRequest } from "@/types/ProjetoRequest";
 import { DropdownContainer, DropdownButton, DropdownContent } from "./styles";
+import { ProjetoResponse } from "@/types/ProjetoResponse";
 
 const SelecaoProjetos = () => {
     const api = useApi();
