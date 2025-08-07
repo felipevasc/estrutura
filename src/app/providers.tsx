@@ -34,7 +34,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <StoreProvider>
         {children}
       </StoreProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }

@@ -44,9 +44,9 @@ const QueueStatus = () => {
     const showDrawer = () => setIsOpen(true);
     const onClose = () => setIsOpen(false);
 
-    const runningCommands = commands.filter(c => c.status === 'RUNNING');
-    const pendingCommands = commands.filter(c => c.status === 'PENDING');
-    const historyCommands = commands.filter(c => c.status === 'COMPLETED' || c.status === 'FAILED');
+    const runningCommands = commands?.filter(c => c.status === 'RUNNING');
+    const pendingCommands = commands?.filter(c => c.status === 'PENDING');
+    const historyCommands = commands?.filter(c => c.status === 'COMPLETED' || c.status === 'FAILED');
 
     const getStatusTag = (status: CommandStatus) => {
         switch (status) {
@@ -81,13 +81,15 @@ const QueueStatus = () => {
                         description={getStatusTag(item.status)}
                     />
                      {item.output && (
-                        <Collapse ghost style={{width: "100%"}}>
-                            <Panel header="Ver saída" key={item.id} >
+                        <Collapse ghost style={{width: "100%"}} items={[{
+                            key: item.id,
+                            label: "Ver saída",
+                            children: <Panel header="Ver saída" key={item.id} >
                                 <pre style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px' }}>
                                     {item.output}
                                 </pre>
                             </Panel>
-                        </Collapse>
+                        }]} ></Collapse>
                     )}
                 </List.Item>
             )}
