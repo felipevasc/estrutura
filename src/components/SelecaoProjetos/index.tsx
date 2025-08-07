@@ -20,17 +20,20 @@ const SelecaoProjetos = () => {
 
     const handleSave = (data: ProjetoRequest) => {
         if (isEditing) {
-            putProjeto({ ...projeto.get(), ...data }, {
-                onSuccess: () => {
-                    refetch();
-                    setIsModalOpen(false);
-                }
-            });
+            const currentProjeto = projeto?.get();
+            if (currentProjeto) {
+                putProjeto({ ...(currentProjeto as ProjetoResponse), ...data }, {
+                    onSuccess: () => {
+                        refetch();
+                        setIsModalOpen(false);
+                    }
+                });
+            }
         } else {
             postProjeto(data, {
                 onSuccess: (newProjeto) => {
                     refetch();
-                    projeto.set(newProjeto);
+                    projeto?.set(newProjeto);
                     setIsModalOpen(false);
                 }
             });
