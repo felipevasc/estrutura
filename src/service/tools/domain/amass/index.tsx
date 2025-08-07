@@ -2,11 +2,15 @@ import path from 'node:path';
 import os from 'node:os';
 import { Terminal } from '@/service/terminal';
 import prisma from '@/database';
+import Database from '@/database/Database';
+import { TipoIp } from '@/database/functions/ip';
 
 const validarDominio = (dominio: string): boolean => {
   const regexDominio = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}$/;
   return regexDominio.test(dominio);
 };
+
+
 
 export const iniciarEnumeracaoAmass = async (idDominio: string) => {
   const op = await prisma.dominio.findFirst({
@@ -34,13 +38,18 @@ export const iniciarEnumeracaoAmass = async (idDominio: string) => {
   const resultado = await Terminal(comando, argumentos, caminhoSaida);
   const subdominios: string[] = [];
   const redes: string[] = [];
-  const ips: string[] = [];
+  const ips: TipoIp[] = [];
 
-  const addElemento = (elemento: string, tipo: string) => {
+  const addElemento = (elemento: string, tipo: string, elementoAssociado: string, tipoAssociado: string) => {
     if (tipo === "FQDN") {
       subdominios.push(elemento);
     } else if (tipo === "IPAddress") {
-      ips.push(elemento);
+      if (tipoAssociado === "FQDN") {
+        ips.push({
+          endereco: elemento,
+          dominio: elementoAssociado,
+        });
+      }
     } else if (tipo === "Netblock") {
       redes.push(elemento);
     }
@@ -61,8 +70,8 @@ export const iniciarEnumeracaoAmass = async (idDominio: string) => {
       const relacao = colunas[1].trim();
 
       if (ativoOrigem.indexOf(dominio) > -1 || ativoDestino.indexOf(dominio) > -1) {
-        addElemento(ativoOrigem, tipoAtivoOrigem);
-        addElemento(ativoDestino, tipoAtivoDestino);
+        addElemento(ativoOrigem, tipoAtivoOrigem, ativoDestino, tipoAtivoDestino);
+        addElemento(ativoDestino, tipoAtivoDestino, ativoOrigem, tipoAtivoOrigem);
       }
     }
   });
@@ -72,24 +81,12 @@ export const iniciarEnumeracaoAmass = async (idDominio: string) => {
     redes: redes.filter((i, idx) => idx === redes.findIndex((item) => item === i)).sort(),
   }
 
-  for (let i = 0; i < tmp.subdominios.length; i++) {
-    const s = tmp.subdominios[i];
-    const dominiosExistentes = await prisma.dominio.findMany({
-      where: {
-        projetoId: Number(op?.projetoId),
-      }
-    });
-    const pai = dominiosExistentes?.find(de => s.indexOf(de.endereco) > -1);
-    if (!dominiosExistentes.find(d => d.endereco === s)?.id) {
-      const r = await prisma.dominio.create({
-        data: {
-          endereco: s,
-          projetoId: Number(op?.projetoId),
-          paiId: pai?.id ?? null,
-        }
-      });
-    }
-  }
-  
+  await Database.adicionarSubdominio(tmp.subdominios, op?.projetoId ?? 0);
+  await Database.adicionarIp(tmp.ips, op?.projetoId ?? 0);
+
   return tmp;
 };
+
+
+
+

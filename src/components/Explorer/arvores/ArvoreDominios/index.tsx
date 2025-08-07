@@ -1,6 +1,6 @@
 "use client"
 import { Tree, TreeDataNode } from 'antd';
-import { useContext, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { GlobalOutlined, SendOutlined } from '@ant-design/icons';
 import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from './styles';
 import NovoDominio from './NovoDominio';
@@ -16,20 +16,28 @@ const ArvoreDominios = () => {
   const { projeto, selecaoTarget } = useContext(StoreContext);
   const { data: dominiosProjeto } = api.dominios.getDominios(projeto?.get()?.id);
   const elementoDominio = useElementoDominio();
-  
-  const selecionado = selecaoTarget?.get()
-  
-  const elementos: TreeDataNode[] | undefined = useMemo(() => {
-    return dominiosProjeto?.map((d) => {
+  const [elementos, setElementos] = useState<TreeDataNode[]>([]);
 
+  const selecionado = selecaoTarget?.get();
+
+  useEffect(() => {
+    setElementos([]);
+    setExpandedKeys([]);
+  }, [projeto?.get()?.id])
+
+  useEffect(() => {
+    setElementos([]);
+    dominiosProjeto?.forEach((d) => {
       let checked = false;
       if (selecionado?.tipo === "domain" && selecionado?.id === d.id) {
         checked = true;
       }
-      return (elementoDominio.getDominio(d))
+      elementoDominio.getDominio(d).then(ret => {
+        setElementos(elementos => [...elementos, ret]);
+      })
     }
     )
-  }, [dominiosProjeto, selecionado])
+  }, [dominiosProjeto])
 
   const onExpand = (newExpandedKeys: React.Key[]) => {
     setExpandedKeys(newExpandedKeys);
@@ -47,7 +55,7 @@ const ArvoreDominios = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={elementos}
+      treeData={elementos.sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)}
       showIcon={true}
       showLine={true}
       switcherIcon={<SendOutlined style={{ transform: "rotate(90deg)" }} />}

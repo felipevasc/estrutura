@@ -11,13 +11,26 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             pai: null,
         },
         include: {
-            subDominios: { 
+            ips: true,
+            subDominios: {
                 include: {
+                    ips: true,
                     subDominios: {
                         include: {
-                            subDominios: true
+                            ips: true,
+                            subDominios: {
+                                include: {
+                                    ips: true,
+                                    subDominios: {
+                                        include: {
+                                            ips: true,
+                                            subDominios: true,
+                                        }
+                                    }
+                                }
+                            }
                         }
-                    },
+                    }
                 }
             }
         }

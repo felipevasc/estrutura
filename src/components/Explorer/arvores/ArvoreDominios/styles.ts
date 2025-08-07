@@ -6,6 +6,7 @@ export const StyledTitleDominio = styled.div`
     padding-top: 12px;
     padding-bottom: 12px;
     font-weight: bold;
+    display: flex;
 `
 
 export const StyledTitleDominioIcon = styled.div`
@@ -18,8 +19,9 @@ export const StyledTitleDominioIcon = styled.div`
 `
 
 export const StyledArvoreDominio = styled.div`
-    & .ant-tree-list-holder-inner {
-        overflow-x: auto;
+    & .ant-tree {
+        overflow: auto;
+        max-height: calc(100vh - 260px);
     }
     & .ant-tree-list-holder-inner .ant-tree-node-content-wrapper {
         font-weight: bold;

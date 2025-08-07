@@ -1,6 +1,7 @@
 "use client"
 import { DominioRequest } from "@/types/DominioRequest";
 import { DominioResponse } from "@/types/DominioResponse";
+import { IpResponse } from "@/types/IpResponse";
 import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -16,9 +17,9 @@ const useDominios = () => {
         },
         enabled: !!idProjeto
     });
-    
+
     const postDominios = async (d: DominioRequest): Promise<DominioResponse> => {
-        
+
         const res = await fetch("/api/v1/dominios", {
             method: "POST",
             headers: {
@@ -41,7 +42,19 @@ const useDominios = () => {
         enabled: !!idDominio
     });
 
-    return { getDominios, postDominios, getDominio };
+    const getSubdominios = async (idDominio?: number): Promise<DominioResponse[]> => {
+        const res = await fetch("/api/v1/dominios/" + idDominio + "/subdominios");
+        const data = await res.json();
+        return data;
+    }
+
+    const getIps = async (idDominio?: number): Promise<IpResponse[]> => {
+        const res = await fetch("/api/v1/dominios/" + idDominio + "/ips");
+        const data = await res.json();
+        return data;
+    }
+
+    return { getDominios, postDominios, getDominio, getSubdominios, getIps };
 }
 
 export default useDominios

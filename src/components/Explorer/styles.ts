@@ -3,7 +3,8 @@ import styled from "styled-components";
 
 export const StyledExplorer = styled.div`
     width: 100%;
-    height: 100%;
+    max-height: calc(100% - 16px);
+    overflow: none;
 `
 
 export const StyledMenuExplorer = styled.div`

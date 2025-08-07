@@ -6,7 +6,33 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!id)
         return NextResponse.json({ error: "Id do dominio é obrigatório" }, { status: 400 })
 
-    const ret = await prisma.dominio.findFirst({ where: { id: Number(id) } });
+    const ret = await prisma.dominio.findFirst({
+        where: { id: Number(id) },
+        include: {
+            ips: true,
+            subDominios: {
+                include: {
+                    ips: true,
+                    subDominios: {
+                        include: {
+                            ips: true,
+                            subDominios: {
+                                include: {
+                                    ips: true,
+                                    subDominios: {
+                                        include: {
+                                            ips: true,
+                                            subDominios: true,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
     return NextResponse.json(ret);
 }
 
@@ -32,5 +58,5 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     return NextResponse.json(ret);
-    
+
 }

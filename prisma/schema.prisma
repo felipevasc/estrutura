@@ -15,6 +15,8 @@ model Projeto {
 
   dominios Dominio[]
   redes    Rede[]
+  ips      Ip[]
+  execucoes Execucao[]
 
   @@map("projetos")
 }
@@ -32,6 +34,8 @@ model Dominio {
   pai         Dominio?  @relation("SubDominios", fields: [paiId], references: [id])
   subDominios Dominio[] @relation("SubDominios")
 
+  ips Ip[]
+
   @@map("dominios")
 }
 
@@ -48,7 +52,22 @@ model Rede {
   pai      Rede?    @relation("SubRedes", fields: [paiId], references: [id])
   subredes Rede[]   @relation("SubRedes")
 
+  ips Ip[]
+
   @@map("redes")
+}
+
+model Ip {
+  id    Int     @id @default(autoincrement())
+  endereco  String
+
+  projetoId Int
+  projeto   Projeto @relation(fields: [projetoId], references: [id])
+
+  dominios Dominio[]
+  redes    Rede[]
+
+  @@map("ips")
 }
 
 model Execucao {

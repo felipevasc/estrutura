@@ -1,7 +1,4 @@
-import prisma from "@/database";
-import { iniciarEnumeracaoAmass } from "@/service/tools/amass";
-import { ApiResponse } from "@/types/ApiResponse";
-import { ProjetoResponse } from "@/types/ProjetoResponse";
+import { iniciarEnumeracaoAmass } from "@/service/tools/domain/amass";
 import { NextResponse } from "next/server";
 
 export async function POST(requisicao: Request) {
@@ -9,13 +6,12 @@ export async function POST(requisicao: Request) {
     const corpo = await requisicao.json();
     const { dominio } = corpo;
 
-    if (!dominio || typeof dominio !== 'string') {
+    if (!dominio) {
       return NextResponse.json(
         { mensagem: 'O campo "dominio" é obrigatório no body.' },
         { status: 400 }
       );
     }
-
     
     const subdominios = await iniciarEnumeracaoAmass(dominio);
     
