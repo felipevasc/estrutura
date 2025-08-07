@@ -22,7 +22,13 @@ const SelecaoProjetos = () => {
         if (isEditing) {
             const currentProjeto = projeto?.get();
             if (currentProjeto) {
-                putProjeto({ ...(currentProjeto as ProjetoResponse), ...data }, {
+                const updatedProjeto: ProjetoResponse = {
+                    id: currentProjeto.id,
+                    nome: data.nome,
+                    createdAt: currentProjeto.createdAt,
+                    updatedAt: currentProjeto.updatedAt,
+                };
+                putProjeto(updatedProjeto, {
                     onSuccess: () => {
                         refetch();
                         setIsModalOpen(false);
@@ -68,7 +74,7 @@ const SelecaoProjetos = () => {
             </DropdownContainer>
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <ProjetoForm
-                    projeto={isEditing ? projeto.get() : undefined}
+                    projeto={isEditing ? projeto?.get() : undefined}
                     onSave={handleSave}
                     onCancel={() => setIsModalOpen(false)}
                 />
