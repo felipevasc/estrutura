@@ -67,7 +67,134 @@ model Ip {
   dominios Dominio[]
   redes    Rede[]
 
+  portas          Porta[]
+  nmapScans       NmapScan[]
+  whoisInfos      WhoisInfo[]
+  dnsreconScans   DnsreconScan[]
+  whatWebResults  WhatWebResult[]
+  niktoScans      NiktoScan[]
+  feroxbusterScans FeroxbusterScan[]
+  testsslScans    TestsslScan[]
+  nucleiScans     NucleiScan[]
+  enum4linuxScans Enum4linuxScan[]
+  webScreenshots  WebScreenshot[]
+
+
   @@map("ips")
+}
+
+model Porta {
+  id        Int      @id @default(autoincrement())
+  numero    Int
+  protocolo String
+  servico   String?
+  versao    String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("portas")
+}
+
+model NmapScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("nmap_scans")
+}
+
+model WhoisInfo {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("whois_infos")
+}
+
+model DnsreconScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("dnsrecon_scans")
+}
+
+model WhatWebResult {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("whatweb_results")
+}
+
+model NiktoScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("nikto_scans")
+}
+
+model FeroxbusterScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("feroxbuster_scans")
+}
+
+model TestsslScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("testssl_scans")
+}
+
+model NucleiScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("nuclei_scans")
+}
+
+model Enum4linuxScan {
+  id        Int      @id @default(autoincrement())
+  rawOutput String?
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("enum4linux_scans")
+}
+
+model WebScreenshot {
+  id        Int      @id @default(autoincrement())
+  path      String
+  port      Int
+  ipId      Int
+  ip        Ip       @relation(fields: [ipId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("web_screenshots")
 }
 
 model Command {

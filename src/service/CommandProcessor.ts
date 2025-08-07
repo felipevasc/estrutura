@@ -1,17 +1,34 @@
 import prisma from '@/database';
 import { CommandStatus } from '@prisma/client';
 import { iniciarEnumeracaoAmass } from '@/service/tools/domain/amass';
-// I need to find the correct path for the other services
-// Let's assume the exports exist based on my previous analysis
 import { executarSubfinder } from '@/service/tools/domain/subfinder';
 import { executarNslookup } from '@/service/tools/domain/nslookup';
+import { executarNmap } from '@/service/tools/ip/nmap';
+import { executarWhois } from '@/service/tools/ip/whois';
+import { executarDnsrecon } from '@/service/tools/ip/dnsrecon';
+import { executarWhatWeb } from '@/service/tools/ip/whatweb';
+import { executarNikto } from '@/service/tools/ip/nikto';
+import { executarFeroxbuster } from '@/service/tools/ip/feroxbuster';
+import { executarTestssl } from '@/service/tools/ip/testssl';
+import { executarNuclei } from '@/service/tools/ip/nuclei';
+import { executarEnum4linux } from '@/service/tools/ip/enum4linux';
+import { executarWebScreenshot } from '@/service/tools/ip/webscreenshot';
 
 // A map to associate command names with their service functions.
 const commandServiceMap: { [key: string]: (args: any) => Promise<any> } = {
     'amass': (args) => iniciarEnumeracaoAmass(args.idDominio),
     'subfinder': (args) => executarSubfinder(args.idDominio),
     'nslookup': (args) => executarNslookup(args.idDominio),
-    // findomain is not implemented
+    'nmap': (args) => executarNmap(args.idIp),
+    'whois': (args) => executarWhois(args.idIp),
+    'dnsrecon': (args) => executarDnsrecon(args.idIp),
+    'whatweb': (args) => executarWhatWeb(args.idIp),
+    'nikto': (args) => executarNikto(args.idIp),
+    'feroxbuster': (args) => executarFeroxbuster(args.idIp),
+    'testssl': (args) => executarTestssl(args.idIp),
+    'nuclei': (args) => executarNuclei(args.idIp),
+    'enum4linux': (args) => executarEnum4linux(args.idIp),
+    'webscreenshot': (args) => executarWebScreenshot(args.idIp),
 };
 
 class CommandProcessor {

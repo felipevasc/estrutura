@@ -1,0 +1,102 @@
+-- CreateTable
+CREATE TABLE "portas" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "numero" INTEGER NOT NULL,
+    "protocolo" TEXT NOT NULL,
+    "servico" TEXT,
+    "versao" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "portas_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "nmap_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "nmap_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "whois_infos" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "whois_infos_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "dnsrecon_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "dnsrecon_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "whatweb_results" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "whatweb_results_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "nikto_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "nikto_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "feroxbuster_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "feroxbuster_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "testssl_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "testssl_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "nuclei_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "nuclei_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "enum4linux_scans" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "rawOutput" TEXT,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "enum4linux_scans_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "web_screenshots" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "path" TEXT NOT NULL,
+    "port" INTEGER NOT NULL,
+    "ipId" INTEGER NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "web_screenshots_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

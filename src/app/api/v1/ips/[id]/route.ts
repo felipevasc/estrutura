@@ -11,6 +11,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         include: {
             dominios: true,
             redes: true,
+            portas: true,
+            nmapScans: { orderBy: { createdAt: 'desc' } },
+            whoisInfos: { orderBy: { createdAt: 'desc' } },
+            dnsreconScans: { orderBy: { createdAt: 'desc' } },
+            whatWebResults: { orderBy: { createdAt: 'desc' } },
+            niktoScans: { orderBy: { createdAt: 'desc' } },
+            feroxbusterScans: { orderBy: { createdAt: 'desc' } },
+            testsslScans: { orderBy: { createdAt: 'desc' } },
+            nucleiScans: { orderBy: { createdAt: 'desc' } },
+            enum4linuxScans: { orderBy: { createdAt: 'desc' } },
+            webScreenshots: { orderBy: { createdAt: 'desc' } },
         }
     });
     return NextResponse.json(ret);
