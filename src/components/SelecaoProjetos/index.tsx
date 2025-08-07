@@ -38,8 +38,10 @@ const SelecaoProjetos = () => {
         } else {
             postProjeto(data, {
                 onSuccess: (newProjeto) => {
-                    refetch();
                     projeto?.set(newProjeto);
+                },
+                onSettled: () => {
+                    refetch();
                     setIsModalOpen(false);
                 }
             });
