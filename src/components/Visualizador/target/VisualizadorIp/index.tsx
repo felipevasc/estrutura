@@ -50,7 +50,7 @@ const VisualizadorIp = () => {
         };
 
         fetchDetails();
-    }, [target, api.ips]);
+    }, [target]);
 
     if (loading) {
         return <Spin size="large" style={{ display: 'block', marginTop: '50px' }} />;

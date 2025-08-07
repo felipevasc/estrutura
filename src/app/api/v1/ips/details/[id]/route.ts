@@ -3,9 +3,10 @@ import prisma from '@/database';
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const id = parseInt(params.id, 10);
+    const { id: idParam } = await params
+    const id = parseInt(idParam, 10);
 
     if (isNaN(id)) {
         return NextResponse.json({ error: 'ID de IP inválido.' }, { status: 400 });

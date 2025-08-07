@@ -57,7 +57,7 @@ export const executarNmapSv = async (idIp: string) => {
     const comando = 'nmap';
     const argumentos = ['-sV', '-Pn', '--open', '-oG', '-', ip];
 
-    console.log(`[Serviço Nmap-SV] Iniciando processo para ${ip}.`);
+    console.log(`[Serviço Nmap-SV] Iniciando processo para ${ip}.`, comando, argumentos);
 
     const resultado = await Terminal(comando, argumentos);
     const portas = parseNmapOutput(resultado.saidaComando ?? '');

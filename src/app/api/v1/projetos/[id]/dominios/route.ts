@@ -11,7 +11,34 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             pai: null,
         },
         include: {
-            ips: true,
+            ips: {
+                include: {
+                    portas: true,
+                    whois: true,
+                    traceroutes: true,
+                    smbShares: true,
+                    vulnerabilidades: {
+                        include: {
+                            porta: true,
+                        }
+                    },
+                    webAppPaths: {
+                        include: {
+                            porta: true,
+                        }
+                    },
+                    sslCiphers: {
+                        include: {
+                            porta: true,
+                        }
+                    },
+                    exploits: {
+                        include: {
+                            porta: true,
+                        }
+                    }
+                }
+            },
             subDominios: {
                 include: {
                     ips: true,

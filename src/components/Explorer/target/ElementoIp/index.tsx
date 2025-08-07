@@ -3,7 +3,7 @@ import StoreContext from "@/store";
 import { DominioResponse } from "@/types/DominioResponse"
 import { IpResponse } from "@/types/IpResponse";
 import { GlobalOutlined,  } from "@ant-design/icons";
-import { faHouseLaptop, faLaptop, faLaptopCode, faNetworkWired, faServer } from "@fortawesome/free-solid-svg-icons";
+import { faHouseLaptop, faLaptop, faLaptopCode, faNetworkWired, faPlug, faServer } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { TreeDataNode } from "antd";
 import React, { useContext } from "react";

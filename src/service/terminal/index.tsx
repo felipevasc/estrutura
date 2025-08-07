@@ -15,12 +15,10 @@ export const Terminal = (
 ): Promise<ResultadoExecucao> => {
   return new Promise((resolver, rejeitar) => {
     const processo = spawn(comando, argumentos);
-    const streamArquivo = createWriteStream(caminhoArquivoSaida, { flags: 'a' });
 
     let saidaComando = "";
     let erroComando = "";
 
-    //processo.stdout.pipe(streamArquivo);
 
     processo.stderr.on('data', (dados: Buffer) => {
       //Exibir dado convertido para texto claro
@@ -40,7 +38,6 @@ export const Terminal = (
     processo.on('error', (erro) => {
       console.log("Erro recebido", erro);
       erroComando += erro.toString();
-      streamArquivo.close();
       resolver({
         erro,
         erroComando,
@@ -51,7 +48,6 @@ export const Terminal = (
 
     processo.on('close', (codigo) => {
       console.log("Close recebido:", codigo, saidaComando, erroComando)
-      streamArquivo.close();
       if (codigo === 0) {
         resolver({
           erroComando,

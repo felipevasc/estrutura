@@ -44,7 +44,7 @@ const useElementoDominio = () => {
       const filhosIp: TreeDataNode[] = [];
       for (let i = 0; i < ips.length; i++) {
         const ip = ips[i];
-        filhosIp.push(await elementoIp.getIp(ip));
+        //filhosIp.push(await elementoIp.getIp(ip));
       }
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}}-ips`,
