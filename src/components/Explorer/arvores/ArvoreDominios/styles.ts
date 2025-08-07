@@ -14,39 +14,48 @@ export const StyledTitleDominioIcon = styled.div`
     right: 0px;
     top: 4px;
     & button {
-        color: #0F0;
+        color: var(--accent-color);
     }
 `
 
 export const StyledArvoreDominio = styled.div`
-    &.ant-tree .ant-tree-node-content-wrapper {
-        padding: 0;
-    }
-    & .ant-tree, & .ant-tree svg {
-        font-size: 10px;
-    }
-    & .ant-tree {
+    .ant-tree {
+        background-color: transparent;
+        font-family: var(--font-geist-mono), monospace;
+        font-size: 14px;
+        color: var(--foreground);
         overflow: auto;
         max-height: calc(100vh - 260px);
     }
-    & .ant-tree-list-holder-inner .ant-tree-node-content-wrapper {
-        font-family: monospace;
-        white-space: nowrap;
-        text-align: left;
-        padding-inline: 0;
+
+    .ant-tree .ant-tree-node-content-wrapper {
+        padding: 2px 4px;
+        border-radius: 4px;
+        transition: background-color 0.2s;
     }
-    & .ant-tree-list-holder-inner .folder .ant-tree-node-content-wrapper {
-        color:rgb(64, 18, 7);
-        font-weight: bolder;
+
+    .ant-tree .ant-tree-node-content-wrapper:hover {
+        background-color: var(--hover-background);
     }
-    & .ant-tree-list-holder-inner .dominio .ant-tree-node-content-wrapper {
-        color: #071540;
+
+    .ant-tree.ant-tree-directory .ant-tree-treenode-selected .ant-tree-node-content-wrapper::before,
+    .ant-tree.ant-tree-directory .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
+        background-color: var(--accent-color);
+        color: #0D1117; /* Use the dark background color for text for high contrast */
     }
-    & .ant-tree-list-holder-inner .ip .ant-tree-node-content-wrapper {
-        color:rgb(105, 73, 13);
+
+    /* Style for different node types */
+    .ant-tree-list-holder-inner .dominio .ant-tree-node-content-wrapper {
+        color: var(--accent-color);
+        font-weight: 500;
     }
-    & .ant-tree-list-holder-inner .checked .ant-tree-node-content-wrapper {
-        background-color: #071540;
-        color: #FFF !important;
+
+    .ant-tree-list-holder-inner .ip .ant-tree-node-content-wrapper {
+        color: #8B949E; /* A secondary color from the theme */
+    }
+
+    /* Adjust switcher (arrow icon) style */
+    .ant-tree .ant-tree-switcher {
+        color: var(--foreground);
     }
 `

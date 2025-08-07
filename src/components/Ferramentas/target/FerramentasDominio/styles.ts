@@ -1,44 +1,41 @@
 import styled from "styled-components";
 
 export const StyledFerramentasDominio = styled.div`
-    & .ant-card {
+    .ant-card {
         cursor: pointer;
-        border-top: #ddf5ff solid 4px;
-        border-right: #ddf5ff solid 4px;
-        border-left: #65748b solid 4px;
-        border-bottom: #65748b solid 4px;
-        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-        transition: 0.3s;
-        margin-bottom: 8px;        
-        background-color: #c5d4eb;
-        transition: 0.3s;
+        border: 1px solid var(--border-color);
+        background-color: var(--panel-background);
+        margin-bottom: 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease-in-out;
 
         &:hover {
-            background-color: #cfdef6;
+            background-color: var(--hover-background);
+            border-color: var(--accent-color);
         }
-        &:active {
-            background-color: #c5d4eb;
-            /* box-shadow inside the box */
-            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 
+        &:active {
             transform: scale(0.98);
-            opacity: 0.9;
-            
-            cursor: pointer;
-            border-top:rgb(69, 78, 92) solid 4px;
-            border-right: rgb(69, 78, 92) solid 4px;
-            border-left:rgb(204, 220, 226) solid 4px;
-            border-bottom: #ddf5ff solid 4px;
+            background-color: var(--hover-background);
         }
     }
-    & .ant-card-head {
+
+    .ant-card-head {
         text-align: center;
         min-height: 20px;
+        padding: 0 12px;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.875rem;
+        font-weight: 600;
     }
-    & .ant-card-body {
-        padding: 4px 8px;
-        & * {
-            color: #333;
-        }
+
+    .ant-card-body {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+
+    .ant-card-head *,
+    .ant-card-body * {
+        color: var(--foreground) !important;
     }
 `

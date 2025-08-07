@@ -1,17 +1,8 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Ubuntu } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import "@govbr-ds/core/dist/core.min.css";
-import "../common/assets/arquivo-fonte-rawline.css";
-import "../common/assets/arquivo-fonte-raleway.css";
 import Providers from "./providers";
-
-const ubuntu = Ubuntu({
-  variable: "--font-ubuntu",
-  subsets: ["latin"],
-  weight: ["400", "700"],
-});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${ubuntu.variable} antialiased`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>
