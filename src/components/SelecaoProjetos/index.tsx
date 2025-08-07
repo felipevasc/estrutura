@@ -1,11 +1,12 @@
 import useApi from "@/api";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronDown, faEdit, faPlus, faSpiral } from '@fortawesome/free-solid-svg-icons';
-import { Menu, Modal } from "@/common/components";
+import Modal from "@/common/components/Modal";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import ProjetoForm from "./ProjetoForm";
 import { ProjetoRequest } from "@/types/ProjetoRequest";
+import { DropdownContainer, DropdownButton, DropdownContent } from "./styles";
 
 const SelecaoProjetos = () => {
     const api = useApi();
@@ -15,6 +16,7 @@ const SelecaoProjetos = () => {
     const { projeto } = useContext(StoreContext);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     const handleSave = (data: ProjetoRequest) => {
         if (isEditing) {
@@ -38,27 +40,29 @@ const SelecaoProjetos = () => {
     return <>
         {isLoading && <FontAwesomeIcon icon={faSpiral} spin />}
         {!isLoading && <>
-            <Menu>
-                <Menu.Button>
+            <DropdownContainer>
+                <DropdownButton onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                     {projeto?.get()?.nome ?? "Nenhum projeto selecionado"} <FontAwesomeIcon icon={faChevronDown} />
-                </Menu.Button>
-                <Menu.List>
-                    {data?.map(p =>
-                        <Menu.Item key={p.id} onClick={() => projeto?.set(p)}>
-                            {p.nome}
-                        </Menu.Item>
-                    )}
-                    <Menu.Divider />
-                    <Menu.Item onClick={() => { setIsEditing(false); setIsModalOpen(true); }}>
-                        <FontAwesomeIcon icon={faPlus} /> Novo Projeto
-                    </Menu.Item>
-                    {projeto?.get() &&
-                        <Menu.Item onClick={() => { setIsEditing(true); setIsModalOpen(true); }}>
-                            <FontAwesomeIcon icon={faEdit} /> Editar Projeto
-                        </Menu.Item>
-                    }
-                </Menu.List>
-            </Menu>
+                </DropdownButton>
+                {isDropdownOpen &&
+                    <DropdownContent>
+                        {data?.map(p =>
+                            <a key={p.id} onClick={() => { projeto?.set(p); setIsDropdownOpen(false); }}>
+                                {p.nome}
+                            </a>
+                        )}
+                        <hr />
+                        <a onClick={() => { setIsEditing(false); setIsModalOpen(true); setIsDropdownOpen(false); }}>
+                            <FontAwesomeIcon icon={faPlus} /> Novo Projeto
+                        </a>
+                        {projeto?.get() &&
+                            <a onClick={() => { setIsEditing(true); setIsModalOpen(true); setIsDropdownOpen(false); }}>
+                                <FontAwesomeIcon icon={faEdit} /> Editar Projeto
+                            </a>
+                        }
+                    </DropdownContent>
+                }
+            </DropdownContainer>
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <ProjetoForm
                     projeto={isEditing ? projeto.get() : undefined}
