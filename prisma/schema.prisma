@@ -16,7 +16,7 @@ model Projeto {
   dominios Dominio[]
   redes    Rede[]
   ips      Ip[]
-  execucoes Execucao[]
+  commands Command[]
 
   @@map("projetos")
 }
@@ -70,22 +70,24 @@ model Ip {
   @@map("ips")
 }
 
-model Execucao {
-  id              Int      @id @default(autoincrement())
-  projetoId Int
-  projeto   Projeto @relation(fields: [projetoId], references: [id])
-  comando         String
-  argumentos      String 
-  status          StatusExecucao @default(AGUARDANDO)
-  caminho_saida   String?
-  mensagem_erro   String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime?
+model Command {
+  id          Int      @id @default(autoincrement())
+  command     String
+  args        String
+  projectId   Int
+  project     Projeto  @relation(fields: [projectId], references: [id])
+  status      CommandStatus @default(PENDING)
+  output      String?
+  createdAt   DateTime @default(now())
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  @@map("commands")
 }
 
-enum StatusExecucao {
-  AGUARDANDO
-  EXECUTANDO
-  CONCLUIDO
-  ERRO
+enum CommandStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
 }
