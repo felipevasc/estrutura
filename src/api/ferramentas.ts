@@ -27,6 +27,7 @@ const useFerramentas = () => {
         const data = await res.json();
         return data;
     }
+
     return {
         executeAmass,
         executeSubfinder

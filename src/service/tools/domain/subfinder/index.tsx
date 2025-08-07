@@ -19,7 +19,7 @@ export const executarSubfinder = async (idDominio: string) => {
   const comando = 'subfinder';
   const argumentos = ['-d', dominio, "--all", "-silent"];
 
-  console.log(`[Serviço Amass] Iniciando processo para ${dominio}. Saída em: ${caminhoSaida}`);
+  console.log(`[Serviço subfinder] Iniciando processo para ${dominio}. Saída em: ${caminhoSaida}`);
 
   const resultado = await Terminal(comando, argumentos, caminhoSaida);
 

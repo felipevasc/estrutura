@@ -4,6 +4,7 @@ import { StyledFerramentasDominio } from "./styles";
 import useApi from "@/api";
 import { useContext } from "react";
 import StoreContext from "@/store";
+import { executeNslookup } from "./actions";
 
 const gridStyle: React.CSSProperties = {
     width: '100%',
@@ -22,6 +23,11 @@ const FerramentasDominio = () => {
     const execSubfinder = () => {
         if (selecaoTarget?.get()?.tipo === "domain") {
             api.ferramentas.executeSubfinder(selecaoTarget.get()?.id ?? 0);
+        }
+    }
+    const execNslookup = () => {
+        if (selecaoTarget?.get()?.tipo === "domain") {
+            executeNslookup(selecaoTarget.get()?.id ?? 0)
         }
     }
 
@@ -43,6 +49,12 @@ const FerramentasDominio = () => {
             title={"Findomain"}
         >
             <Card.Meta description={"Monitoramento e descoberta de subdomínios."} />
+        </Card>
+        <Card
+            title={"NsLookup"}
+            onClick={execNslookup}
+        >
+            <Card.Meta description={"Descobrir IPs de um domínio."} />
         </Card>
     </StyledFerramentasDominio>
 }

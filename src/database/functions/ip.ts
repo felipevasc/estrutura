@@ -24,6 +24,7 @@ export const adicionarIp = async (ips: TipoIp[], projetoId: number) => {
         projetoId: projetoId,
       }
     });
+    console.log("Adicionando IP", ip, ipAtual, dominioAtual)
     if (dominioAtual?.id) {
       if (!ipAtual?.id) {
         ipAtual = await prisma.ip.create({

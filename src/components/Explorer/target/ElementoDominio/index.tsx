@@ -2,7 +2,7 @@ import useApi from "@/api";
 import StoreContext from "@/store";
 import { DominioResponse } from "@/types/DominioResponse"
 import { GlobalOutlined, DeploymentUnitOutlined } from "@ant-design/icons";
-import { faNetworkWired } from "@fortawesome/free-solid-svg-icons";
+import { faNetworkWired, faPlug, faRoute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { TreeDataNode } from "antd";
 import React, { useContext } from "react";
@@ -24,7 +24,7 @@ const useElementoDominio = () => {
     
     const filhos: TreeDataNode[] = [];
     
-    const subdominios = await api.dominios.getSubdominios(dominio.id); 
+    const subdominios = dominio.subDominios ?? []; 
     if (subdominios.length) {
       const filhosSubdominios: TreeDataNode[] = [];
       for (let i = 0; i < subdominios.length; i++) {
@@ -33,12 +33,13 @@ const useElementoDominio = () => {
       }
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}-subdominios}`,
-        title: <div><DeploymentUnitOutlined />{' '}Subdominios</div>,
-        children: filhosSubdominios
+        title: <div><FontAwesomeIcon icon={faRoute} />{' '}Subdominios</div>,
+        children: filhosSubdominios,
+        className: "folder"
       })
     }
 
-    const ips = await api.dominios.getIps(dominio.id); 
+    const ips = dominio.ips ?? []; 
     if (ips.length) {
       const filhosIp: TreeDataNode[] = [];
       for (let i = 0; i < ips.length; i++) {
@@ -48,7 +49,8 @@ const useElementoDominio = () => {
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}}-ips`,
         title: <div><FontAwesomeIcon icon={faNetworkWired} />{' '}IPs</div>,
-        children: filhosIp
+        children: filhosIp,
+        className: "folder"
       })
     }
 

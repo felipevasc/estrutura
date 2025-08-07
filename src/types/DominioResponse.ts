@@ -1,3 +1,5 @@
+import { IpResponse } from "./IpResponse";
+
 export type DominioResponse = {
     id?: number;
     endereco?: string;
@@ -5,4 +7,5 @@ export type DominioResponse = {
     projetoId?: number;
     paiId?: number | null;
     subDominios?: DominioResponse[];
+    ips?: IpResponse[];
 }

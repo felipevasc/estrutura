@@ -26,7 +26,7 @@ export const Terminal = (
       //Exibir dado convertido para texto claro
       console.log("Data recebido", dados.buffer, dados.toString())
       saidaComando += dados.toString();
-      console.error(`[Executor] Erro no comando '${comando}': ${dados.toString()}`);
+      console.error(`[Executor] Erro no comando '${comando}': ${dados.toString()}`, argumentos);
     });
 
     processo.stdout.on('data', (dados: Buffer) => {

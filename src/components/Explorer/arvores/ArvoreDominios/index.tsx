@@ -28,10 +28,6 @@ const ArvoreDominios = () => {
   useEffect(() => {
     setElementos([]);
     dominiosProjeto?.forEach((d) => {
-      let checked = false;
-      if (selecionado?.tipo === "domain" && selecionado?.id === d.id) {
-        checked = true;
-      }
       elementoDominio.getDominio(d).then(ret => {
         setElementos(elementos => [...elementos, ret]);
       })
