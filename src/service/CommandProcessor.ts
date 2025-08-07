@@ -59,7 +59,9 @@ class CommandProcessor {
                     data: {
                         status: CommandStatus.COMPLETED,
                         completedAt: new Date(),
-                        output: JSON.stringify(result, null, 2),
+                        output: JSON.stringify(result.treatedResult, null, 2),
+                        rawOutput: result.rawOutput,
+                        executedCommand: result.executedCommand,
                     },
                 });
 

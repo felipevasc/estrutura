@@ -80,16 +80,49 @@ const QueueStatus = () => {
                         title={item.command}
                         description={getStatusTag(item.status)}
                     />
-                     {item.output && (
-                        <Collapse ghost style={{width: "100%"}} items={[{
-                            key: item.id,
-                            label: "Ver saída",
-                            children: <Panel header="Ver saída" key={item.id} >
-                                <pre style={{ backgroundColor: '#f5f5f5', padding: '10px', borderRadius: '4px' }}>
-                                    {item.output}
-                                </pre>
-                            </Panel>
-                        }]} ></Collapse>
+                </List.Item>
+            )}
+        />
+    );
+
+    const renderCommandListHistory = (data: Command[], showCancel: boolean) => (
+        <List
+            itemLayout="horizontal"
+            dataSource={data}
+            renderItem={item => (
+                <List.Item
+                    style={{display: "flex", flexDirection: "column"}}
+                    actions={showCancel ? [
+                        <Popconfirm
+                            title="Cancelar comando?"
+                            onConfirm={() => handleCancelCommand(item.id)}
+                            okText="Sim"
+                            cancelText="Não"
+                        >
+                            <Button icon={<DeleteOutlined />} type="primary" danger shape="circle" />
+                        </Popconfirm>
+                    ] : []}
+                >
+                    <List.Item.Meta
+                        style={{width: "100%"}}
+                        avatar={<VscTerminal />}
+                        title={item.executedCommand || item.command}
+                        description={getStatusTag(item.status)}
+                    />
+                    {(item.rawOutput || item.output) && (
+                        <pre style={{
+                            backgroundColor: '#1e1e1e',
+                            color: '#d4d4d4',
+                            padding: '15px',
+                            borderRadius: '5px',
+                            whiteSpace: 'pre-wrap',
+                            wordBreak: 'break-all',
+                            width: '100%',
+                            fontFamily: 'monospace'
+                        }}>
+                            {item.executedCommand && <div style={{ color: '#569cd6' }}>$ {item.executedCommand}</div>}
+                            {item.rawOutput || item.output}
+                        </pre>
                     )}
                 </List.Item>
             )}
@@ -110,7 +143,7 @@ const QueueStatus = () => {
         {
             key: '3',
             label: 'Histórico',
-            children: renderCommandList(historyCommands, false),
+            children: renderCommandListHistory(historyCommands, false),
         },
     ];
 
@@ -118,10 +151,15 @@ const QueueStatus = () => {
 
     return (
         <StyledQueueStatus>
-            <Badge count={pendingCount} onClick={showDrawer} title="Fila de execução">
-                <VscTerminal style={{ fontSize: '30px', cursor: 'pointer' }} />
-            </Badge>
-            <Drawer title="Fila de Execução" placement="right" onClose={onClose} open={isOpen} width={500}>
+            <Button
+                type="primary"
+                icon={<UnorderedListOutlined />}
+                onClick={showDrawer}
+                size="large"
+            >
+                Fila de Execução ({pendingCount})
+            </Button>
+            <Drawer title="Fila de Execução" placement="right" onClose={onClose} open={isOpen} width={800}>
                 <Tabs defaultActiveKey="1" items={items} />
             </Drawer>
         </StyledQueueStatus>

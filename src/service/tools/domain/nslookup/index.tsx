@@ -39,5 +39,9 @@ export const executarNslookup = async (idDominio: string) => {
   }
   await Database.adicionarIp(ips, op?.projetoId ?? 0);
 
-  return ips;
+  return {
+    executedCommand: `${comando} ${argumentos.join(' ')}`,
+    rawOutput: resultado.saidaComando,
+    treatedResult: ips,
+  };
 };

@@ -71,16 +71,18 @@ model Ip {
 }
 
 model Command {
-  id          Int      @id @default(autoincrement())
-  command     String
-  args        String
-  projectId   Int
-  project     Projeto  @relation(fields: [projectId], references: [id])
-  status      CommandStatus @default(PENDING)
-  output      String?
-  createdAt   DateTime @default(now())
-  startedAt   DateTime?
-  completedAt DateTime?
+  id              Int           @id @default(autoincrement())
+  command         String
+  args            String
+  executedCommand String?
+  projectId       Int
+  project         Projeto       @relation(fields: [projectId], references: [id])
+  status          CommandStatus @default(PENDING)
+  output          String?
+  rawOutput       String?
+  createdAt       DateTime      @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
 
   @@map("commands")
 }

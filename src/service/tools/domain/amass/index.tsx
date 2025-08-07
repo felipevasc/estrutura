@@ -84,7 +84,11 @@ export const iniciarEnumeracaoAmass = async (idDominio: string) => {
   await Database.adicionarSubdominio(tmp.subdominios, op?.projetoId ?? 0);
   await Database.adicionarIp(tmp.ips, op?.projetoId ?? 0);
 
-  return tmp;
+  return {
+    executedCommand: `${comando} ${argumentos.join(' ')}`,
+    rawOutput: resultado.saidaComando,
+    treatedResult: tmp,
+  };
 };
 
 

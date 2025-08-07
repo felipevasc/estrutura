@@ -27,5 +27,9 @@ export const executarSubfinder = async (idDominio: string) => {
 
   await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
 
-  return subdominios;
+  return {
+    executedCommand: `${comando} ${argumentos.join(' ')}`,
+    rawOutput: resultado.saidaComando,
+    treatedResult: subdominios,
+  };
 };
