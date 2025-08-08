@@ -12,3 +12,8 @@ export const StyledTopo = styled.header`
     justify-content: space-between;
     flex-shrink: 0;
 `
+
+export const StyledAcoesTopo = styled.div`
+    display: flex;
+    gap: 1rem;
+`
