@@ -3,6 +3,7 @@ import StoreContext from "@/store"
 import { useContext } from "react"
 import VisualizarDominio from "./target/VisualizarDominio";
 import VisualizarIp from "./target/VisualizarIp";
+import VisualizarPorta from "./target/VisualizarPorta";
 import VisualizarRede from "./target/VisualizarRede";
 import VisualizarUsuario from "./target/VisualizarUsuario";
 import VisualizarDatabase from "./target/VisualizarDatabase";
@@ -25,6 +26,8 @@ const Visualizador = () => {
             return <VisualizarDominio />;
         case "ip":
             return <VisualizarIp />;
+        case "port":
+            return <VisualizarPorta />;
         case "network":
             return <VisualizarRede />;
         case "user":
