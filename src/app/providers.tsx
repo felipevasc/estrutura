@@ -3,17 +3,16 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import StoreContext, { StoreProvider } from "@/store";
-import { ThemeProvider } from "styled-components";
-import { theme, GlobalStyles } from "@/theme";
+import { StoreProvider } from "@/store";
+import AplicacaoTema from "@/theme/AplicacaoTema";
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,
-      },
-    },
+        staleTime: 60 * 1000
+      }
+    }
   });
 }
 
@@ -34,10 +33,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <ThemeProvider theme={theme}>
-          <GlobalStyles />
+        <AplicacaoTema>
           {children}
-        </ThemeProvider>
+        </AplicacaoTema>
       </StoreProvider>
     </QueryClientProvider>
   );
