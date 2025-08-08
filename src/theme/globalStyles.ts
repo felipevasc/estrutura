@@ -1,18 +1,22 @@
-// Arquivo: src/theme/globalStyles.ts
 import { createGlobalStyle } from 'styled-components';
 import fonts from './fonts';
-import theme from './theme';
 
 const GlobalStyles = createGlobalStyle`
   ${fonts}
-
+  :root {
+    --background: ${({ theme }) => theme.colors.background};
+    --foreground: ${({ theme }) => theme.colors.foreground};
+    --border-color: ${({ theme }) => theme.colors.borderColor};
+    --panel-background: ${({ theme }) => theme.colors.panelBackground};
+    --accent-color: ${({ theme }) => theme.colors.accentColor};
+    --hover-background: ${({ theme }) => theme.colors.hoverBackground};
+  }
   body {
-    background: ${theme.colors.background};
-    color: ${theme.colors.foreground};
+    background: var(--background);
+    color: var(--foreground);
     font-family: 'Rawline', sans-serif;
     position: relative;
   }
-
   body, html {
     width: 100%;
     height: 100%;

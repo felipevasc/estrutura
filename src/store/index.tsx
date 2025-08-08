@@ -16,6 +16,7 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
     const [projeto, setProjeto] = useState<ProjetoResponse>();
     const [explorer, setExplorer] = useState<ExplorerType>("domain");
     const [selecaoTarget, setSelecaoTarget] = useState<SelecaoTargetType>();
+    const [tema, setTema] = useState<string>("dark");
 
     const storeValue: StoreType = {
         projeto: {
@@ -24,11 +25,15 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
         },
         explorer: {
             get: () => explorer,
-            set: (e) => setExplorer(e ?? "domain")
+            set: e => setExplorer(e ?? "domain")
         },
         selecaoTarget: {
             get: () => selecaoTarget,
             set: setSelecaoTarget
+        },
+        tema: {
+            get: () => tema,
+            set: setTema
         }
     };
 
