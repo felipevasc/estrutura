@@ -1,21 +1,23 @@
-'use client';
+'use client'
 
-import { ProjetoResponse } from "@/types/ProjetoResponse";
-import { createContext, useState, ReactNode } from "react";
-import { StoreType } from "./types/StoreType";
-import { ExplorerType } from "@/types/ExplorerType";
-import { SelecaoTargetType } from "./types/SelecaoTargetType";
+import { ProjetoResponse } from "@/types/ProjetoResponse"
+import { createContext, useState, ReactNode } from "react"
+import { StoreType } from "./types/StoreType"
+import { ExplorerType } from "@/types/ExplorerType"
+import { SelecaoTargetType } from "./types/SelecaoTargetType"
+import { TemaType } from "@/theme"
 
 interface StoreProviderProps {
-    children: ReactNode;
+    children: ReactNode
 }
 
-const StoreContext = createContext<StoreType>({});
+const StoreContext = createContext<StoreType>({})
 
 export const StoreProvider = ({ children }: StoreProviderProps) => {
-    const [projeto, setProjeto] = useState<ProjetoResponse>();
-    const [explorer, setExplorer] = useState<ExplorerType>("domain");
-    const [selecaoTarget, setSelecaoTarget] = useState<SelecaoTargetType>();
+    const [projeto, setProjeto] = useState<ProjetoResponse>()
+    const [explorer, setExplorer] = useState<ExplorerType>("domain")
+    const [selecaoTarget, setSelecaoTarget] = useState<SelecaoTargetType>()
+    const [tema, setTema] = useState<TemaType>("classico")
 
     const storeValue: StoreType = {
         projeto: {
@@ -24,19 +26,23 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
         },
         explorer: {
             get: () => explorer,
-            set: (e) => setExplorer(e ?? "domain")
+            set: e => setExplorer(e ?? "domain")
         },
         selecaoTarget: {
             get: () => selecaoTarget,
             set: setSelecaoTarget
+        },
+        tema: {
+            get: () => tema,
+            set: v => setTema(v ?? "classico")
         }
-    };
+    }
 
     return (
         <StoreContext.Provider value={storeValue}>
             {children}
         </StoreContext.Provider>
-    );
-};
+    )
+}
 
-export default StoreContext;
+export default StoreContext
