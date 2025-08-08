@@ -5,12 +5,20 @@ import { iniciarEnumeracaoAmass } from '@/service/tools/domain/amass';
 // Let's assume the exports exist based on my previous analysis
 import { executarSubfinder } from '@/service/tools/domain/subfinder';
 import { executarNslookup } from '@/service/tools/domain/nslookup';
+import { executarNmap } from '@/service/tools/ip/nmap';
+import { executarPing } from '@/service/tools/ip/ping';
+import { executarTraceroute } from '@/service/tools/ip/traceroute';
+import { executarWhois } from '@/service/tools/ip/whois';
 
 // A map to associate command names with their service functions.
 const commandServiceMap: { [key: string]: (args: any) => Promise<any> } = {
     'amass': (args) => iniciarEnumeracaoAmass(args.idDominio),
     'subfinder': (args) => executarSubfinder(args.idDominio),
     'nslookup': (args) => executarNslookup(args.idDominio),
+    'nmap': (args) => executarNmap(args.idIp),
+    'ping': (args) => executarPing(args.idIp),
+    'traceroute': (args) => executarTraceroute(args.idIp),
+    'whois': (args) => executarWhois(args.idIp),
     // findomain is not implemented
 };
 
