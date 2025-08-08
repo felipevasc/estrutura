@@ -3,4 +3,5 @@ export type TargetType =
     | "network"
     | "user" 
     | "database"
-    | "ip";
+    | "ip"
+    | "porta";

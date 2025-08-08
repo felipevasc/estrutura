@@ -20,7 +20,7 @@ const useElementoIp = () => {
     const filhos: TreeDataNode[] = ipDetails?.portas?.map((porta: any) => ({
       key: `porta-${porta.id}`,
       title: (
-        <div onClick={() => selecaoTarget?.set({ tipo: "porta", id: porta.id, parent: ip })}>
+        <div onClick={() => selecaoTarget?.set({ tipo: "porta", id: porta.id })}>
           <FontAwesomeIcon icon={faDoorOpen} />{' '}
           {porta.numero}/{porta.protocolo} - {porta.servico}
         </div>

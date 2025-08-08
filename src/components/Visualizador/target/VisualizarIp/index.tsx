@@ -1,7 +1,7 @@
 "use client";
 import useApi from "@/api";
 import StoreContext from "@/store";
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import styled from 'styled-components';
 import { Tabs, Table, Tag, List as AntList, Card as AntCard, Image } from 'antd';
 import { IpResponse } from "@/types/IpResponse";
@@ -48,12 +48,14 @@ const VisualizarIp = () => {
     const { selecaoTarget } = useContext(StoreContext);
     const api = useApi();
     const idIp = selecaoTarget?.get()?.id;
-    const { data: ip, isLoading, error, refetch } = api.ips.getIp(idIp, {
-        refetchInterval: 5000, // Refetch data every 5 seconds
-    });
+    const [ip, setIp] = useState<IpResponse>();
 
-    if (isLoading) return <DashboardContainer><h2>Carregando...</h2></DashboardContainer>;
-    if (error) return <DashboardContainer><h2>Erro ao carregar dados do IP.</h2></DashboardContainer>;
+    useEffect(() => {
+        if (idIp) {
+            api.ips.getIp(idIp).then(ip => setIp(ip));
+        }
+    }, [idIp]);
+
     if (!ip) return <DashboardContainer><h2>Nenhum IP selecionado.</h2></DashboardContainer>;
 
     const items = [

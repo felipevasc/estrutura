@@ -5,15 +5,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 const useIps = () => {
     const queryClient = useQueryClient();
 
-    const getIp = (idIp?: number) => useQuery({
-        queryKey: ["get-ip", idIp],
-        queryFn: async (): Promise<IpResponse> => {
-            const res = await fetch("/api/v1/ips/" + idIp);
-            const data = await res.json();
-            return data;
-        },
-        enabled: !!idIp
-    });
+    const getIp = async (idIp?: number): Promise<IpResponse> => {
+        const res = await fetch("/api/v1/ips/" + idIp);
+        const data = await res.json();
+        return data;
+    }
 
     const getIps = (idProjeto?: number) => useQuery({
         queryKey: ["get-ips", idProjeto],
