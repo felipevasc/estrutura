@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useContext } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import StoreContext, { StoreProvider } from "@/store";
 import { ThemeProvider } from "styled-components";
-import { theme, GlobalStyles } from "@/theme";
+import { temas, GlobalStyles } from "@/theme";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -28,16 +28,25 @@ function getQueryClient() {
   }
 }
 
+function TemaProvider({ children }: { children: React.ReactNode }) {
+  const { tema } = useContext(StoreContext);
+  const temaAtual = temas[tema?.get() ?? "sombrio"];
+
+  return (
+    <ThemeProvider theme={temaAtual}>
+      <GlobalStyles />
+      {children}
+    </ThemeProvider>
+  );
+}
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <ThemeProvider theme={theme}>
-          <GlobalStyles />
-          {children}
-        </ThemeProvider>
+        <TemaProvider>{children}</TemaProvider>
       </StoreProvider>
     </QueryClientProvider>
   );
