@@ -1,0 +1,20 @@
+Varredura de portas em alta velocidade
+Ferramentas como o masscan (p/ mega-scale) e o nmap com scripts NSE (p/ detalhes adicionais).
+
+Enumeração de serviços e banners
+Técnicas de banner grabbing, http-title do nmap, enum4linux (SMB), Nikto (web), etc.
+
+Descoberta de diretórios e arquivos sensíveis
+dirsearch, gobuster, feroxbuster para mapeamento de caminhos e endpoints ocultos.
+
+Scan de vulnerabilidades
+nuclei (templates rápidos), Nessus/OpenVAS (mais completos), Burp Scanner (quando for web).
+
+Mapeamento de subdomínios e ativos relacionados
+subfinder, amass, assetfinder + aquatone para captura de screenshots.
+
+OSINT focado em IP
+Shodan, Censys, BinaryEdge para descobrir serviços expostos, CVEs já associados etc.
+
+Automação e orquestração
+Escrita de scripts em Python ou uso de frameworks como Pacu (p/ AWS), AutoRecon, Sn1per.

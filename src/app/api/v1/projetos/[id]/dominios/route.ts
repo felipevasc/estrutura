@@ -3,6 +3,11 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { DominioResponse } from "@/types/DominioResponse";
 import { NextRequest, NextResponse } from "next/server";
 
+const includeIp = {
+    include: {
+        portas: true
+    }
+};
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<DominioResponse[]> {
     const p = await params
     const ret = await prisma.dominio.findMany({
@@ -11,19 +16,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             pai: null,
         },
         include: {
-            ips: true,
+            ips: includeIp,
             subDominios: {
                 include: {
-                    ips: true,
+                    ips: includeIp,
                     subDominios: {
                         include: {
-                            ips: true,
+                            ips: includeIp,
                             subDominios: {
                                 include: {
-                                    ips: true,
+                                    ips: includeIp,
                                     subDominios: {
                                         include: {
-                                            ips: true,
+                                            ips: includeIp,
                                             subDominios: true,
                                         }
                                     }

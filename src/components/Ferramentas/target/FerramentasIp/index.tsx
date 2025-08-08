@@ -1,10 +1,10 @@
 import { Card, Modal, notification } from "antd";
-import { StyledFerramentasDominio } from "../styles";
 import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
+import { StyledFerramentasDominio } from "../styles";
 
-const FerramentasDominio = () => {
+const FerramentasIp = () => {
     const api = useApi();
     const { selecaoTarget, projeto } = useContext(StoreContext);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -16,7 +16,7 @@ const FerramentasDominio = () => {
     };
 
     const handleOk = async () => {
-        if (commandToRun && selecaoTarget?.get()?.tipo === "domain") {
+        if (commandToRun && selecaoTarget?.get()?.tipo === "ip") {
             try {
                 const currentProject = projeto?.get();
                 if (!currentProject) {
@@ -52,32 +52,15 @@ const FerramentasDominio = () => {
         setCommandToRun(null);
     };
 
-    const getDomainId = () => selecaoTarget?.get()?.id ?? 0;
+    const getId = () => selecaoTarget?.get()?.id ?? 0;
 
     return (
         <StyledFerramentasDominio>
             <Card
-                title={"Amass"}
-                onClick={() => showConfirmationModal('amass', { idDominio: getDomainId().toString() })}
+                title={"Nmap"}
+                onClick={() => showConfirmationModal('nmap', { idIp: getId().toString() })}
             >
-                <Card.Meta description={"Enumeração de subdomínios e descoberta de assets."} />
-            </Card>
-            <Card
-                title={"Subfinder"}
-                onClick={() => showConfirmationModal('subfinder', { idDominio: getDomainId().toString() })}
-            >
-                <Card.Meta description={"Descoberta de subdomínios passivos."} />
-            </Card>
-            <Card
-                title={"Findomain"}
-            >
-                <Card.Meta description={"Monitoramento e descoberta de subdomínios."} />
-            </Card>
-            <Card
-                title={"NsLookup"}
-                onClick={() => showConfirmationModal('nslookup', { idDominio: getDomainId().toString() })}
-            >
-                <Card.Meta description={"Descobrir IPs de um domínio."} />
+                <Card.Meta description={"Enumeração de portas."} />
             </Card>
 
             <Modal
@@ -94,4 +77,4 @@ const FerramentasDominio = () => {
     );
 };
 
-export default FerramentasDominio;
+export default FerramentasIp;

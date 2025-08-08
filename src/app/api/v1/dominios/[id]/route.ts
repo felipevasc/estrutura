@@ -1,6 +1,12 @@
 import prisma from "@/database";
 import { NextRequest, NextResponse } from "next/server";
 
+const includeIp = {
+    include: {
+        portas: true
+    }
+};
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     if (!id)
@@ -9,19 +15,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const ret = await prisma.dominio.findFirst({
         where: { id: Number(id) },
         include: {
-            ips: true,
+            ips: includeIp,
             subDominios: {
                 include: {
-                    ips: true,
+                    ips: includeIp,
                     subDominios: {
                         include: {
-                            ips: true,
+                            ips: includeIp,
                             subDominios: {
                                 include: {
-                                    ips: true,
+                                    ips: includeIp,
                                     subDominios: {
                                         include: {
-                                            ips: true,
+                                            ips: includeIp,
                                             subDominios: true,
                                         }
                                     }
@@ -33,6 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             }
         }
     });
+    console.log("AAAA", ret, "-------")
     return NextResponse.json(ret);
 }
 
@@ -45,7 +52,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (!body.projetoId) {
         return NextResponse.json({ error: "Nome do projeto é obrigatório" }, { status: 400 });
     }
-
     const ret = await prisma.dominio.update({
         where: {
             id: Number(id)
@@ -56,7 +62,5 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             projetoId: body.projetoId,
         },
     });
-
     return NextResponse.json(ret);
-
 }

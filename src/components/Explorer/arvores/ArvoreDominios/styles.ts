@@ -32,6 +32,7 @@ export const StyledArvoreDominio = styled.div`
         padding: 2px 4px;
         border-radius: 4px;
         transition: background-color 0.2s;
+        white-space: nowrap;
     }
 
     .ant-tree .ant-tree-node-content-wrapper:hover {
@@ -41,7 +42,7 @@ export const StyledArvoreDominio = styled.div`
     .ant-tree.ant-tree-directory .ant-tree-treenode-selected .ant-tree-node-content-wrapper::before,
     .ant-tree.ant-tree-directory .ant-tree-treenode-selected .ant-tree-node-content-wrapper {
         background-color: var(--accent-color);
-        color: #0D1117; /* Use the dark background color for text for high contrast */
+        color: #0D1117;
     }
 
     /* Style for different node types */

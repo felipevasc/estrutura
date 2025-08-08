@@ -27,10 +27,24 @@ const useFerramentas = () => {
         const data = await res.json();
         return data;
     }
+    const executeNmap = async (idIp: number) => {
+        const res = await fetch(`/api/v1/ferramentas/ip/nmap`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                ip: idIp
+            }),
+        });
+        const data = await res.json();
+        return data;
+    }
 
     return {
         executeAmass,
-        executeSubfinder
+        executeSubfinder,
+        executeNmap
     }
 }
 

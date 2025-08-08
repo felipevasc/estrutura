@@ -10,7 +10,6 @@ export async function GET(): ApiResponse<DominioResponse[]> {
 
 export async function POST(request: Request): ApiResponse<DominioResponse> {
     const body = await request.json();
-    console.log(body);
     if (!body.projetoId) {
         return NextResponse.json({ error: "ID do projeto é obrigatório" }, { status: 400 });
     }

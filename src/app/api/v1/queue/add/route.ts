@@ -18,8 +18,6 @@ export async function POST(request: Request) {
             },
         });
 
-        // Asynchronously start the queue processor.
-        // We don't await this, so the API returns immediately.
         CommandProcessor.processQueue();
 
         return NextResponse.json({ message: 'Command added to the queue', command: newCommand }, { status: 202 });
