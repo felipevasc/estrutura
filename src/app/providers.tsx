@@ -1,11 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useContext } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import StoreContext, { StoreProvider } from "@/store";
 import { ThemeProvider } from "styled-components";
-import { theme, GlobalStyles } from "@/theme";
+import { GlobalStyles, temas } from "@/theme";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -34,11 +33,21 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
-        <ThemeProvider theme={theme}>
-          <GlobalStyles />
+        <Tema>
           {children}
-        </ThemeProvider>
+        </Tema>
       </StoreProvider>
     </QueryClientProvider>
   );
+}
+
+function Tema({ children }: { children: React.ReactNode }) {
+  const { tema } = useContext(StoreContext)
+  const selecionado = temas[tema?.get() || 'dark']
+  return (
+    <ThemeProvider theme={selecionado}>
+      <GlobalStyles />
+      {children}
+    </ThemeProvider>
+  )
 }
