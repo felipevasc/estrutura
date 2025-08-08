@@ -27,6 +27,22 @@ O sistema é construído com Next.js e TypeScript.
     - `src/components`: Componentes React reutilizáveis e específicos de funcionalidades (Explorer, Ferramentas, Visualizador, etc.).
     - `src/layout`: Componentes que definem a estrutura visual da página (Topo, Rodapé, Menu).
     - `src/store`: Gerenciamento de estado global da aplicação.
+    - `src/theme`: Contém todas as definições de design, como cores, fontes e estilos globais.
+
+#### Convenção de Estilo
+
+Toda a estilização da aplicação é centralizada no diretório `src/theme`. Para usar as definições do tema em um styled component, utilize a prop `theme` que é injetada pelo `ThemeProvider`.
+
+**Exemplo:**
+
+```javascript
+import styled from 'styled-components';
+
+export const MeuComponenteEstilizado = styled.div`
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.foreground};
+`;
+```
 
 ### Backend
 

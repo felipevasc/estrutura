@@ -6,18 +6,18 @@ export const StyledMenuEsquerdo = styled.div`
     height: 100%;
     padding: 0;
     margin: 0;
-    background-color: var(--panel-background);
-    border: 1px solid var(--border-color);
+    background-color: ${({ theme }) => theme.colors.panelBackground};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
     
     & .br-menu, & .menu-container {
         height: 100%;
-        background-color: var(--panel-background);
+        background-color: ${({ theme }) => theme.colors.panelBackground};
     }
 
     & .br-item {
-        color: var(--foreground);
+        color: ${({ theme }) => theme.colors.foreground};
         &:hover {
-            background-color: var(--hover-background);
+            background-color: ${({ theme }) => theme.colors.hoverBackground};
         }
     }
 `

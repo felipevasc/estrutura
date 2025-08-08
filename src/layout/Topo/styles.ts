@@ -4,8 +4,8 @@ import styled from "styled-components";
 export const StyledTopo = styled.header`
     height: 50px;
     width: 100%;
-    background-color: var(--panel-background);
-    border-bottom: 1px solid var(--border-color);
+    background-color: ${({ theme }) => theme.colors.panelBackground};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
     display: flex;
     align-items: center;
     padding: 0 1rem;

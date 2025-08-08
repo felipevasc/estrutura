@@ -29,8 +29,8 @@ export const StyledConteudoPrincipal = styled.main`
     flex-grow: 1;
     padding: 1rem;
     overflow-y: auto;
-    background-color: var(--panel-background);
-    border: 1px solid var(--border-color);
+    background-color: ${({ theme }) => theme.colors.panelBackground};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
     border-radius: 6px;
 `
 
@@ -39,8 +39,8 @@ export const StyledPainelDireito = styled.aside`
     flex-shrink: 0;
     padding: 1rem;
     overflow-y: auto;
-    background-color: var(--panel-background);
-    border: 1px solid var(--border-color);
+    background-color: ${({ theme }) => theme.colors.panelBackground};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
     border-radius: 6px;
 `
 
@@ -49,8 +49,8 @@ export const StyledPainelEsquerdo = styled.aside`
     flex-shrink: 0;
     padding: 1rem;
     overflow-y: auto;
-    background-color: var(--panel-background);
-    border: 1px solid var(--border-color);
+    background-color: ${({ theme }) => theme.colors.panelBackground};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
     border-radius: 6px;
 `
 

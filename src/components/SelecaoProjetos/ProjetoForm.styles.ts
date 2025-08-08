@@ -11,17 +11,17 @@ export const FormContainer = styled.form`
     }
 
     label {
-        color: #333;
+        color: ${({ theme }) => theme.colors.foreground};
         margin-bottom: 0.5rem;
         font-weight: bold;
     }
 
     input {
         padding: 0.5rem;
-        border: 1px solid #ccc;
+        border: 1px solid ${({ theme }) => theme.colors.borderColor};
         border-radius: 4px;
-        color: #000;
-        background-color: #fff;
+        color: ${({ theme }) => theme.colors.foreground};
+        background-color: ${({ theme }) => theme.colors.background};
     }
 
     .actions {

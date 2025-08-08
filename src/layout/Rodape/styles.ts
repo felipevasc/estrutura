@@ -4,8 +4,8 @@ import styled from "styled-components";
 export const StyledRodape = styled.footer`
     height: 50px;
     width: 100%;
-    background-color: var(--panel-background);
-    border-top: 1px solid var(--border-color);
+    background-color: ${({ theme }) => theme.colors.panelBackground};
+    border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
     display: flex;
     align-items: center;
     justify-content: center;
