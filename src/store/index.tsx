@@ -5,6 +5,7 @@ import { createContext, useState, ReactNode } from "react";
 import { StoreType } from "./types/StoreType";
 import { ExplorerType } from "@/types/ExplorerType";
 import { SelecaoTargetType } from "./types/SelecaoTargetType";
+import { TipoLayout } from "@/types/TipoLayout";
 
 interface StoreProviderProps {
     children: ReactNode;
@@ -16,6 +17,7 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
     const [projeto, setProjeto] = useState<ProjetoResponse>();
     const [explorer, setExplorer] = useState<ExplorerType>("domain");
     const [selecaoTarget, setSelecaoTarget] = useState<SelecaoTargetType>();
+    const [layout, setLayout] = useState<TipoLayout>('classico');
 
     const storeValue: StoreType = {
         projeto: {
@@ -29,6 +31,10 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
         selecaoTarget: {
             get: () => selecaoTarget,
             set: setSelecaoTarget
+        },
+        layout: {
+            get: () => layout,
+            set: (v) => setLayout(v ?? 'classico')
         }
     };
 
