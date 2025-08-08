@@ -5,6 +5,7 @@ import { useContext } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { RedeResponse } from "@/types/RedeResponse";
+import { PortaResponse } from "@/types/PortaResponse";
 
 // Reusing styled components from VisualizarDominio for consistency
 // In a real app, these would be in a shared styles file.
@@ -98,6 +99,19 @@ const VisualizarIp = () => {
                     </List>
                 ) : (
                     <p>Nenhuma rede associada encontrada.</p>
+                )}
+            </Card>
+
+            <Card>
+                <CardTitle>Portas</CardTitle>
+                {ip.portas && ip.portas.length > 0 ? (
+                    <List>
+                        {ip.portas.map((porta: PortaResponse) => (
+                            <ListItem key={porta.id}>{porta.numero}/{porta.protocolo} - {porta.servico} ({porta.estado})</ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhuma porta registrada.</p>
                 )}
             </Card>
         </DashboardContainer>
