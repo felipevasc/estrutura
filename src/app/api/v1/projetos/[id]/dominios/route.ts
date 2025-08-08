@@ -11,19 +11,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             pai: null,
         },
         include: {
-            ips: true,
+            ips: { include: { portas: true } },
             subDominios: {
                 include: {
-                    ips: true,
+                    ips: { include: { portas: true } },
                     subDominios: {
                         include: {
-                            ips: true,
+                            ips: { include: { portas: true } },
                             subDominios: {
                                 include: {
-                                    ips: true,
+                                    ips: { include: { portas: true } },
                                     subDominios: {
                                         include: {
-                                            ips: true,
+                                            ips: { include: { portas: true } },
                                             subDominios: true,
                                         }
                                     }

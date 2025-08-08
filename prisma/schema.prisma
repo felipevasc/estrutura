@@ -66,8 +66,35 @@ model Ip {
 
   dominios Dominio[]
   redes    Rede[]
+  portas   Porta[]
+  infos    IpInfo[]
 
   @@map("ips")
+}
+
+model Porta {
+  id       Int    @id @default(autoincrement())
+  numero   Int
+  protocolo String?
+  servico   String?
+  estado    String?
+
+  ipId Int
+  ip   Ip @relation(fields: [ipId], references: [id])
+
+  @@map("portas")
+}
+
+model IpInfo {
+  id    Int    @id @default(autoincrement())
+  tipo  String
+  chave String?
+  valor String
+
+  ipId Int
+  ip   Ip @relation(fields: [ipId], references: [id])
+
+  @@map("ip_infos")
 }
 
 model Command {

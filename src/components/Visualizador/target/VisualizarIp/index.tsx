@@ -5,6 +5,8 @@ import { useContext } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { RedeResponse } from "@/types/RedeResponse";
+import { PortResponse } from "@/types/PortResponse";
+import { IpInfoResponse } from "@/types/IpInfoResponse";
 
 // Reusing styled components from VisualizarDominio for consistency
 // In a real app, these would be in a shared styles file.
@@ -98,6 +100,58 @@ const VisualizarIp = () => {
                     </List>
                 ) : (
                     <p>Nenhuma rede associada encontrada.</p>
+                )}
+            </Card>
+
+            <Card>
+                <CardTitle>Portas</CardTitle>
+                {ip.portas && ip.portas.length > 0 ? (
+                    <List>
+                        {ip.portas.map((porta: PortResponse) => (
+                            <ListItem key={porta.id}>{porta.numero}/{porta.protocolo} - {porta.servico} ({porta.estado})</ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhuma porta encontrada.</p>
+                )}
+            </Card>
+
+            <Card>
+                <CardTitle>Ping</CardTitle>
+                {ip.infos && ip.infos.filter((i: IpInfoResponse) => i.tipo === 'ping').length > 0 ? (
+                    <List>
+                        {ip.infos.filter((i: IpInfoResponse) => i.tipo === 'ping').map((info: IpInfoResponse, idx: number) => (
+                            <ListItem key={idx}>{info.chave}: {info.valor}</ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhuma informação de ping.</p>
+                )}
+            </Card>
+
+            <Card>
+                <CardTitle>Traceroute</CardTitle>
+                {ip.infos && ip.infos.find((i: IpInfoResponse) => i.tipo === 'traceroute') ? (
+                    <List>
+                        {JSON.parse(ip.infos.find((i: IpInfoResponse) => i.tipo === 'traceroute')?.valor ?? '[]').map((hop: string, idx: number) => (
+                            <ListItem key={idx}>{hop}</ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhum dado de traceroute.</p>
+                )}
+            </Card>
+
+            <Card>
+                <CardTitle>Whois</CardTitle>
+                {ip.infos && ip.infos.filter((i: IpInfoResponse) => i.tipo === 'whois').length > 0 ? (
+                    <List>
+                        {ip.infos.filter((i: IpInfoResponse) => i.tipo === 'whois').map((info: IpInfoResponse, idx: number) => (
+                            <ListItem key={idx}>{info.chave}: {info.valor}</ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhuma informação de whois.</p>
                 )}
             </Card>
         </DashboardContainer>

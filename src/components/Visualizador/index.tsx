@@ -6,6 +6,7 @@ import VisualizarIp from "./target/VisualizarIp";
 import VisualizarRede from "./target/VisualizarRede";
 import VisualizarUsuario from "./target/VisualizarUsuario";
 import VisualizarDatabase from "./target/VisualizarDatabase";
+import VisualizarPorta from "./target/VisualizarPorta";
 
 const Visualizador = () => {
     const { selecaoTarget } = useContext(StoreContext);
@@ -31,6 +32,8 @@ const Visualizador = () => {
             return <VisualizarUsuario />;
         case "database":
             return <VisualizarDatabase />;
+        case "port":
+            return <VisualizarPorta />;
         default:
             return (
                 <div style={{ textAlign: 'center', marginTop: '50px' }}>
