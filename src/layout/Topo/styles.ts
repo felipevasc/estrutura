@@ -1,5 +1,5 @@
 'use client'
-import styled from "styled-components";
+import styled from "styled-components"
 
 export const StyledTopo = styled.header`
     height: 50px;
@@ -11,4 +11,9 @@ export const StyledTopo = styled.header`
     padding: 0 1rem;
     justify-content: space-between;
     flex-shrink: 0;
+`
+
+export const ContainerSelecao = styled.div`
+    display: flex;
+    gap: 0.5rem;
 `

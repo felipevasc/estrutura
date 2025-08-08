@@ -1,9 +1,10 @@
 "use client"
-import { StyledTopo } from "./styles";
-import SelecaoProjetos from "@/components/SelecaoProjetos";
-import { useContext } from "react";
-import StoreContext from "@/store";
-import styled from "styled-components";
+import { StyledTopo, ContainerSelecao } from "./styles"
+import SelecaoProjetos from "@/components/SelecaoProjetos"
+import SelecaoLayout from "@/components/SelecaoLayout"
+import { useContext } from "react"
+import StoreContext from "@/store"
+import styled from "styled-components"
 
 const StyledProjectTitle = styled.div`
     font-size: 1rem;
@@ -17,15 +18,18 @@ const StyledProjectTitle = styled.div`
 `
 
 const Topo = () => {
-    const { projeto } = useContext(StoreContext);
+    const { projeto } = useContext(StoreContext)
 
     return <StyledTopo>
         <StyledProjectTitle>
             {!!projeto?.get()?.id && <span><b>Projeto:</b> {projeto?.get()?.nome}</span>}
             {!projeto?.get()?.id && <span>Selecione um projeto</span>}
         </StyledProjectTitle>
-        <div><SelecaoProjetos /></div>
+        <ContainerSelecao>
+            <SelecaoProjetos />
+            <SelecaoLayout />
+        </ContainerSelecao>
     </StyledTopo>
 }
 
-export default Topo;
+export default Topo

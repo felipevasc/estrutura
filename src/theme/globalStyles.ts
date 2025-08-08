@@ -1,15 +1,13 @@
-// Arquivo: src/theme/globalStyles.ts
-import { createGlobalStyle } from 'styled-components';
-import fonts from './fonts';
-import theme from './theme';
+import { createGlobalStyle } from 'styled-components'
+import fonts from './fonts'
 
 const GlobalStyles = createGlobalStyle`
   ${fonts}
 
   body {
-    background: ${theme.colors.background};
-    color: ${theme.colors.foreground};
-    font-family: 'Rawline', sans-serif;
+    background: ${({ theme }) => theme.colors.background};
+    color: ${({ theme }) => theme.colors.foreground};
+    font-family: ${({ theme }) => theme.fontFamily};
     position: relative;
   }
 
@@ -17,6 +15,6 @@ const GlobalStyles = createGlobalStyle`
     width: 100%;
     height: 100%;
   }
-`;
+`
 
-export default GlobalStyles;
+export default GlobalStyles
