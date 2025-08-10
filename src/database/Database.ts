@@ -1,9 +1,7 @@
-import * as dominio from "./functions/dominio"
-import * as ip from "./functions/ip"
+import * as DatabaseFunctions from "./functions"
 
 const Database = {
-    ...dominio,
-    ...ip
+    ...DatabaseFunctions
 }
 
 export default Database;

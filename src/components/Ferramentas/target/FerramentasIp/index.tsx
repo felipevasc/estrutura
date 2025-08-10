@@ -63,6 +63,13 @@ const FerramentasIp = () => {
                 <Card.Meta description={"Enumeração de portas."} />
             </Card>
 
+            <Card
+                title={"Enum4linux"}
+                onClick={() => showConfirmationModal('enum4linux', { idIp: getId().toString() })}
+            >
+                <Card.Meta description={"Enumeração de usuários."} />
+            </Card>
+
             <Modal
                 title="Confirmar Execução"
                 open={isModalVisible}

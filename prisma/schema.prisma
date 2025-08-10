@@ -16,6 +16,7 @@ model Projeto {
   dominios Dominio[]
   redes    Rede[]
   ips      Ip[]
+  usuarios Usuario[]
   commands Command[]
 
   @@map("projetos")
@@ -67,8 +68,21 @@ model Ip {
   dominios Dominio[]
   redes    Rede[]
   portas   Porta[]
+  usuarios Usuario[]
 
   @@map("ips")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  projetoId Int
+  projeto   Projeto  @relation(fields: [projetoId], references: [id])
+  ips       Ip[]
+  createdAt DateTime @default(now()) @map("criacao")
+  updatedAt DateTime @updatedAt @map("atualizacao")
+
+  @@map("usuarios")
 }
 
 model Command {

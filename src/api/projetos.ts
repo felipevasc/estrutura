@@ -53,8 +53,17 @@ const useProjetos = () => {
         },
     });
 
+    const getUsuarios = (id: number) => useQuery({
+        queryKey: ["projetos", id, "usuarios"],
+        queryFn: async () => {
+            const res = await fetch(`/api/v1/projetos/${id}/usuarios`);
+            const data = await res.json();
+            return data;
+        },
+    });
 
-    return { getProjetos, postProjeto, putProjeto, deleteProjeto };
+
+    return { getProjetos, postProjeto, putProjeto, deleteProjeto, getUsuarios };
 }
 
 export default useProjetos
