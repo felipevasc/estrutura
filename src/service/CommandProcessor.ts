@@ -4,12 +4,14 @@ import { iniciarEnumeracaoAmass } from '@/service/tools/domain/amass';
 import { executarSubfinder } from '@/service/tools/domain/subfinder';
 import { executarNslookup } from '@/service/tools/domain/nslookup';
 import { executarNmap } from './tools/ip/nmap';
+import { executarEnum4linux } from './tools/ip/enum4linux';
 
 const commandServiceMap: { [key: string]: (args: any) => Promise<any> } = {
     'amass': (args) => iniciarEnumeracaoAmass(args.idDominio),
     'subfinder': (args) => executarSubfinder(args.idDominio),
     'nslookup': (args) => executarNslookup(args.idDominio),
     'nmap': (args) => executarNmap(args.idIp),
+    'enum4linux': (args) => executarEnum4linux(args.idIp),
 };
 
 class CommandProcessor {

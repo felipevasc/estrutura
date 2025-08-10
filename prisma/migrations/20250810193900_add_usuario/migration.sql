@@ -1,0 +1,7 @@
+-- CreateTable
+CREATE TABLE "usuarios" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "nome" TEXT NOT NULL,
+    "ipId" INTEGER NOT NULL,
+    CONSTRAINT "usuarios_ipId_fkey" FOREIGN KEY ("ipId") REFERENCES "ips" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);

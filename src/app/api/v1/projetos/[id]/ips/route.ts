@@ -13,6 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             dominios: true,
             redes: true,
             portas: true,
+            usuarios: true,
         }
     });
     return NextResponse.json(ret);

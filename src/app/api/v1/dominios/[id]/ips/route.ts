@@ -13,6 +13,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
                     id: Number(id)
                 }
             }
+        },
+        include: {
+            portas: true,
+            usuarios: true,
+            dominios: true,
+            redes: true,
         }
     });
     return NextResponse.json(ret);

@@ -3,16 +3,18 @@ import StoreContext from "@/store";
 import { DominioResponse } from "@/types/DominioResponse"
 import { IpResponse } from "@/types/IpResponse";
 import { GlobalOutlined, } from "@ant-design/icons";
-import { faEthernet, faHouseLaptop, faLaptop, faLaptopCode, faNetworkWired, faServer } from "@fortawesome/free-solid-svg-icons";
+import { faEthernet, faHouseLaptop, faLaptop, faLaptopCode, faNetworkWired, faServer, faUserFriends } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { TreeDataNode } from "antd";
 import React, { useContext } from "react";
 import useElementoPorta from "../ElementoPorta";
+import useElementoUsuario from "../ElementoUsuario";
 
 const useElementoIp = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const api = useApi();
   const elementoPorta = useElementoPorta();
+  const elementoUsuario = useElementoUsuario();
 
   const selecionado = selecaoTarget?.get()
 
@@ -31,6 +33,21 @@ const useElementoIp = () => {
         key: `${ip.endereco}-${ip.id}-portas}`,
         title: <div><FontAwesomeIcon icon={faEthernet} />{' '}Portas</div>,
         children: filhosPorta,
+        className: "folder"
+      })
+    }
+
+    const usuarios = ip.usuarios ?? [];
+    if (usuarios.length) {
+      const filhosUsuarios: TreeDataNode[] = [];
+      for (let i = 0; i < usuarios.length; i++) {
+        const usuario = usuarios[i];
+        filhosUsuarios.push(await elementoUsuario.getUsuario(usuario));
+      }
+      filhos.push({
+        key: `${ip.endereco}-${ip.id}-usuarios}`,
+        title: <div><FontAwesomeIcon icon={faUserFriends} />{' '}Usuários</div>,
+        children: filhosUsuarios,
         className: "folder"
       })
     }

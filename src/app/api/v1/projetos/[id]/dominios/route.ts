@@ -8,6 +8,7 @@ const includeIp = {
         portas: true,
         dominios: true,
         redes: true,
+        usuarios: true,
     }
 };
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<DominioResponse[]> {

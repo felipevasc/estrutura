@@ -9,6 +9,7 @@ export async function GET(): ApiResponse<IpResponse[]> {
             dominios: true,
             redes: true,
             portas: true,
+            usuarios: true,
         },
     });
     return NextResponse.json(ret);
@@ -39,6 +40,7 @@ export async function POST(request: Request): ApiResponse<IpResponse> {
             dominios: true,
             redes: true,
             portas: true,
+            usuarios: true,
         }
     });
 
