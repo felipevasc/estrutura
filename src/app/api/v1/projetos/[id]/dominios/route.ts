@@ -8,6 +8,8 @@ const includeIp = {
         portas: true,
         dominios: true,
         redes: true,
+        sambaUsers: true,
+        sambaShares: true,
     }
 };
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<DominioResponse[]> {

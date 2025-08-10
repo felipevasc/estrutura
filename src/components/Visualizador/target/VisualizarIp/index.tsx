@@ -6,6 +6,7 @@ import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { RedeResponse } from "@/types/RedeResponse";
 import VisualizarPortas from "./VisualizarPortas";
+import SambaInfo from "../ip/SambaInfo";
 
 // NOTE: These styled components are duplicated from VisualizarDominio.
 // In a real-world refactor, they should be moved to a common/shared file
@@ -118,6 +119,11 @@ const VisualizarIp = () => {
                 ) : (
                     <p>Nenhuma rede associada encontrada.</p>
                 )}
+            </Card>
+
+            <Card>
+                <CardTitle>Informações de Samba</CardTitle>
+                <SambaInfo />
             </Card>
         </DashboardContainer>
     );

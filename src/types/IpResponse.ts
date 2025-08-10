@@ -1,3 +1,4 @@
+import { SambaShare, SambaUser } from "@prisma/client";
 import { DominioResponse } from "./DominioResponse";
 import { PortaResponse } from "./PortaResponse";
 import { RedeResponse } from "./RedeResponse";
@@ -9,4 +10,6 @@ export type IpResponse = {
     portas: PortaResponse[];
     dominios: DominioResponse[];
     redes: RedeResponse[];
+    sambaUsers: SambaUser[];
+    sambaShares: SambaShare[];
 }

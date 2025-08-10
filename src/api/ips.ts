@@ -1,5 +1,6 @@
 "use client"
 import { IpResponse } from "@/types/IpResponse";
+import { SambaInfoResponse } from "@/types/SambaInfoResponse";
 import { useQuery } from "@tanstack/react-query";
 
 const useIps = () => {
@@ -14,7 +15,13 @@ const useIps = () => {
         enabled: !!idIp
     });
 
-    return { getIp };
+    const getSambaInfo = async (idIp: string): Promise<SambaInfoResponse> => {
+        const res = await fetch(`/api/v1/ips/${idIp}/samba`);
+        const data = await res.json();
+        return data;
+    }
+
+    return { getIp, getSambaInfo };
 }
 
 export default useIps;
