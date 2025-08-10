@@ -35,7 +35,13 @@ const Page = () => {
         <Menu items={menuItems} />
         <hr />
         <h4>Table</h4>
-        <Table data={[{ id: 1, nome: 'Nome 1' }, { id: 2, nome: 'Nome 2' }]} actions={{ editar: { icon: 'edit', title: 'Editar', action: (row) => alert(`Editar ${row?.id}`) }, excluir: { icon: 'trash', title: 'Excluir', action: (row) => alert(`Excluir ${row?.id}`) } }}>
+        <Table
+            data={[{ id: 1, nome: 'Nome 1' }, { id: 2, nome: 'Nome 2' }]}
+            actions={[
+                { icon: 'edit', title: 'Editar', action: (row?: { id: number; nome: string; }) => alert(`Editar ${row?.id}`) },
+                { icon: 'trash', title: 'Excluir', action: (row?: { id: number; nome: string; }) => alert(`Excluir ${row?.id}`) }
+            ]}
+        >
             <Table.Thead column="id" title="ID" />
             <Table.Thead column="nome" title="Nome" />
         </Table>
