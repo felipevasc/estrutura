@@ -1,11 +1,16 @@
 import prisma from "@/database";
 import { ApiResponse } from "@/types/ApiResponse";
-import { DominioResponse } from "@/types/DominioResponse";
 import { IpResponse } from "@/types/IpResponse";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function GET(): ApiResponse<IpResponse[]> {
-    const ret = await prisma.ip.findMany();
+    const ret = await prisma.ip.findMany({
+        include: {
+            dominios: true,
+            redes: true,
+            portas: true,
+        },
+    });
     return NextResponse.json(ret);
 }
 
@@ -19,12 +24,27 @@ export async function POST(request: Request): ApiResponse<IpResponse> {
         return NextResponse.json({ error: "Endereceo é obrigatório" }, { status: 400 });
     }
 
-    const ret = await prisma.ip.create({
+    const createdIp = await prisma.ip.create({
         data: {
             endereco: body.endereco,
             projetoId: body.projetoId,
         },
     });
+
+    const ret = await prisma.ip.findUnique({
+        where: {
+            id: createdIp.id,
+        },
+        include: {
+            dominios: true,
+            redes: true,
+            portas: true,
+        }
+    });
+
+    if (!ret) {
+        return NextResponse.json({ error: "Falha ao buscar o IP recém-criado." }, { status: 500 });
+    }
 
     return NextResponse.json(ret);
 }

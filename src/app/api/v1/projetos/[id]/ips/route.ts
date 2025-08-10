@@ -8,6 +8,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const ret = await prisma.ip.findMany({
         where: {
             projetoId: Number(p.id),
+        },
+        include: {
+            dominios: true,
+            redes: true,
+            portas: true,
         }
     });
     return NextResponse.json(ret);

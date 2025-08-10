@@ -5,14 +5,18 @@ import { useContext } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { RedeResponse } from "@/types/RedeResponse";
+import VisualizarPortas from "./VisualizarPortas";
 
-// Reusing styled components from VisualizarDominio for consistency
-// In a real app, these would be in a shared styles file.
+// NOTE: These styled components are duplicated from VisualizarDominio.
+// In a real-world refactor, they should be moved to a common/shared file
+// to avoid code duplication. For this task, we will update them here directly.
+
 const DashboardContainer = styled.div`
   padding: 2rem;
-  background-color: #f4f7f9;
-  font-family: 'Roboto', sans-serif;
-  color: #333;
+  background-color: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.foreground};
+  height: 100%;
+  overflow-y: auto;
 `;
 
 const Header = styled.div`
@@ -20,29 +24,32 @@ const Header = styled.div`
   h1 {
     font-size: 2rem;
     font-weight: 500;
-    color: #2c3e50;
+    color: ${({ theme }) => theme.colors.accentColor};
   }
   p {
     font-size: 1rem;
-    color: #7f8c8d;
+    color: ${({ theme }) => theme.colors.foreground};
+    opacity: 0.8;
   }
 `;
 
 const Card = styled.div`
-  background-color: #ffffff;
+  background-color: ${({ theme }) => theme.colors.panelBackground};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
   border-radius: 8px;
   padding: 1.5rem;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   margin-bottom: 1.5rem;
+  transition: background-color 0.3s, border-color 0.3s;
 `;
 
 const CardTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 500;
   margin-bottom: 1rem;
-  color: #34495e;
-  border-bottom: 1px solid #ecf0f1;
-  padding-bottom: 0.5rem;
+  color: ${({ theme }) => theme.colors.accentColor};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
+  padding-bottom: 0.75rem;
+  transition: color 0.3s, border-color 0.3s;
 `;
 
 const List = styled.ul`
@@ -51,10 +58,17 @@ const List = styled.ul`
 `;
 
 const ListItem = styled.li`
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #ecf0f1;
+  padding: 0.75rem 0.25rem;
+  color: ${({ theme }) => theme.colors.foreground};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
+  transition: background-color 0.3s, border-color 0.3s;
+
   &:last-child {
     border-bottom: none;
+  }
+
+  &:hover {
+    background-color: ${({ theme }) => theme.colors.hoverBackground};
   }
 `;
 
@@ -74,6 +88,11 @@ const VisualizarIp = () => {
                 <h1>{ip.endereco}</h1>
                 <p>Dashboard de informações do Endereço IP</p>
             </Header>
+
+            <Card>
+                <CardTitle>Portas Abertas</CardTitle>
+                <VisualizarPortas portas={ip.portas || []} />
+            </Card>
 
             <Card>
                 <CardTitle>Domínios Associados</CardTitle>
