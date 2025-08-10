@@ -89,3 +89,6 @@ Para adicionar uma nova ferramenta ao sistema, siga os seguintes passos:
 
 4.  **Crie a rota da API:**
     - Crie uma nova rota na API (`src/app/api/v1/...`) que recebe a requisição do frontend e adiciona o comando correspondente à tabela `Command` no banco de dados com o status `PENDING`. O `CommandProcessor` se encarregará de executá-lo.
+
+## Outras observações
+- **Novo target:** Sempre que incluir um novo target, se atentar para incluir também no explorer e criar uma visualização das informações dele. Também se atentar para fazer o carregamento deste target a partir da consulta de origem, apenas incrementando com `include` na chamada do prisma o novo target. Fazer isso sempre pra o mínimo de 4 níveis possíveis onde aquele target pode aparecer, conforme feito no arquivo `src/app/api/v1/projetos/[id]/dominios/route.ts`.
