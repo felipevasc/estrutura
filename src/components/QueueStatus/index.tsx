@@ -1,6 +1,6 @@
 import { Badge, Drawer, Button, Tabs, List, Tag, Popconfirm, Collapse } from 'antd';
 import { UnorderedListOutlined, DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import useApi from '@/api';
 import { Command, CommandStatus } from '@prisma/client';
 import { StyledQueueStatus } from './styles';
@@ -13,6 +13,7 @@ const QueueStatus = () => {
     const [commands, setCommands] = useState<Command[]>([]);
     const api = useApi();
     const { projeto } = useContext(StoreContext);
+    const timeout = useRef<NodeJS.Timeout>(null)
 
     const projectId = projeto?.get()?.id;
 
@@ -21,6 +22,8 @@ const QueueStatus = () => {
         try {
             const data = await api.queue.getCommands(projectId);
             setCommands(data);
+            timeout.current && clearTimeout(timeout.current);
+            timeout.current = setTimeout(fetchCommands, 30000);
         } catch (error) {
             console.error("Failed to fetch commands", error);
         }
@@ -28,8 +31,9 @@ const QueueStatus = () => {
 
     useEffect(() => {
         fetchCommands();
-        const interval = setInterval(fetchCommands, 3000); // Poll every 3 seconds
-        return () => clearInterval(interval);
+        return () => {
+            timeout.current && clearTimeout(timeout.current);
+        }
     }, [projectId]);
 
     const handleCancelCommand = async (commandId: number) => {
