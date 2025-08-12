@@ -17,7 +17,7 @@ export const executarEnum4linux = async (idIp: string) => {
   const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
   const comando = 'enum4linux';
-  const argumentos = ['-U', enderecoIp];
+  const argumentos = ['-U', '-r', enderecoIp];
 
   const resultado = await Terminal(comando, argumentos, caminhoSaida);
 
@@ -25,8 +25,12 @@ export const executarEnum4linux = async (idIp: string) => {
   const usuarios: TipoUsuario[] = [];
   for (let i = 0; i < linhas.length; i++) {
     const linha = linhas[i];
-    const match = linha.match(/user:\[(.*)\]/i);
-    if (match && match[1]) {
+    let match = linha.match(/user:\[([^\[]*)\]/i);
+    if (match?.[1]) {
+      usuarios.push({ nome: match[1] });
+    }
+    match = linha.match(/.*\\(.*) \(Local User\)/i);
+    if (match?.[1]) {
       usuarios.push({ nome: match[1] });
     }
   }
