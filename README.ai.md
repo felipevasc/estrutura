@@ -44,11 +44,32 @@ export const MeuComponenteEstilizado = styled.div`
 `;
 ```
 
-### Backend
+### Backend e Nano-Serviços
 
-- **Framework:** Next.js (API Routes)
-- **Linguagem:** TypeScript
-- **API:** As rotas da API estão em `src/app/api/v1/`. Elas são responsáveis por interagir com o banco de dados e o sistema de arquivos.
+O backend foi refatorado para seguir uma arquitetura orientada a eventos e "nano-serviços". A ideia central é que a evolução do sistema se dê através da **adição de novos serviços**, e não pela modificação de códigos monolíticos. Cada serviço é uma unidade coesa, independente e responsável por uma tarefa única.
+
+#### Estrutura (`src/service/nano/`)
+
+- **`EventBus.ts`:** O canal de comunicação central. Todos os serviços se comunicam emitindo e escutando eventos aqui.
+- **`NanoService.ts`:** A classe base abstrata para todos os serviços. Fornece acesso ao `bus` e métodos de log.
+- **`System.ts` (`NanoSystem`):** O orquestrador que inicializa e registra todos os serviços disponíveis.
+
+#### Serviços Principais (`src/service/nano/services/`)
+
+- **`QueueService.ts`:** Monitora a fila de comandos no banco de dados. Quando encontra um comando pendente (`PENDING`), emite um evento `COMMAND_RECEIVED` para que a ferramenta apropriada o execute. Também gerencia timeouts e atualiza o status do comando (`COMPLETED`, `FAILED`).
+- **`TerminalService.ts`:** Responsável por executar comandos shell no sistema operacional. Escuta o evento `EXECUTE_TERMINAL` e emite `TERMINAL_RESULT` (ou um evento de resposta customizado) ao finalizar.
+
+#### Serviços de Ferramentas (`src/service/nano/services/tools/`)
+
+Cada ferramenta (Amass, Nmap, etc.) é um nano-serviço separado.
+
+- **Responsabilidade:**
+  1.  Escutar o evento `COMMAND_RECEIVED`.
+  2.  Verificar se o comando é para ela (ex: `if (payload.command === 'amass')`).
+  3.  Preparar os argumentos e emitir `EXECUTE_TERMINAL` para rodar o binário.
+  4.  Escutar a resposta do terminal, processar a saída (fazer parse do texto).
+  5.  Salvar os resultados no banco de dados.
+  6.  Emitir `JOB_COMPLETED` (ou `JOB_FAILED`) para notificar o `QueueService`.
 
 ### Banco de Dados
 
@@ -57,38 +78,39 @@ export const MeuComponenteEstilizado = styled.div`
 - **Schema:** O schema do banco de dados está definido em `prisma/schema.prisma`. Ele é a fonte da verdade para a estrutura de dados.
 - **Migrations:** Para atualizar o banco de dados, utilize o comando `npm run updatedb`.
 
-### Processamento de Comandos
-
-- **`src/service/CommandProcessor.ts`:** Este é um serviço singleton responsável por processar a fila de comandos.
-- **`src/service/tools/`:** Contém a lógica para executar cada ferramenta de segurança. Cada ferramenta tem seu próprio arquivo que exporta uma função para executá-la e tratar sua saída.
-
 ## Padrões de Código e Convenções
 
-- **Idioma:** Nomes de variáveis, métodos, arquivos e diretórios devem ser em **português**.
-- **Comentários:** O código **não deve conter comentários**. A clareza do código deve ser suficiente para o seu entendimento.
-- **Coesão e Responsabilidade Única:** Crie arquivos curtos e coesos, com uma única responsabilidade clara.
-- **Simplicidade:** A forma de implementação deve ser sempre a mais fácil possível para facilitar futuras manutenções.
-- **Reaproveitamento:** Sempre que uma função ou lógica for criada, analise se não já existe algo semelhante. Em caso positivo, utilize o que já existe ou refatore para torná-lo genérico.
+- **Idioma:** Nomes de variáveis, métodos, arquivos e diretórios devem ser em **português** (exceto termos técnicos padronizados ou nomes de ferramentas).
+- **Arquitetura Evolutiva:** A evolução do backend deve ocorrer via **incremento de serviços**. Evite alterar a lógica central do `QueueService` ou `TerminalService` a menos que seja uma melhoria estrutural. Para novas funcionalidades, crie novos serviços.
+- **Comentários:** O código deve ser autoexplicativo.
+- **Coesão:** Cada serviço deve fazer uma coisa apenas.
 
 ## Adicionando Novas Ferramentas
 
-Para adicionar uma nova ferramenta ao sistema, siga os seguintes passos:
+Para adicionar uma nova ferramenta ao sistema, siga o fluxo dos Nano-Serviços:
 
-1.  **Crie o arquivo da ferramenta:**
-    - Em `src/service/tools/`, crie um novo arquivo para a sua ferramenta (ex: `src/service/tools/domain/minhaferramenta.ts`).
-    - Neste arquivo, crie uma função que executa a ferramenta (usando `child_process` ou similar) e trata a sua saída, retornando um objeto com os dados estruturados.
+1.  **Crie o Nano-Serviço da Ferramenta:**
+    - Crie um arquivo em `src/service/nano/services/tools/` (ex: `MinhaFerramentaService.ts`).
+    - Estenda a classe `NanoService`.
+    - No método `initialize()`, registre um listener para `COMMAND_RECEIVED`.
+    - Implemente a lógica:
+        - Verifique se o comando é o seu.
+        - Busque dados necessários no DB (ex: domínio, IP).
+        - Emita `EXECUTE_TERMINAL` definindo `replyTo` e `errorTo` para eventos únicos (ex: `MINHAFERRAMENTA_RESULT`).
+        - Escute esses eventos de resposta para processar o output e salvar no banco.
+        - Emita `JOB_COMPLETED` ao final.
 
-2.  **Adicione a ferramenta ao `CommandProcessor`:**
-    - Abra o arquivo `src/service/CommandProcessor.ts`.
-    - Importe a função que você criou no passo 1.
-    - Adicione uma nova entrada no objeto `commandServiceMap`, mapeando o nome do comando para a sua função.
+2.  **Registre no Sistema:**
+    - Abra `src/service/nano/System.ts`.
+    - Importe seu novo serviço.
+    - Adicione `this.services.push(new MinhaFerramentaService());` no método `initialize`.
 
-3.  **Adicione a ferramenta à interface:**
-    - Modifique o componente `src/components/Ferramentas/index.tsx` para exibir a nova ferramenta no painel da direita quando um alvo compatível for selecionado.
-    - A ação de clique do botão da ferramenta deve chamar a API para enfileirar o novo comando.
+3.  **Adicione a ferramenta à interface (Frontend):**
+    - Modifique `src/components/Ferramentas/index.tsx` para exibir o botão da ferramenta.
+    - A ação do botão deve chamar a API `/api/v1/queue/add` enviando o nome do comando (igual ao que seu serviço espera).
 
-4.  **Crie a rota da API:**
-    - Crie uma nova rota na API (`src/app/api/v1/...`) que recebe a requisição do frontend e adiciona o comando correspondente à tabela `Command` no banco de dados com o status `PENDING`. O `CommandProcessor` se encarregará de executá-lo.
+4.  **Verificação:**
+    - O sistema cuidará do resto: a API adiciona na fila, o `QueueService` pega, avisa seu serviço, seu serviço roda o terminal, processa e avisa que acabou.
 
 ## Outras observações
 - **Novo target:** Sempre que incluir um novo target, se atentar para incluir também no explorer e criar uma visualização das informações dele. Também se atentar para fazer o carregamento deste target a partir da consulta de origem, apenas incrementando com `include` na chamada do prisma o novo target. Fazer isso sempre pra o mínimo de 4 níveis possíveis onde aquele target pode aparecer, conforme feito no arquivo `src/app/api/v1/projetos/[id]/dominios/route.ts`.
