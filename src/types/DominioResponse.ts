@@ -1,3 +1,4 @@
+import { DiretorioResponse } from "./DiretorioResponse";
 import { IpResponse } from "./IpResponse";
 
 export type DominioResponse = {
@@ -8,4 +9,5 @@ export type DominioResponse = {
     paiId?: number | null;
     subDominios?: DominioResponse[];
     ips?: IpResponse[];
+    diretorios?: DiretorioResponse[];
 }

@@ -35,6 +35,7 @@ model Dominio {
   subDominios Dominio[] @relation("SubDominios")
 
   ips Ip[]
+  diretorios Diretorio[]
 
   @@map("dominios")
 }
@@ -68,6 +69,7 @@ model Ip {
   redes    Rede[]
   portas   Porta[]
   usuarios Usuario[]
+  diretorios Diretorio[]
 
   @@map("ips")
 }
@@ -115,4 +117,21 @@ model Usuario {
   ip   Ip     @relation(fields: [ipId], references: [id])
 
   @@map("usuarios")
+}
+
+model Diretorio {
+  id          Int      @id @default(autoincrement())
+  caminho     String
+  status      Int?
+  tamanho     Int?
+
+  dominioId   Int?
+  dominio     Dominio? @relation(fields: [dominioId], references: [id])
+
+  ipId        Int?
+  ip          Ip?      @relation(fields: [ipId], references: [id])
+
+  createdAt   DateTime @default(now())
+
+  @@map("diretorios")
 }

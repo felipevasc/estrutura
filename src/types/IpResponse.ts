@@ -1,3 +1,4 @@
+import { DiretorioResponse } from "./DiretorioResponse";
 import { DominioResponse } from "./DominioResponse";
 import { PortaResponse } from "./PortaResponse";
 import { RedeResponse } from "./RedeResponse";
@@ -11,4 +12,5 @@ export type IpResponse = {
     dominios: DominioResponse[];
     redes: RedeResponse[];
     usuarios: UsuarioResponse[];
+    diretorios: DiretorioResponse[];
 }

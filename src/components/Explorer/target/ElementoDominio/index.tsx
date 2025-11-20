@@ -7,6 +7,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { TreeDataNode } from "antd";
 import React, { useContext } from "react";
 import useElementoIp from "../ElementoIp";
+import useElementoDiretorio from "../ElementoDiretorio";
+import { faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 
 type ElementoDominioProps = {
   dominio: DominioResponse;
@@ -16,6 +18,7 @@ const useElementoDominio = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const api = useApi();
   const elementoIp = useElementoIp();
+  const elementoDiretorio = useElementoDiretorio();
 
   const selecionado = selecaoTarget?.get()
 
@@ -54,6 +57,20 @@ const useElementoDominio = () => {
       })
     }
 
+    const diretorios = dominio.diretorios ?? [];
+    if (diretorios.length) {
+      const filhosDiretorios: TreeDataNode[] = [];
+      for (let i = 0; i < diretorios.length; i++) {
+        const dir = diretorios[i];
+        filhosDiretorios.push(await elementoDiretorio.getDiretorio(dir));
+      }
+      filhos.push({
+        key: `${dominio.endereco}-${dominio.id}-diretorios`,
+        title: <div><FontAwesomeIcon icon={faFolderOpen} />{' '}Diretórios</div>,
+        children: filhosDiretorios,
+        className: "folder"
+      })
+    }
 
     return {
       key: `${dominio.endereco}-${dominio.id}}`,

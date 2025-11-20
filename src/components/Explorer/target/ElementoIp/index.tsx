@@ -9,12 +9,15 @@ import { TreeDataNode } from "antd";
 import React, { useContext } from "react";
 import useElementoPorta from "../ElementoPorta";
 import useElementoUsuario from "../ElementoUsuario";
+import useElementoDiretorio from "../ElementoDiretorio";
+import { faFolderOpen } from "@fortawesome/free-solid-svg-icons";
 
 const useElementoIp = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const api = useApi();
   const elementoPorta = useElementoPorta();
   const elementoUsuario = useElementoUsuario();
+  const elementoDiretorio = useElementoDiretorio();
 
   const selecionado = selecaoTarget?.get()
 
@@ -48,6 +51,21 @@ const useElementoIp = () => {
         key: `${ip.endereco}-${ip.id}-usuarios}`,
         title: <div><FontAwesomeIcon icon={faUserFriends} />{' '}Usuários</div>,
         children: filhosUsuarios,
+        className: "folder"
+      })
+    }
+
+    const diretorios = ip.diretorios ?? [];
+    if (diretorios.length) {
+      const filhosDiretorios: TreeDataNode[] = [];
+      for (let i = 0; i < diretorios.length; i++) {
+        const dir = diretorios[i];
+        filhosDiretorios.push(await elementoDiretorio.getDiretorio(dir));
+      }
+      filhos.push({
+        key: `${ip.endereco}-${ip.id}-diretorios`,
+        title: <div><FontAwesomeIcon icon={faFolderOpen} />{' '}Diretórios</div>,
+        children: filhosDiretorios,
         className: "folder"
       })
     }

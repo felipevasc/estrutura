@@ -70,6 +70,13 @@ const FerramentasIp = () => {
                 <Card.Meta description={"Enumeração de usuários SMB."} />
             </Card>
 
+            <Card
+                title={"Ffuf"}
+                onClick={() => showConfirmationModal('ffuf', { idIp: getId().toString() })}
+            >
+                <Card.Meta description={"Fuzzing de diretórios."} />
+            </Card>
+
             <Modal
                 title="Confirmar Execução"
                 open={isModalVisible}

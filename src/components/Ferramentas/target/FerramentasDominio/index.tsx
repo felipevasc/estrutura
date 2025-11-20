@@ -80,6 +80,13 @@ const FerramentasDominio = () => {
                 <Card.Meta description={"Descobrir IPs de um domínio."} />
             </Card>
 
+            <Card
+                title={"Ffuf"}
+                onClick={() => showConfirmationModal('ffuf', { idDominio: getDomainId().toString() })}
+            >
+                <Card.Meta description={"Fuzzing de diretórios."} />
+            </Card>
+
             <Modal
                 title="Confirmar Execução"
                 open={isModalVisible}

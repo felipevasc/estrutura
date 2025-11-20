@@ -5,6 +5,7 @@ import { SubfinderService } from './services/tools/SubfinderService';
 import { NslookupService } from './services/tools/NslookupService';
 import { NmapService } from './services/tools/NmapService';
 import { Enum4linuxService } from './services/tools/Enum4linuxService';
+import { FfufService } from './services/tools/FfufService';
 import EventBus from './EventBus';
 
 class NanoSystem {
@@ -33,6 +34,7 @@ class NanoSystem {
     this.services.push(new NslookupService());
     this.services.push(new NmapService());
     this.services.push(new Enum4linuxService());
+    this.services.push(new FfufService());
 
     this.initialized = true;
     console.log('[NanoSystem] Services initialized.');
