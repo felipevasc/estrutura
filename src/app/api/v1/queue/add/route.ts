@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/database';
-import CommandProcessor from '@/service/CommandProcessor';
+import NanoSystem from '@/service/nano/System';
 
 export async function POST(request: Request) {
     try {
@@ -18,7 +18,8 @@ export async function POST(request: Request) {
             },
         });
 
-        CommandProcessor.processQueue();
+        // Trigger the NanoSystem to process the queue
+        NanoSystem.process();
 
         return NextResponse.json({ message: 'Command added to the queue', command: newCommand }, { status: 202 });
     } catch (error) {
