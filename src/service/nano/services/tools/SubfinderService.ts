@@ -28,6 +28,8 @@ export class SubfinderService extends NanoService {
         });
         const dominio = op?.endereco ?? "";
 
+        if (!dominio) throw new Error('Domain not found');
+
         const nomeArquivoSaida = `subfinder_resultado_${op?.projetoId}_${op?.id}_${dominio}_${Date.now()}.txt`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
@@ -53,36 +55,36 @@ export class SubfinderService extends NanoService {
   }
 
   private async processResult(payload: any) {
-      const { executionId, id, output, meta, command, args } = payload;
-      const jobId = id ?? executionId;
+      const { id, stdout, meta, command, args } = payload;
       const { op } = meta;
 
-      this.log(`Processing result for ${jobId}`);
+      this.log(`Processing result for ${id}`);
 
       try {
-        const subdominios = output?.split("\n").filter((s: string) => !!s) ?? [];
+        // stdout contains one domain per line because of -silent
+        const subdominios = stdout?.split("\n").map((s: string) => s.trim()).filter((s: string) => !!s && s.includes('.')) ?? [];
 
         await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
 
         this.bus.emit('JOB_COMPLETED', {
-            id: jobId,
+            id: id,
             result: subdominios,
-            rawOutput: output,
+            rawOutput: stdout,
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              id: jobId,
+              id: id,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, id, error } = payload;
+      const { id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          id: id ?? executionId,
+          id: id,
           error: error
       });
   }

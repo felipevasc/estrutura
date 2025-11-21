@@ -1,134 +1,120 @@
 import { NanoService } from '../../NanoService';
-import EventBus from '../../EventBus';
 import prisma from '@/database';
 import fs from 'fs';
+import path from 'node:path';
+import os from 'node:os';
 
 export class FfufService extends NanoService {
-  constructor() {
-    super();
-  }
-
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', this.handleCommand.bind(this));
-    this.listen('FFUF_RESULT', this.handleResult.bind(this));
+    this.listen('COMMAND_RECEIVED', (payload) => {
+      if (payload.command === 'ffuf') {
+        this.processCommand(payload);
+      }
+    });
+    this.listen('FFUF_RESULT', (payload) => this.processResult(payload));
+    this.listen('FFUF_ERROR', (payload) => this.processError(payload));
   }
 
-  private async handleCommand(payload: any) {
-    if (payload.command !== 'ffuf') return;
+  private async processCommand(payload: any) {
+    const { id, args, projectId } = payload;
+    this.log(`Processing Ffuf for project ${projectId}`);
 
-    console.log(`[FfufService] Handling command for project ${payload.projectId}`);
-
-    let args: any;
     try {
-        args = typeof payload.args === 'string' ? JSON.parse(payload.args) : payload.args;
-    } catch (e) {
-        console.error('[FfufService] Failed to parse args JSON', e);
-        EventBus.emit('JOB_FAILED', { id: payload.id, error: 'Invalid arguments' });
-        return;
-    }
+        let dominio = null;
+        let ip = null;
+        let target = '';
 
-    let dominio = null;
-    let ip = null;
-    let target = '';
+        if (args.idDominio) {
+            dominio = await prisma.dominio.findUnique({ where: { id: parseInt(args.idDominio) } });
+        } else if (args.idIp) {
+            ip = await prisma.ip.findUnique({ where: { id: parseInt(args.idIp) } });
+        }
 
-    if (args.idDominio) {
-        dominio = await prisma.dominio.findUnique({ where: { id: parseInt(args.idDominio) } });
-    } else if (args.idIp) {
-        ip = await prisma.ip.findUnique({ where: { id: parseInt(args.idIp) } });
-    }
+        if (!dominio && !ip) {
+            throw new Error('Target not found');
+        }
 
-    if (!dominio && !ip) {
-        console.error('[FfufService] Target not found');
-        EventBus.emit('JOB_FAILED', { id: payload.id, error: 'Target not found' });
-        return;
-    }
+        target = dominio ? dominio.endereco : (ip ? ip.endereco : '');
 
-    target = dominio ? dominio.endereco : (ip ? ip.endereco : '');
+        if (!target.startsWith('http')) {
+            target = `http://${target}`;
+        }
 
-    if (!target.startsWith('http')) {
-        target = `http://${target}`;
-    }
-
-    const wordlistPath = `/tmp/wordlist_${payload.id}.txt`;
-    const dummyWordlist = `admin
+        const wordlistPath = path.join(os.tmpdir(), `wordlist_${id}.txt`);
+        // Expanded dummy wordlist for dev/POC
+        const dummyWordlist = `admin
 login
 test
 dev
 backup
-robot.txt
+robots.txt
 sitemap.xml
 api
 dashboard
-config`;
+config
+.env
+wp-admin`;
 
-    // Ideally, use a real wordlist. For dev/POC, we use this inline list.
-    fs.writeFileSync(wordlistPath, dummyWordlist);
+        fs.writeFileSync(wordlistPath, dummyWordlist);
 
-    EventBus.emit('EXECUTE_TERMINAL', {
-      command: 'ffuf',
-      args: ['-u', `${target}/FUZZ`, '-w', wordlistPath, '-o', '-', '-of', 'json'],
-      replyTo: 'FFUF_RESULT',
-      errorTo: 'JOB_FAILED',
-      id: payload.id
-    });
+        const outputPath = path.join(os.tmpdir(), `ffuf_output_${id}_${Date.now()}.json`);
+
+        // -o output to file, -of json format
+        // We also output to stdout (default behavior of ffuf if -o is not -)
+        // But TerminalService writes stdout to file if outputFile is set.
+        // Ffuf: -o file writes to file. -o - writes to stdout.
+        // TerminalService expects output on stdout to capture it in memory.
+        // So we use -o - to print to stdout, and TerminalService will capture it and write to its own log file.
+
+        this.bus.emit('EXECUTE_TERMINAL', {
+            id: id,
+            command: 'ffuf',
+            args: ['-u', `${target}/FUZZ`, '-w', wordlistPath, '-o', '-', '-of', 'json'],
+            outputFile: outputPath, // TerminalService saves the raw text output here
+            replyTo: 'FFUF_RESULT',
+            errorTo: 'FFUF_ERROR',
+            meta: { projectId, dominio, ip, wordlistPath }
+        });
+
+    } catch (e: any) {
+        this.bus.emit('JOB_FAILED', {
+            id: id,
+            error: e.message
+        });
+    }
   }
 
-  private async handleResult(payload: any) {
-    console.log('[FfufService] Processing result');
+  private async processResult(payload: any) {
+    const { id, stdout, meta, command, args } = payload;
+    const { dominio, ip, wordlistPath } = meta;
+
+    this.log(`Processing result for ${id}`);
 
     try {
-        const output = payload.output;
+        // Try to find JSON in the output (stdout)
+        // Ffuf with -of json prints a valid JSON object.
+        // However, sometimes there might be other text.
+        // We look for the first '{' and last '}'
+        const start = stdout.indexOf('{');
+        const end = stdout.lastIndexOf('}');
 
-        let data;
-        try {
-             data = JSON.parse(output);
-        } catch (e) {
-             // If output is not valid JSON (e.g. ffuf banner mixed in), try to find the JSON part or fail gracefully
-             console.warn('[FfufService] Output is not pure JSON, attempting to extract');
-             // Sometimes tools output logs then JSON.
-             // For now, if it fails, we might fail the job or try to regex the JSON.
-             // Assuming standard behavior with -o - -of json
-             EventBus.emit('JOB_FAILED', { id: payload.id, error: 'Invalid JSON output from ffuf' });
-             return;
+        if (start === -1 || end === -1) {
+            throw new Error('No JSON found in output');
         }
 
+        const jsonStr = stdout.substring(start, end + 1);
+        const data = JSON.parse(jsonStr);
         const results = data.results;
 
         if (results && Array.isArray(results)) {
-            const commandRecord = await prisma.command.findUnique({ where: { id: payload.id } });
-
-            if (!commandRecord) {
-                console.error('[FfufService] Command record not found');
-                return;
-            }
-
-            let args: any;
-            try {
-                args = JSON.parse(commandRecord.args);
-            } catch (e) {
-                // Fallback if args was saved as raw string (legacy behavior support?)
-                // But we know we sent JSON.
-                 console.error('[FfufService] Failed to parse stored args');
-                 return;
-            }
-
-            let dominio = null;
-            let ip = null;
-
-            if (args.idDominio) {
-                dominio = await prisma.dominio.findUnique({ where: { id: parseInt(args.idDominio) } });
-            } else if (args.idIp) {
-                ip = await prisma.ip.findUnique({ where: { id: parseInt(args.idIp) } });
-            }
-
             for (const res of results) {
-                const path = res.input.FUZZ;
+                const pathFound = res.input.FUZZ;
                 const status = res.status;
                 const size = res.length;
 
                 await prisma.diretorio.create({
                     data: {
-                        caminho: path,
+                        caminho: pathFound,
                         status: status,
                         tamanho: size,
                         dominioId: dominio ? dominio.id : null,
@@ -139,16 +125,40 @@ config`;
         }
 
         // Clean up wordlist
-        const wordlistPath = `/tmp/wordlist_${payload.id}.txt`;
         if (fs.existsSync(wordlistPath)) {
             fs.unlinkSync(wordlistPath);
         }
 
-        EventBus.emit('JOB_COMPLETED', { id: payload.id, output: payload.output });
+        this.bus.emit('JOB_COMPLETED', {
+            id: id,
+            result: results, // Store parsed results
+            rawOutput: stdout,
+            executedCommand: `${command} ${args.join(' ')}`
+        });
 
-    } catch (e) {
-        console.error('[FfufService] Error processing result:', e);
-        EventBus.emit('JOB_FAILED', { id: payload.id, error: String(e) });
+    } catch (e: any) {
+        this.error(`Error processing result: ${e.message}`);
+
+        // Clean up wordlist even on error
+        if (wordlistPath && fs.existsSync(wordlistPath)) {
+            fs.unlinkSync(wordlistPath);
+        }
+
+        this.bus.emit('JOB_FAILED', { id: id, error: e.message });
     }
+  }
+
+  private processError(payload: any) {
+      const { id, error, meta } = payload;
+      const { wordlistPath } = meta || {};
+
+      if (wordlistPath && fs.existsSync(wordlistPath)) {
+          fs.unlinkSync(wordlistPath);
+      }
+
+      this.bus.emit('JOB_FAILED', {
+          id: id,
+          error: error
+      });
   }
 }

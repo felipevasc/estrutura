@@ -29,11 +29,14 @@ export class NslookupService extends NanoService {
         });
         const dominio = op?.endereco ?? "";
 
+        if (!dominio) throw new Error('Domain not found');
+
         const nomeArquivoSaida = `nslookup_resultado_${op?.projetoId}_${op?.id}_${dominio}_${Date.now()}.txt`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
         const comando = 'nslookup';
-        const argumentos = ['-debug', dominio, "1.1.1.1"];
+        // Use Google DNS to avoid local DNS caching/restrictions
+        const argumentos = ['-debug', dominio, "8.8.8.8"];
 
         this.bus.emit('EXECUTE_TERMINAL', {
             id: id,
@@ -54,48 +57,60 @@ export class NslookupService extends NanoService {
   }
 
   private async processResult(payload: any) {
-      const { executionId, id, output, meta, command, args } = payload;
-      const jobId = id ?? executionId;
+      const { id, stdout, meta, command, args } = payload;
       const { op, dominio } = meta;
 
-      this.log(`Processing result for ${jobId}`);
+      this.log(`Processing result for ${id}`);
 
       try {
-        const linhas = output?.split("\n").filter((s: string) => !!s) ?? [];
+        const linhas = stdout?.split("\n").filter((s: string) => !!s) ?? [];
         const ips: TipoIp[] = [];
         for (let i = 0; i < linhas.length; i++) {
             const linha = linhas[i];
-            if (linha.indexOf("internet address") < 0) {
-            continue;
-            }
-            const tmp = linha.split("=")
-            const ip = tmp?.[1]?.trim();
-            if (ip) {
-            ips.push({ endereco: ip, dominio: dominio });
+            // nslookup output format varies, but standard is "Address: <ip>"
+            // or "Name: <domain>\nAddress: <ip>"
+            // The existing parser looked for "internet address =". Wait, that looks like `dig` or a specific nslookup version?
+            // Standard Linux nslookup:
+            // Address: 1.2.3.4
+            //
+            // However, the code had: `if (linha.indexOf("internet address") < 0)`
+            // This implies a specific version or maybe `host` command was intended?
+            // Or `nslookup -debug` output format.
+
+            // Let's support standard "Address: "
+            if (linha.toLowerCase().includes("address:")) {
+                const parts = linha.split(":");
+                if (parts.length > 1) {
+                    const ip = parts[1].trim();
+                    // Filter out the DNS server address (often ends with #53)
+                    if (!ip.includes('#') && ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
+                         ips.push({ endereco: ip, dominio: dominio });
+                    }
+                }
             }
         }
 
         await Database.adicionarIp(ips, op?.projetoId ?? 0);
 
         this.bus.emit('JOB_COMPLETED', {
-            id: jobId,
+            id: id,
             result: ips,
-            rawOutput: output,
+            rawOutput: stdout,
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              id: jobId,
+              id: id,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, id, error } = payload;
+      const { id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          id: id ?? executionId,
+          id: id,
           error: error
       });
   }

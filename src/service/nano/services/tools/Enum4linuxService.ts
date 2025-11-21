@@ -29,6 +29,8 @@ export class Enum4linuxService extends NanoService {
         });
         const enderecoIp = ip?.endereco ?? "";
 
+        if (!enderecoIp) throw new Error('IP not found');
+
         const nomeArquivoSaida = `enum4linux_resultado_${ip?.projetoId}_${ip?.id}_${enderecoIp}_${Date.now()}.txt`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
@@ -54,14 +56,13 @@ export class Enum4linuxService extends NanoService {
   }
 
   private async processResult(payload: any) {
-      const { executionId, id, output, meta, command, args } = payload;
-      const jobId = id ?? executionId;
+      const { id, stdout, meta, command, args } = payload;
       const { idIp } = meta;
 
-      this.log(`Processing result for ${jobId}`);
+      this.log(`Processing result for ${id}`);
 
       try {
-        const linhas = output?.split("\n") ?? [];
+        const linhas = stdout?.split("\n") ?? [];
         const usuarios: TipoUsuario[] = [];
         for (let i = 0; i < linhas.length; i++) {
             const linha = linhas[i];
@@ -77,24 +78,24 @@ export class Enum4linuxService extends NanoService {
         await Database.adicionarUsuarios(usuarios, Number(idIp));
 
         this.bus.emit('JOB_COMPLETED', {
-            id: jobId,
+            id: id,
             result: usuarios,
-            rawOutput: output,
+            rawOutput: stdout,
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              id: jobId,
+              id: id,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, id, error } = payload;
+      const { id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          id: id ?? executionId,
+          id: id,
           error: error
       });
   }
