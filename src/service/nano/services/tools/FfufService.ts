@@ -61,12 +61,12 @@ api
 dashboard
 config`;
 
+    // Ideally, use a real wordlist. For dev/POC, we use this inline list.
     fs.writeFileSync(wordlistPath, dummyWordlist);
 
-    const cmd = `ffuf -u ${target}/FUZZ -w ${wordlistPath} -o - -of json`;
-
     EventBus.emit('EXECUTE_TERMINAL', {
-      command: cmd,
+      command: 'ffuf',
+      args: ['-u', `${target}/FUZZ`, '-w', wordlistPath, '-o', '-', '-of', 'json'],
       replyTo: 'FFUF_RESULT',
       errorTo: 'JOB_FAILED',
       id: payload.id

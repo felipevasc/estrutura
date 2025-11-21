@@ -9,9 +9,9 @@ export class QueueService extends NanoService {
   private readonly JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout
 
   initialize(): void {
-    this.bus.on('KICK_QUEUE', () => this.processQueue());
-    this.bus.on('JOB_COMPLETED', (payload) => this.handleJobCompleted(payload));
-    this.bus.on('JOB_FAILED', (payload) => this.handleJobFailed(payload));
+    this.listen('KICK_QUEUE', () => this.processQueue());
+    this.listen('JOB_COMPLETED', (payload: any) => this.handleJobCompleted(payload));
+    this.listen('JOB_FAILED', (payload: any) => this.handleJobFailed(payload));
   }
 
   private async processQueue() {
@@ -54,7 +54,7 @@ export class QueueService extends NanoService {
 
             // Emit event for tools to pick up
             this.bus.emit('COMMAND_RECEIVED', {
-                commandId: command.id,
+                id: command.id,
                 command: command.command,
                 args: args,
                 projectId: command.projectId
@@ -70,19 +70,19 @@ export class QueueService extends NanoService {
   }
 
   private async handleJobCompleted(payload: any) {
-      const { commandId, result, executedCommand, rawOutput } = payload;
+      const { id, result, executedCommand, rawOutput } = payload;
 
-      if (this.currentCommandId !== commandId) {
+      if (this.currentCommandId !== id) {
           // Received completion for a job we are not currently tracking (maybe from before restart or timeout)
           return;
       }
 
       this.clearTimeout();
-      this.log(`Job completed: ${commandId}`);
+      this.log(`Job completed: ${id}`);
 
       try {
           await prisma.command.update({
-              where: { id: commandId },
+              where: { id: id },
               data: {
                   status: CommandStatus.COMPLETED,
                   completedAt: new Date(),
@@ -92,7 +92,7 @@ export class QueueService extends NanoService {
               },
           });
       } catch (e) {
-          this.error(`Error updating command status for ${commandId}`, e);
+          this.error(`Error updating command status for ${id}`, e);
       }
 
       this.resetProcessing();
@@ -101,16 +101,16 @@ export class QueueService extends NanoService {
   }
 
   private async handleJobFailed(payload: any) {
-      const { commandId, error } = payload;
+      const { id, error } = payload;
 
-      if (this.currentCommandId !== commandId) {
+      if (this.currentCommandId !== id) {
           return;
       }
 
       this.clearTimeout();
-      this.error(`Job failed: ${commandId}`, error);
+      this.error(`Job failed: ${id}`, error);
 
-      await this.failCommand(commandId, error);
+      await this.failCommand(id, error);
   }
 
   private async failCommand(commandId: number, error: string) {

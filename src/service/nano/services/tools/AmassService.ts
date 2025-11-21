@@ -7,13 +7,13 @@ import { TipoIp } from '@/database/functions/ip';
 
 export class AmassService extends NanoService {
   initialize(): void {
-    this.bus.on('COMMAND_RECEIVED', (payload) => {
+    this.listen('COMMAND_RECEIVED', (payload) => {
       if (payload.command === 'amass') {
         this.processCommand(payload);
       }
     });
 
-    this.bus.on('TERMINAL_RESULT', (payload) => {
+    this.listen('TERMINAL_RESULT', (payload) => {
         // We need to verify if this result belongs to AmassService
         // But wait, the EventBus is global. How do we filter?
         // In a real message bus, we would subscribe to a topic or check correlation ID.
@@ -39,12 +39,12 @@ export class AmassService extends NanoService {
     // So `AmassService` listens to `TERMINAL_RESULT` and checks if the executionId matches one it expects?
     // Or we can pass a 'callbackChannel' in the payload? 'AMASS_RESULT'.
 
-    this.bus.on('AMASS_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.bus.on('AMASS_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen('AMASS_TERMINAL_RESULT', (payload) => this.processResult(payload));
+    this.listen('AMASS_TERMINAL_ERROR', (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
-    const { commandId, args, projectId } = payload;
+    const { id, args, projectId } = payload;
     const idDominio = args.idDominio;
 
     this.log(`Processing Amass for domain ID: ${idDominio}`);
@@ -70,7 +70,7 @@ export class AmassService extends NanoService {
         // Let's modify TerminalService to emit back to a specific event if provided.
 
         this.bus.emit('EXECUTE_TERMINAL', {
-            executionId: commandId,
+            id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
@@ -81,17 +81,18 @@ export class AmassService extends NanoService {
 
     } catch (e: any) {
         this.bus.emit('JOB_FAILED', {
-            commandId,
+            id: id,
             error: e.message
         });
     }
   }
 
   private async processResult(payload: any) {
-      const { executionId, output, meta, command, args } = payload;
+      const { executionId, id, output, meta, command, args } = payload;
+      const jobId = id ?? executionId;
       const { projectId, dominio, op } = meta;
 
-      this.log(`Processing result for ${executionId}`);
+      this.log(`Processing result for ${jobId}`);
 
       try {
         const subdominios: string[] = [];
@@ -144,7 +145,7 @@ export class AmassService extends NanoService {
         await Database.adicionarIp(tmp.ips, op?.projetoId ?? 0);
 
         this.bus.emit('JOB_COMPLETED', {
-            commandId: executionId,
+            id: jobId,
             result: tmp,
             rawOutput: output,
             executedCommand: `${command} ${args.join(' ')}`
@@ -152,16 +153,16 @@ export class AmassService extends NanoService {
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              commandId: executionId,
+              id: jobId,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, error } = payload;
+      const { executionId, id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          commandId: executionId,
+          id: id ?? executionId,
           error: error
       });
   }

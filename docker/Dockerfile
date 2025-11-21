@@ -8,9 +8,6 @@ RUN apt install git -y
 
 WORKDIR /app
 
-# Forçar atualização dessas etapas sempre que houver novo commit
-ADD https://api.github.com/repos/felipevasc/estrutura/commits/main version.json
-
 RUN git clone https://github.com/felipevasc/estrutura
 
 WORKDIR /app/estrutura
