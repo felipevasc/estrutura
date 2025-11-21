@@ -29,10 +29,13 @@ export class NmapService extends NanoService {
         });
         const enderecoIp = op?.endereco ?? "";
 
+        if (!enderecoIp) throw new Error('IP not found');
+
         const nomeArquivoSaida = `nmap_resultado_${op?.projetoId}_${op?.id}_${enderecoIp}_${Date.now()}.txt`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
         const comando = 'nmap';
+        // Use -Pn to treat host as up (good for firewalled hosts)
         const argumentos = ['-Pn', enderecoIp, "-p", "1-9999"];
 
         this.bus.emit('EXECUTE_TERMINAL', {
@@ -54,50 +57,56 @@ export class NmapService extends NanoService {
   }
 
   private async processResult(payload: any) {
-      const { executionId, id, output, meta, command, args } = payload;
-      const jobId = id ?? executionId;
-      const { op, idIp } = meta;
+      const { id, stdout, meta, command, args } = payload;
+      const { idIp } = meta;
 
-      this.log(`Processing result for ${jobId}`);
+      this.log(`Processing result for ${id}`);
 
       try {
-        const linhas = output?.split("\n").filter((s: string) => !!s) ?? [];
+        const linhas = stdout?.split("\n").filter((s: string) => !!s) ?? [];
         const portas: TipoPorta[] = [];
         for (let i = 0; i < linhas.length; i++) {
             const linha = linhas[i];
+            // Nmap standard output table
+            // PORT     STATE SERVICE
+            // 80/tcp   open  http
             if (linha.indexOf("open") < 0) {
-            continue;
+                continue;
             }
+            // Remove extra spaces and tabs
             const tmp = linha.replace(/\t/g, " ").replace(/\s+/g, " ").split(" ")
-            const tmp2 = tmp?.[0]?.trim()?.split("/");
-            const porta = tmp2?.[0]?.trim();
-            const protocolo = tmp2?.[1]?.trim();
-            const servico = tmp?.[2]?.trim();
-            if (porta) {
-            portas.push({ porta: Number(porta), servico, versao: "", protocolo });
+            if (tmp.length < 3) continue;
+
+            const tmp2 = tmp[0].trim().split("/");
+            const porta = tmp2[0].trim();
+            const protocolo = tmp2[1]?.trim() || "tcp";
+            const servico = tmp[2].trim();
+
+            if (porta && !isNaN(Number(porta))) {
+                portas.push({ porta: Number(porta), servico, versao: "", protocolo });
             }
         }
         await Database.adicionarPortas(portas, Number(idIp));
 
         this.bus.emit('JOB_COMPLETED', {
-            id: jobId,
+            id: id,
             result: portas,
-            rawOutput: output,
+            rawOutput: stdout,
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              id: jobId,
+              id: id,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, id, error } = payload;
+      const { id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          id: id ?? executionId,
+          id: id,
           error: error
       });
   }
