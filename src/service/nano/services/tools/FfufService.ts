@@ -126,9 +126,9 @@ wp-admin`;
         }
 
         // Clean up wordlist
-        if (fs.existsSync(wordlistPath)) {
-            fs.unlinkSync(wordlistPath);
-        }
+        //if (fs.existsSync(wordlistPath)) {
+            //fs.unlinkSync(wordlistPath);
+        //}
 
         this.bus.emit('JOB_COMPLETED', {
             id: id,
@@ -141,9 +141,9 @@ wp-admin`;
         this.error(`Error processing result: ${e.message}`);
 
         // Clean up wordlist even on error
-        if (wordlistPath && fs.existsSync(wordlistPath)) {
-            fs.unlinkSync(wordlistPath);
-        }
+        //if (wordlistPath && fs.existsSync(wordlistPath)) {
+            //fs.unlinkSync(wordlistPath);
+        //}
 
         this.bus.emit('JOB_FAILED', { id: id, error: e.message });
     }
@@ -153,9 +153,9 @@ wp-admin`;
       const { id, error, meta } = payload;
       const { wordlistPath } = meta || {};
 
-      if (wordlistPath && fs.existsSync(wordlistPath)) {
-          fs.unlinkSync(wordlistPath);
-      }
+    //   if (wordlistPath && fs.existsSync(wordlistPath)) {
+    //       fs.unlinkSync(wordlistPath);
+    //   }
 
       this.bus.emit('JOB_FAILED', {
           id: id,
