@@ -40,7 +40,8 @@ export class FfufService extends NanoService {
             target = `http://${target}`;
         }
 
-        const wordlistPath = path.join(os.tmpdir(), `wordlist_${id}.txt`);
+        //const wordlistPath = path.join(os.tmpdir(), `wordlist_${id}.txt`);
+        const wordlistPath = "/usr/share/wordlists/dirb/common.txt";
         // Expanded dummy wordlist for dev/POC
         const dummyWordlist = `admin
 login
@@ -55,7 +56,7 @@ config
 .env
 wp-admin`;
 
-        fs.writeFileSync(wordlistPath, dummyWordlist);
+        //fs.writeFileSync(wordlistPath, dummyWordlist);
 
         const outputPath = path.join(os.tmpdir(), `ffuf_output_${id}_${Date.now()}.json`);
 
