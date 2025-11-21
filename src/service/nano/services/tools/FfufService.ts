@@ -40,41 +40,24 @@ export class FfufService extends NanoService {
             target = `http://${target}`;
         }
 
-        //const wordlistPath = path.join(os.tmpdir(), `wordlist_${id}.txt`);
         const wordlistPath = "/usr/share/wordlists/dirb/common.txt";
-        // Expanded dummy wordlist for dev/POC
-        const dummyWordlist = `admin
-login
-test
-dev
-backup
-robots.txt
-sitemap.xml
-api
-dashboard
-config
-.env
-wp-admin`;
 
-        //fs.writeFileSync(wordlistPath, dummyWordlist);
+        // Output path for the JSON results (ffuf writes here)
+        const jsonOutputPath = path.join(os.tmpdir(), `ffuf_results_${id}_${Date.now()}.json`);
 
-        const outputPath = path.join(os.tmpdir(), `ffuf_output_${id}_${Date.now()}.json`);
-
-        // -o output to file, -of json format
-        // We also output to stdout (default behavior of ffuf if -o is not -)
-        // But TerminalService writes stdout to file if outputFile is set.
-        // Ffuf: -o file writes to file. -o - writes to stdout.
-        // TerminalService expects output on stdout to capture it in memory.
-        // So we use -o - to print to stdout, and TerminalService will capture it and write to its own log file.
+        // Output path for the terminal logs (TerminalService writes stdout/stderr here)
+        const logOutputPath = path.join(os.tmpdir(), `ffuf_log_${id}_${Date.now()}.txt`);
 
         this.bus.emit('EXECUTE_TERMINAL', {
             id: id,
             command: 'ffuf',
-            args: ['-u', `${target}/FUZZ`, '-w', wordlistPath, '-o', '-', '-of', 'json'],
-            outputFile: outputPath, // TerminalService saves the raw text output here
+            // We use -o to write results to the JSON file.
+            // TerminalService will still capture stdout/stderr to logOutputPath.
+            args: ['-u', `${target}/FUZZ`, '-w', wordlistPath, '-o', jsonOutputPath, '-of', 'json'],
+            outputFile: logOutputPath,
             replyTo: 'FFUF_RESULT',
             errorTo: 'FFUF_ERROR',
-            meta: { projectId, dominio, ip, wordlistPath }
+            meta: { projectId, dominio, ip, wordlistPath, jsonOutputPath, logOutputPath }
         });
 
     } catch (e: any) {
@@ -87,24 +70,23 @@ wp-admin`;
 
   private async processResult(payload: any) {
     const { id, stdout, meta, command, args } = payload;
-    const { dominio, ip, wordlistPath } = meta;
+    const { dominio, ip, jsonOutputPath, logOutputPath } = meta;
 
     this.log(`Processing result for ${id}`);
 
     try {
-        // Try to find JSON in the output (stdout)
-        // Ffuf with -of json prints a valid JSON object.
-        // However, sometimes there might be other text.
-        // We look for the first '{' and last '}'
-        const start = stdout.indexOf('{');
-        const end = stdout.lastIndexOf('}');
-
-        if (start === -1 || end === -1) {
-            throw new Error('No JSON found in output');
+        if (!fs.existsSync(jsonOutputPath)) {
+             throw new Error(`JSON output file not found at ${jsonOutputPath}`);
         }
 
-        const jsonStr = stdout.substring(start, end + 1);
-        const data = JSON.parse(jsonStr);
+        const jsonStr = fs.readFileSync(jsonOutputPath, 'utf8');
+        let data;
+        try {
+            data = JSON.parse(jsonStr);
+        } catch (parseError: any) {
+            throw new Error(`Failed to parse JSON from ${jsonOutputPath}: ${parseError.message}`);
+        }
+
         const results = data.results;
 
         if (results && Array.isArray(results)) {
@@ -125,14 +107,16 @@ wp-admin`;
             }
         }
 
-        // Clean up wordlist
-        //if (fs.existsSync(wordlistPath)) {
-            //fs.unlinkSync(wordlistPath);
-        //}
+        // Clean up files
+        if (fs.existsSync(jsonOutputPath)) fs.unlinkSync(jsonOutputPath);
+        // We might want to keep logOutputPath for debugging, or delete it.
+        // For now, let's keep it or delete it? Usually we don't need it if success.
+        if (fs.existsSync(logOutputPath)) fs.unlinkSync(logOutputPath);
+
 
         this.bus.emit('JOB_COMPLETED', {
             id: id,
-            result: results, // Store parsed results
+            result: results,
             rawOutput: stdout,
             executedCommand: `${command} ${args.join(' ')}`
         });
@@ -140,22 +124,28 @@ wp-admin`;
     } catch (e: any) {
         this.error(`Error processing result: ${e.message}`);
 
-        // Clean up wordlist even on error
-        //if (wordlistPath && fs.existsSync(wordlistPath)) {
-            //fs.unlinkSync(wordlistPath);
-        //}
+        // Try to read log file to give more info
+        let logContent = "";
+        if (logOutputPath && fs.existsSync(logOutputPath)) {
+            logContent = fs.readFileSync(logOutputPath, 'utf8');
+            // clean up log file
+            fs.unlinkSync(logOutputPath);
+        }
+        if (jsonOutputPath && fs.existsSync(jsonOutputPath)) {
+             fs.unlinkSync(jsonOutputPath);
+        }
 
-        this.bus.emit('JOB_FAILED', { id: id, error: e.message });
+        this.bus.emit('JOB_FAILED', { id: id, error: `${e.message}. Log: ${logContent}` });
     }
   }
 
   private processError(payload: any) {
       const { id, error, meta } = payload;
-      const { wordlistPath } = meta || {};
+      const { jsonOutputPath, logOutputPath } = meta || {};
 
-    //   if (wordlistPath && fs.existsSync(wordlistPath)) {
-    //       fs.unlinkSync(wordlistPath);
-    //   }
+      // Clean up files
+      if (jsonOutputPath && fs.existsSync(jsonOutputPath)) fs.unlinkSync(jsonOutputPath);
+      if (logOutputPath && fs.existsSync(logOutputPath)) fs.unlinkSync(logOutputPath);
 
       this.bus.emit('JOB_FAILED', {
           id: id,
