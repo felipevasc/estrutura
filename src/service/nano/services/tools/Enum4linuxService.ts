@@ -7,18 +7,18 @@ import { TipoUsuario } from '@/database/functions/usuario';
 
 export class Enum4linuxService extends NanoService {
   initialize(): void {
-    this.bus.on('COMMAND_RECEIVED', (payload) => {
+    this.listen('COMMAND_RECEIVED', (payload) => {
       if (payload.command === 'enum4linux') {
         this.processCommand(payload);
       }
     });
 
-    this.bus.on('ENUM4LINUX_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.bus.on('ENUM4LINUX_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen('ENUM4LINUX_TERMINAL_RESULT', (payload) => this.processResult(payload));
+    this.listen('ENUM4LINUX_TERMINAL_ERROR', (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
-    const { commandId, args, projectId } = payload;
+    const { id, args, projectId } = payload;
     const idIp = args.idIp;
 
     this.log(`Processing Enum4linux for IP ID: ${idIp}`);
@@ -36,7 +36,7 @@ export class Enum4linuxService extends NanoService {
         const argumentos = ['-U', '-r', enderecoIp];
 
         this.bus.emit('EXECUTE_TERMINAL', {
-            executionId: commandId,
+            id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
@@ -47,17 +47,18 @@ export class Enum4linuxService extends NanoService {
 
     } catch (e: any) {
         this.bus.emit('JOB_FAILED', {
-            commandId,
+            id: id,
             error: e.message
         });
     }
   }
 
   private async processResult(payload: any) {
-      const { executionId, output, meta, command, args } = payload;
+      const { executionId, id, output, meta, command, args } = payload;
+      const jobId = id ?? executionId;
       const { idIp } = meta;
 
-      this.log(`Processing result for ${executionId}`);
+      this.log(`Processing result for ${jobId}`);
 
       try {
         const linhas = output?.split("\n") ?? [];
@@ -76,7 +77,7 @@ export class Enum4linuxService extends NanoService {
         await Database.adicionarUsuarios(usuarios, Number(idIp));
 
         this.bus.emit('JOB_COMPLETED', {
-            commandId: executionId,
+            id: jobId,
             result: usuarios,
             rawOutput: output,
             executedCommand: `${command} ${args.join(' ')}`
@@ -84,16 +85,16 @@ export class Enum4linuxService extends NanoService {
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              commandId: executionId,
+              id: jobId,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, error } = payload;
+      const { executionId, id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          commandId: executionId,
+          id: id ?? executionId,
           error: error
       });
   }

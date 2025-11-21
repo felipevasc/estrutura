@@ -6,18 +6,18 @@ import os from 'node:os';
 
 export class SubfinderService extends NanoService {
   initialize(): void {
-    this.bus.on('COMMAND_RECEIVED', (payload) => {
+    this.listen('COMMAND_RECEIVED', (payload) => {
       if (payload.command === 'subfinder') {
         this.processCommand(payload);
       }
     });
 
-    this.bus.on('SUBFINDER_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.bus.on('SUBFINDER_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen('SUBFINDER_TERMINAL_RESULT', (payload) => this.processResult(payload));
+    this.listen('SUBFINDER_TERMINAL_ERROR', (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
-    const { commandId, args, projectId } = payload;
+    const { id, args, projectId } = payload;
     const idDominio = args.idDominio;
 
     this.log(`Processing Subfinder for domain ID: ${idDominio}`);
@@ -35,7 +35,7 @@ export class SubfinderService extends NanoService {
         const argumentos = ['-d', dominio, "--all", "-silent"];
 
         this.bus.emit('EXECUTE_TERMINAL', {
-            executionId: commandId,
+            id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
@@ -46,17 +46,18 @@ export class SubfinderService extends NanoService {
 
     } catch (e: any) {
         this.bus.emit('JOB_FAILED', {
-            commandId,
+            id: id,
             error: e.message
         });
     }
   }
 
   private async processResult(payload: any) {
-      const { executionId, output, meta, command, args } = payload;
+      const { executionId, id, output, meta, command, args } = payload;
+      const jobId = id ?? executionId;
       const { op } = meta;
 
-      this.log(`Processing result for ${executionId}`);
+      this.log(`Processing result for ${jobId}`);
 
       try {
         const subdominios = output?.split("\n").filter((s: string) => !!s) ?? [];
@@ -64,7 +65,7 @@ export class SubfinderService extends NanoService {
         await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
 
         this.bus.emit('JOB_COMPLETED', {
-            commandId: executionId,
+            id: jobId,
             result: subdominios,
             rawOutput: output,
             executedCommand: `${command} ${args.join(' ')}`
@@ -72,16 +73,16 @@ export class SubfinderService extends NanoService {
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              commandId: executionId,
+              id: jobId,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, error } = payload;
+      const { executionId, id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          commandId: executionId,
+          id: id ?? executionId,
           error: error
       });
   }

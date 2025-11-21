@@ -9,6 +9,10 @@ export abstract class NanoService {
 
   abstract initialize(): void;
 
+  protected listen(event: string, callback: (...args: any[]) => void) {
+    this.bus.on(event, callback);
+  }
+
   protected log(message: string, ...args: any[]) {
     console.log(`[${this.constructor.name}] ${message}`, ...args);
   }

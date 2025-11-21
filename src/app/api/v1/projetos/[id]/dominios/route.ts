@@ -13,10 +13,6 @@ const includeIp = {
     }
 };
 
-const includeDiretorios = {
-    diretorios: true
-}
-
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<DominioResponse[]> {
     const p = await params
     const ret = await prisma.dominio.findMany({
