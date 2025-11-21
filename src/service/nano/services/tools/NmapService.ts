@@ -7,18 +7,18 @@ import { TipoPorta } from '@/database/functions/ip';
 
 export class NmapService extends NanoService {
   initialize(): void {
-    this.bus.on('COMMAND_RECEIVED', (payload) => {
+    this.listen('COMMAND_RECEIVED', (payload) => {
       if (payload.command === 'nmap') {
         this.processCommand(payload);
       }
     });
 
-    this.bus.on('NMAP_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.bus.on('NMAP_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen('NMAP_TERMINAL_RESULT', (payload) => this.processResult(payload));
+    this.listen('NMAP_TERMINAL_ERROR', (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
-    const { commandId, args, projectId } = payload;
+    const { id, args, projectId } = payload;
     const idIp = args.idIp;
 
     this.log(`Processing Nmap for IP ID: ${idIp}`);
@@ -36,7 +36,7 @@ export class NmapService extends NanoService {
         const argumentos = ['-Pn', enderecoIp, "-p", "1-9999"];
 
         this.bus.emit('EXECUTE_TERMINAL', {
-            executionId: commandId,
+            id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
@@ -47,17 +47,18 @@ export class NmapService extends NanoService {
 
     } catch (e: any) {
         this.bus.emit('JOB_FAILED', {
-            commandId,
+            id: id,
             error: e.message
         });
     }
   }
 
   private async processResult(payload: any) {
-      const { executionId, output, meta, command, args } = payload;
+      const { executionId, id, output, meta, command, args } = payload;
+      const jobId = id ?? executionId;
       const { op, idIp } = meta;
 
-      this.log(`Processing result for ${executionId}`);
+      this.log(`Processing result for ${jobId}`);
 
       try {
         const linhas = output?.split("\n").filter((s: string) => !!s) ?? [];
@@ -79,7 +80,7 @@ export class NmapService extends NanoService {
         await Database.adicionarPortas(portas, Number(idIp));
 
         this.bus.emit('JOB_COMPLETED', {
-            commandId: executionId,
+            id: jobId,
             result: portas,
             rawOutput: output,
             executedCommand: `${command} ${args.join(' ')}`
@@ -87,16 +88,16 @@ export class NmapService extends NanoService {
 
       } catch (e: any) {
           this.bus.emit('JOB_FAILED', {
-              commandId: executionId,
+              id: jobId,
               error: e.message
           });
       }
   }
 
   private processError(payload: any) {
-      const { executionId, error } = payload;
+      const { executionId, id, error } = payload;
       this.bus.emit('JOB_FAILED', {
-          commandId: executionId,
+          id: id ?? executionId,
           error: error
       });
   }

@@ -8,7 +8,8 @@ export class TerminalService extends NanoService {
   }
 
   private execute(payload: any) {
-    const { executionId, command, args, outputFile, replyTo, errorTo, meta } = payload;
+    const { id, command, args, outputFile, replyTo, errorTo, meta } = payload;
+    const executionId = id ?? payload.executionId;
     this.log(`Executing: ${command} ${args.join(' ')}`);
 
     const processo = spawn(command, args);
