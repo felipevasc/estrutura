@@ -13,32 +13,6 @@ export class AmassService extends NanoService {
       }
     });
 
-    this.listen('TERMINAL_RESULT', (payload) => {
-        // We need to verify if this result belongs to AmassService
-        // But wait, the EventBus is global. How do we filter?
-        // In a real message bus, we would subscribe to a topic or check correlation ID.
-        // Here we check the ID format or we just check if we have a pending job for this ID.
-        // For simplicity, let's assume we check if we can parse it or if it's meant for us.
-        // Ideally, we should store state "pendingJobs".
-
-        // A better way is to have a specific event like 'AMASS_TERMINAL_RESULT' but TerminalService is generic.
-        // So TerminalService emits 'TERMINAL_RESULT'.
-        // We can check if the payload has a 'source' or 'tool' field if we passed it.
-        // Let's add 'meta' to execute payload.
-    });
-
-    // To handle the correlation properly without state in the service (which might be lost if process restarts, though here it's in memory),
-    // we can assume the NanoSystem is persistent during the request.
-    // Since we are refactoring for "Nano Services", we should accept that they might be stateless.
-    // So we need to persist the context.
-    // But wait, the `processCommand` will trigger terminal, and then we need to pick up the result.
-
-    // Let's actually implement a listener that checks the executionId.
-    // We can use a map to store pending executions if we want, OR we can just inspect the payload.
-    // However, `TerminalService` doesn't know about "amass".
-    // So `AmassService` listens to `TERMINAL_RESULT` and checks if the executionId matches one it expects?
-    // Or we can pass a 'callbackChannel' in the payload? 'AMASS_RESULT'.
-
     this.listen('AMASS_TERMINAL_RESULT', (payload) => this.processResult(payload));
     this.listen('AMASS_TERMINAL_ERROR', (payload) => this.processError(payload));
   }
@@ -62,20 +36,16 @@ export class AmassService extends NanoService {
         const nomeArquivoSaida = `amass_resultado_${op?.projetoId}_${op?.id}_${dominio}_${Date.now()}.txt`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
         const comando = 'amass';
-        const argumentos = ['enum', '-d', dominio, '-timeout', "2", "2>&1"];
-
-        // Emit to Terminal Service
-        // We use a custom reply channel 'AMASS_TERMINAL_RESULT' so we don't conflict with other tools
-        // Actually, TerminalService emits 'TERMINAL_RESULT'. We need to change TerminalService to support reply topics or we just filter.
-        // Let's modify TerminalService to emit back to a specific event if provided.
+        // Removed "2>&1" because spawn does not support shell redirection in args
+        const argumentos = ['enum', '-d', dominio, '-timeout', "2"];
 
         this.bus.emit('EXECUTE_TERMINAL', {
             id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
-            replyTo: 'AMASS_TERMINAL_RESULT', // New field
-            errorTo: 'AMASS_TERMINAL_ERROR',   // New field
+            replyTo: 'AMASS_TERMINAL_RESULT',
+            errorTo: 'AMASS_TERMINAL_ERROR',
             meta: { projectId, dominio, op }
         });
 
@@ -90,7 +60,8 @@ export class AmassService extends NanoService {
   private async processResult(payload: any) {
       const { executionId, id, output, meta, command, args } = payload;
       const jobId = id ?? executionId;
-      const { projectId, dominio, op } = meta;
+      const { op } = meta;
+      const { dominio } = meta;
 
       this.log(`Processing result for ${jobId}`);
 
@@ -114,6 +85,9 @@ export class AmassService extends NanoService {
             }
         }
 
+        // Use combined output (stdout + stderr) as amass might print important info to stderr?
+        // Actually, amass prints results to stdout.
+        // But since we kept 'output' as combined in TerminalService, we are good.
         output?.split("\n").forEach((linha: string) => {
             const colunas = linha.split(" --> ");
             if (colunas.length === 3) {

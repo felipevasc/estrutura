@@ -9,9 +9,37 @@ export class QueueService extends NanoService {
   private readonly JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout
 
   initialize(): void {
+    this.recoverQueue();
     this.listen('KICK_QUEUE', () => this.processQueue());
     this.listen('JOB_COMPLETED', (payload: any) => this.handleJobCompleted(payload));
     this.listen('JOB_FAILED', (payload: any) => this.handleJobFailed(payload));
+  }
+
+  /**
+   * Recovers any jobs that were stuck in RUNNING state when the system started.
+   * This happens if the server crashed or was restarted during execution.
+   */
+  private async recoverQueue() {
+    this.log('Recovering queue...');
+    try {
+        const stuckCommands = await prisma.command.findMany({
+            where: { status: CommandStatus.RUNNING },
+        });
+
+        for (const cmd of stuckCommands) {
+            this.log(`Marking stuck command ${cmd.id} as FAILED`);
+            await prisma.command.update({
+                where: { id: cmd.id },
+                data: {
+                    status: CommandStatus.FAILED,
+                    completedAt: new Date(),
+                    output: 'System restarted during execution',
+                },
+            });
+        }
+    } catch (e) {
+        this.error('Error recovering queue', e);
+    }
   }
 
   private async processQueue() {

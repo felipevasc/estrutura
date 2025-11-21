@@ -13,8 +13,10 @@ export class TerminalService extends NanoService {
     this.log(`Executing: ${command} ${args.join(' ')}`);
 
     const processo = spawn(command, args);
-    let saidaComando = "";
-    let erroComando = "";
+    let stdoutOutput = "";
+    let stderrOutput = "";
+    let combinedOutput = "";
+    let processError = "";
 
     // Only write to file if outputFile is provided
     let streamArquivo: any = null;
@@ -24,24 +26,31 @@ export class TerminalService extends NanoService {
 
     processo.stderr.on('data', (dados: Buffer) => {
       const texto = dados.toString();
-      saidaComando += texto;
+      stderrOutput += texto;
+      combinedOutput += texto;
+      if (streamArquivo) streamArquivo.write(texto);
     });
 
     processo.stdout.on('data', (dados: Buffer) => {
       const texto = dados.toString();
-      saidaComando += texto;
+      stdoutOutput += texto;
+      combinedOutput += texto;
+      if (streamArquivo) streamArquivo.write(texto);
     });
 
     processo.on('error', (erro) => {
       this.error("Erro recebido", erro);
-      erroComando += erro.toString();
+      processError += erro.toString();
       if (streamArquivo) streamArquivo.close();
 
       const errorEvent = errorTo || 'TERMINAL_ERROR';
       this.bus.emit(errorEvent, {
-          executionId,
-          error: erroComando || erro.message,
-          output: saidaComando,
+          id: executionId, // Standardized on id
+          executionId,     // Kept for backward compatibility
+          error: processError || erro.message,
+          output: combinedOutput, // Backward compatibility
+          stdout: stdoutOutput,
+          stderr: stderrOutput,
           meta,
           command,
           args
@@ -54,9 +63,12 @@ export class TerminalService extends NanoService {
       if (codigo === 0) {
         const successEvent = replyTo || 'TERMINAL_RESULT';
         this.bus.emit(successEvent, {
+            id: executionId,
             executionId,
-            output: saidaComando,
-            error: erroComando,
+            output: combinedOutput,
+            stdout: stdoutOutput,
+            stderr: stderrOutput,
+            error: processError,
             meta,
             command,
             args
@@ -64,9 +76,12 @@ export class TerminalService extends NanoService {
       } else {
         const errorEvent = errorTo || 'TERMINAL_ERROR';
         this.bus.emit(errorEvent, {
+            id: executionId,
             executionId,
-            error: erroComando || `Comando '${command}' terminou com o código de erro: ${codigo}`,
-            output: saidaComando,
+            error: processError || `Comando '${command}' terminou com o código de erro: ${codigo}`,
+            output: combinedOutput,
+            stdout: stdoutOutput,
+            stderr: stderrOutput,
             meta,
             command,
             args
