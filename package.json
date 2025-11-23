@@ -10,7 +10,8 @@
     "build": "tsc --declaration --emitDeclarationOnly false",
     "start": "next start",
     "lint": "next lint",
-    "updatedb": "prisma migrate dev"
+    "updatedb": "prisma migrate dev",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
