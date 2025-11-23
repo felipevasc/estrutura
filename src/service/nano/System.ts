@@ -1,16 +1,10 @@
-import { QueueService } from './services/QueueService';
-import { TerminalService } from './services/TerminalService';
-import { AmassService } from './services/tools/AmassService';
-import { SubfinderService } from './services/tools/SubfinderService';
-import { NslookupService } from './services/tools/NslookupService';
-import { NmapService } from './services/tools/NmapService';
-import { Enum4linuxService } from './services/tools/Enum4linuxService';
-import { FfufService } from './services/tools/FfufService';
 import EventBus from './EventBus';
+import { registeredServices } from './registry';
+import { NanoService } from './NanoService';
 
 class NanoSystem {
   private static instance: NanoSystem;
-  private services: any[] = [];
+  private services: NanoService[] = [];
   private initialized = false;
 
   private constructor() {}
@@ -25,19 +19,13 @@ class NanoSystem {
   public initialize() {
     if (this.initialized) return;
 
-    console.log('[NanoSystem] Initializing services...');
+    console.log('[NanoSystem] Initializing services from registry...');
 
-    this.services.push(new QueueService());
-    this.services.push(new TerminalService());
-    this.services.push(new AmassService());
-    this.services.push(new SubfinderService());
-    this.services.push(new NslookupService());
-    this.services.push(new NmapService());
-    this.services.push(new Enum4linuxService());
-    this.services.push(new FfufService());
+    // Load services from registry
+    this.services = [...registeredServices];
 
     this.initialized = true;
-    console.log('[NanoSystem] Services initialized.');
+    console.log(`[NanoSystem] ${this.services.length} services initialized.`);
   }
 
   public process() {
