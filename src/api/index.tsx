@@ -4,6 +4,7 @@ import useIps from "./ips";
 import useProjetos from "./projetos";
 import useQueue from "./queue";
 import useUsuarios from "./usuarios";
+import useIa from "./ia";
 
 const useApi = () => {
     const dominios = useDominios();
@@ -12,6 +13,7 @@ const useApi = () => {
     const ips = useIps();
     const queue = useQueue();
     const usuarios = useUsuarios();
+    const ia = useIa();
     return {
         projeto: { ...projetos },
         dominios: { ...dominios },
@@ -19,6 +21,7 @@ const useApi = () => {
         ips: { ...ips },
         queue: { ...queue },
         usuarios: { ...usuarios },
+        ia: { ...ia },
     }
 }
 
