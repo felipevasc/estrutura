@@ -14,7 +14,17 @@ const useIps = () => {
         enabled: !!idIp
     });
 
-    return { getIp };
+    const getIps = (idProjeto?: number) => useQuery({
+        queryKey: ["get-ips-projeto", idProjeto],
+        queryFn: async (): Promise<IpResponse[]> => {
+            const res = await fetch(`/api/v1/projetos/${idProjeto}/ips`);
+            const data = await res.json();
+            return data;
+        },
+        enabled: !!idProjeto
+    });
+
+    return { getIp, getIps };
 }
 
 export default useIps;

@@ -1,26 +1,29 @@
 import prisma from "@/database";
 import { ApiResponse } from "@/types/ApiResponse";
-import { UsuarioResponse } from "@/types/UsuarioResponse";
+import { PortaResponse } from "@/types/PortaResponse";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<UsuarioResponse[]> {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<PortaResponse[]> {
     const p = await params;
-    const ret = await prisma.usuario.findMany({
+    const ret = await prisma.porta.findMany({
         where: {
             ip: {
                 projetoId: Number(p.id),
             },
+            servico: {
+                not: null
+            }
         },
         include: {
             ip: {
                 include: {
-                    portas: true,
-                    dominios: true,
-                    redes: true,
                     usuarios: true,
-                    diretorios: true,
+                    dominios: true,
+                    portas: true,
+                    redes: true,
+                    diretorios: true
                 }
-            },
+            }
         },
     });
     return NextResponse.json(ret);

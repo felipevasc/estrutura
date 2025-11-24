@@ -37,7 +37,6 @@
     "react-xtermjs": "^1.0.10",
     "sqlite3": "^5.1.7",
     "styled-components": "^6.1.19",
-    "tsc": "^2.0.4",
     "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0"
   },
@@ -53,7 +52,7 @@
     "prisma": "^6.13.0",
     "sass": "^1.90.0",
     "tailwindcss": "^4",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "repository": {
     "type": "git",

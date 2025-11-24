@@ -1,8 +1,8 @@
 export type DiretorioResponse = {
     id: number;
     caminho: string;
-    status?: number;
-    tamanho?: number;
-    dominioId?: number;
-    ipId?: number;
+    status?: number | null;
+    tamanho?: number | null;
+    dominioId?: number | null;
+    ipId?: number | null;
 }

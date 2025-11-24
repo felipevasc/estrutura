@@ -14,6 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             redes: true,
             portas: true,
             usuarios: true,
+            diretorios: true, // Added missing include
         }
     });
     return NextResponse.json(ret);

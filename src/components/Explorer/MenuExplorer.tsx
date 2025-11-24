@@ -2,7 +2,7 @@
 import { Button } from "@/common/components"
 import { StyledMenuExplorer } from "./styles"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faDatabase, faGlobe, faNetworkWired, faSitemap, faUser, faUserFriends, faWebAwesome } from "@fortawesome/free-solid-svg-icons"
+import { faDatabase, faGlobe, faNetworkWired, faSitemap, faUser, faUserFriends, faWebAwesome, faCogs } from "@fortawesome/free-solid-svg-icons"
 import { useContext } from "react"
 import StoreContext from "@/store"
 
@@ -18,8 +18,8 @@ const MenuExplorer = () => {
         <Button type="primary" darkMode={true} checked={explorer?.get() === "user"} onClick={() => explorer?.set("user")}>
             <FontAwesomeIcon icon={faUserFriends} />
         </Button>
-        <Button type="primary" darkMode={true} checked={explorer?.get() === "database"} onClick={() => explorer?.set("database")}>
-            <FontAwesomeIcon icon={faDatabase} />
+        <Button type="primary" darkMode={true} checked={explorer?.get() === "service"} onClick={() => explorer?.set("service")}>
+            <FontAwesomeIcon icon={faCogs} />
         </Button>
     </StyledMenuExplorer>
 }
