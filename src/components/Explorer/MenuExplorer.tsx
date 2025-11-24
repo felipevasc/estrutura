@@ -1,26 +1,36 @@
 "use client"
-import { Button } from "@/common/components"
 import { StyledMenuExplorer } from "./styles"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faDatabase, faGlobe, faNetworkWired, faSitemap, faUser, faUserFriends, faWebAwesome, faCogs } from "@fortawesome/free-solid-svg-icons"
+import { faGlobe, faSitemap, faUserFriends, faCogs } from "@fortawesome/free-solid-svg-icons"
 import { useContext } from "react"
 import StoreContext from "@/store"
+import { Tooltip } from "antd"
 
 const MenuExplorer = () => {
     const { explorer } = useContext(StoreContext);
+    const current = explorer?.get();
+
     return <StyledMenuExplorer>
-        <Button type="primary" darkMode={true} checked={explorer?.get() === "domain"} onClick={() => explorer?.set("domain")}>
-            <FontAwesomeIcon icon={faGlobe} />
-        </Button>
-        <Button type="primary" darkMode={true} checked={explorer?.get() === "network"} onClick={() => explorer?.set("network")}>
-            <FontAwesomeIcon icon={faSitemap} />
-        </Button>
-        <Button type="primary" darkMode={true} checked={explorer?.get() === "user"} onClick={() => explorer?.set("user")}>
-            <FontAwesomeIcon icon={faUserFriends} />
-        </Button>
-        <Button type="primary" darkMode={true} checked={explorer?.get() === "service"} onClick={() => explorer?.set("service")}>
-            <FontAwesomeIcon icon={faCogs} />
-        </Button>
+        <Tooltip title="Domínios">
+            <button className={current === "domain" ? "active" : ""} onClick={() => explorer?.set("domain")}>
+                <FontAwesomeIcon icon={faGlobe} />
+            </button>
+        </Tooltip>
+        <Tooltip title="Rede">
+            <button className={current === "network" ? "active" : ""} onClick={() => explorer?.set("network")}>
+                <FontAwesomeIcon icon={faSitemap} />
+            </button>
+        </Tooltip>
+        <Tooltip title="Usuários">
+            <button className={current === "user" ? "active" : ""} onClick={() => explorer?.set("user")}>
+                <FontAwesomeIcon icon={faUserFriends} />
+            </button>
+        </Tooltip>
+        <Tooltip title="Serviços">
+            <button className={current === "service" ? "active" : ""} onClick={() => explorer?.set("service")}>
+                <FontAwesomeIcon icon={faCogs} />
+            </button>
+        </Tooltip>
     </StyledMenuExplorer>
 }
 
