@@ -1,11 +1,14 @@
 import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined;
+  prisma_v1: PrismaClient | undefined;
 };
 
-const prisma = globalForPrisma.prisma ?? new PrismaClient();
+// Use a new key to force a fresh instance after schema update
+const prisma = globalForPrisma.prisma_v1 ?? new PrismaClient();
 
-globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') {
+    globalForPrisma.prisma_v1 = prisma;
+}
 
 export default prisma;
