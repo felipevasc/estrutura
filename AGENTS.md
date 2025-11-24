@@ -7,7 +7,12 @@ Este repositório foi arquitetado para ser mantido e expandido por IAs. Siga est
 1.  **Nano-Serviços Independentes:** Cada funcionalidade do backend deve ser um serviço isolado (`NanoService`).
     *   Um serviço **não deve** importar a lógica de outro serviço.
     *   A comunicação é feita **exclusivamente** via `EventBus`.
-2.  **Registro Centralizado:**
+2.  **Padrões de Código e Arquitetura:**
+    *   **Português:** Todas as variáveis, funções, métodos e nomes de arquivos/módulos devem ser em português.
+    *   **Sem Comentários:** O código deve ser autoexplicativo. Não adicione comentários nas linhas.
+    *   **Concisão:** Escreva o código da menor forma possível.
+    *   **Modularidade:** Módulos devem ser totalmente independentes e coesos. A evolução de um não deve depender do conhecimento interno de outro.
+3.  **Registro Centralizado:**
     *   Não modifique a lógica do `System.ts` ou do `Explorer/index.tsx`.
     *   Para adicionar um serviço ou visualização, crie o arquivo e adicione-o ao arquivo de registro correspondente (`registry.ts` ou `viewRegistry.tsx`).
 3.  **Imutabilidade do Core:** Se você precisa alterar `QueueService`, `TerminalService` ou `System.ts`, pare e pense. É provável que você deva criar um *novo* serviço que interaja com eles via eventos.
