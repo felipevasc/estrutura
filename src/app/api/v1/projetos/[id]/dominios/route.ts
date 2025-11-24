@@ -14,7 +14,8 @@ const includeIp = {
 };
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<DominioResponse[]> {
-    const p = await params
+    const p = await params;
+    // Force route rebuild
     const ret = await prisma.dominio.findMany({
         where: {
             projetoId: Number(p.id),
