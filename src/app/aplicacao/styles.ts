@@ -12,6 +12,10 @@ export const StyledEstruturaInicial = styled.div`
     overflow: hidden;
     width: 100%;
     gap: 0;
+
+    .nextjs-toast {
+      display: none;
+    }
 `
 
 export const StyledEstruturaCentro = styled.div`
