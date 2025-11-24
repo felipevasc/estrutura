@@ -1,7 +1,8 @@
-import { ContainerRecon, ConteudoPrincipal, PainelLateral } from "./styles";
+import { ContainerRecon, ConteudoPrincipal, PainelLateral, PainelInspector } from "./styles";
 import Explorer from "@/components/Explorer";
-import Visualizador from "@/components/Visualizador";
-import Ferramentas from "@/components/Ferramentas";
+import Workspace from "@/components/Workspace";
+import Inspector from "@/components/Inspector";
+import StatusBar from "@/components/StatusBar";
 
 export default function Reconhecimento() {
   return (
@@ -9,12 +10,16 @@ export default function Reconhecimento() {
       <PainelLateral>
         <Explorer />
       </PainelLateral>
+
       <ConteudoPrincipal>
-        <Visualizador />
+        <Workspace />
       </ConteudoPrincipal>
-      <PainelLateral>
-        <Ferramentas />
-      </PainelLateral>
+
+      <PainelInspector>
+        <Inspector />
+      </PainelInspector>
+
+      <StatusBar />
     </ContainerRecon>
   );
 }

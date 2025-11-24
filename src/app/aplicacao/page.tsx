@@ -3,7 +3,6 @@ import { useState } from "react";
 import { StyledEstruturaInicial } from "./styles";
 import Topo from "@/layout/Topo";
 import Rodape from "@/layout/Rodape";
-import QueueStatus from "@/components/QueueStatus";
 import ChatWidget from "@/components/Chat";
 import Navegacao from "@/components/Navegacao";
 import Reconhecimento from "@/modulos/Reconhecimento";
@@ -33,7 +32,6 @@ export default function Aplicacao() {
         {renderizarModulo()}
         <Rodape />
       </StyledEstruturaInicial>
-      <QueueStatus />
       <ChatWidget />
     </>
   );
