@@ -1,3 +1,4 @@
+import useChat from "./chat";
 import useDominios from "./dominios";
 import useFerramentas from "./ferramentas";
 import useIps from "./ips";
@@ -6,6 +7,7 @@ import useQueue from "./queue";
 import useUsuarios from "./usuarios";
 
 const useApi = () => {
+    const chat = useChat();
     const dominios = useDominios();
     const projetos = useProjetos();
     const ferramentas = useFerramentas();
@@ -13,6 +15,7 @@ const useApi = () => {
     const queue = useQueue();
     const usuarios = useUsuarios();
     return {
+        chat: { ...chat },
         projeto: { ...projetos },
         dominios: { ...dominios },
         ferramentas: { ...ferramentas },

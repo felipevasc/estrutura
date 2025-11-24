@@ -60,6 +60,26 @@ O `Explorer` exibe árvores de dados baseadas no contexto (Domínios, Usuários,
 *   Use `src/database/Database.ts` para operações comuns (adicionar subdomínio, IP, etc.).
 *   Evite lógica complexa de banco dentro dos serviços se ela puder ser reutilizada.
 
+## Integração com IA
+
+O projeto agora possui um módulo de IA para auxílio em operações de Red Team.
+
+### Estrutura
+*   `src/service/ai/AiService.ts`: Serviço de interação com a OpenAI e recuperação de contexto.
+*   `src/service/ai/CommandInterpreter.ts`: Interpretador de comandos sugeridos pela IA para payloads de NanoServices.
+*   `src/app/api/v1/chat/`: Endpoints para chat e execução de comandos.
+*   `src/components/Chat/`: Interface do usuário (Widget e Drawer).
+
+### Protocolo de Comandos
+A IA pode sugerir comandos no formato JSON:
+`{"COMANDO":"NOME", "PARAMETRO1":"VALOR"}`
+
+O `CommandInterpreter` converte estes comandos para a estrutura interna dos NanoServices (ex: resolvendo nomes de domínio para IDs).
+
+### Como adicionar novos comandos à IA
+1.  Implemente o comando no `src/service/ai/CommandInterpreter.ts`.
+2.  Atualize o Prompt do Sistema em `src/service/ai/AiService.ts` para instruir a IA sobre o novo comando.
+
 ## Onde encontrar as coisas
 
 *   `src/service/nano/services/`: Serviços Core (Queue, Terminal).

@@ -13,6 +13,7 @@ import Explorer from "@/components/Explorer";
 import Visualizador from "@/components/Visualizador";
 import Ferramentas from "@/components/Ferramentas";
 import QueueStatus from "@/components/QueueStatus";
+import ChatWidget from "@/components/Chat";
 import '@ant-design/v5-patch-for-react-19';
 
 export default function Aplicacao() {
@@ -34,6 +35,7 @@ export default function Aplicacao() {
         <Rodape />
       </StyledEstruturaInicial>
       <QueueStatus />
+      <ChatWidget />
     </>
   );
 }
