@@ -3,18 +3,20 @@ import prisma from '@/database';
 import Database from '@/database/Database';
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs';
 import { TipoIp } from '@/database/functions/ip';
+import { NanoEvents } from '../../events';
 
 export class AmassService extends NanoService {
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', (payload) => {
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'amass') {
         this.processCommand(payload);
       }
     });
 
-    this.listen('AMASS_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.listen('AMASS_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen(NanoEvents.AMASS_TERMINAL_RESULT, (payload) => this.processResult(payload));
+    this.listen(NanoEvents.AMASS_TERMINAL_ERROR, (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
@@ -33,24 +35,29 @@ export class AmassService extends NanoService {
             throw new Error('Domínio inválido ou inseguro fornecido.');
         }
 
-        const nomeArquivoSaida = `amass_resultado_${op?.projetoId}_${op?.id}_${dominio}_${Date.now()}.txt`;
-        const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
-        const comando = 'amass';
-        // Removed "2>&1" because spawn does not support shell redirection in args
-        const argumentos = ['enum', '-d', dominio, '-timeout', "2"];
+        // JSON output file
+        const jsonOutputFile = path.join(os.tmpdir(), `amass_${op?.projetoId}_${id}_${Date.now()}.json`);
+        // Log file for stdout/stderr (mostly progress bars or errors)
+        const logOutputFile = path.join(os.tmpdir(), `amass_log_${op?.projetoId}_${id}_${Date.now()}.txt`);
 
-        this.bus.emit('EXECUTE_TERMINAL', {
+        const comando = 'amass';
+        // Use -json output for reliable parsing
+        // -timeout 15 (minutes) is better than 2 if we want real results, but let's stick to 2 if it was intentional.
+        // Actually, let's assume 5 mins.
+        const argumentos = ['enum', '-d', dominio, '-timeout', "5", '-json', jsonOutputFile];
+
+        this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: comando,
             args: argumentos,
-            outputFile: caminhoSaida,
-            replyTo: 'AMASS_TERMINAL_RESULT',
-            errorTo: 'AMASS_TERMINAL_ERROR',
-            meta: { projectId, dominio, op }
+            outputFile: logOutputFile,
+            replyTo: NanoEvents.AMASS_TERMINAL_RESULT,
+            errorTo: NanoEvents.AMASS_TERMINAL_ERROR,
+            meta: { projectId, dominio, op, jsonOutputFile, logOutputFile }
         });
 
     } catch (e: any) {
-        this.bus.emit('JOB_FAILED', {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
             error: e.message
         });
@@ -60,73 +67,80 @@ export class AmassService extends NanoService {
   private async processResult(payload: any) {
       const { executionId, id, output, meta, command, args } = payload;
       const jobId = id ?? executionId;
-      const { op } = meta;
-      const { dominio } = meta;
+      const { op, jsonOutputFile, logOutputFile } = meta;
 
       this.log(`Processing result for ${jobId}`);
 
       try {
         const subdominios: string[] = [];
-        const redes: string[] = [];
         const ips: TipoIp[] = [];
 
-        const addElemento = (elemento: string, tipo: string, elementoAssociado: string, tipoAssociado: string) => {
-            if (tipo === "FQDN") {
-            subdominios.push(elemento);
-            } else if (tipo === "IPAddress") {
-            if (tipoAssociado === "FQDN") {
-                ips.push({
-                endereco: elemento,
-                dominio: elementoAssociado,
-                });
+        // Read JSON output
+        if (fs.existsSync(jsonOutputFile)) {
+            const content = fs.readFileSync(jsonOutputFile, 'utf-8');
+            // Amass writes one JSON object per line
+            const lines = content.split('\n').filter(l => l.trim());
+
+            for (const line of lines) {
+                try {
+                    const item = JSON.parse(line);
+                    // Amass JSON structure:
+                    // { "name": "sub.example.com", "domain": "example.com", "addresses": [ { "ip": "1.2.3.4", "cidr": "...", "asn": ... } ] }
+
+                    if (item.name) {
+                        subdominios.push(item.name);
+                    }
+
+                    if (item.addresses && Array.isArray(item.addresses)) {
+                        for (const addr of item.addresses) {
+                            if (addr.ip) {
+                                ips.push({
+                                    endereco: addr.ip,
+                                    dominio: item.name || item.domain // Link IP to the subdomain found
+                                });
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // ignore parse error for single line
+                }
             }
-            } else if (tipo === "Netblock") {
-            redes.push(elemento);
-            }
+
+            // Cleanup
+            fs.unlinkSync(jsonOutputFile);
+        } else {
+            this.log('Warning: No JSON output file found from Amass. Maybe no results?');
         }
 
-        // Use combined output (stdout + stderr) as amass might print important info to stderr?
-        // Actually, amass prints results to stdout.
-        // But since we kept 'output' as combined in TerminalService, we are good.
-        output?.split("\n").forEach((linha: string) => {
-            const colunas = linha.split(" --> ");
-            if (colunas.length === 3) {
-            const tmp0 = colunas[0]?.trim()?.replaceAll(")", "").split("(");
-            const ativoOrigem = tmp0[0].trim();
-            const tipoAtivoOrigem = tmp0[1];
-
-            const tmp1 = colunas[2].trim().replaceAll(")", "").split("(");
-            // console.warn(tmp0, tmp1)
-            const ativoDestino = tmp1[0].trim();
-            const tipoAtivoDestino = tmp1[1].trim();
-
-            // const relacao = colunas[1].trim();
-
-            if (ativoOrigem.indexOf(dominio) > -1 || ativoDestino.indexOf(dominio) > -1) {
-                addElemento(ativoOrigem, tipoAtivoOrigem, ativoDestino, tipoAtivoDestino);
-                addElemento(ativoDestino, tipoAtivoDestino, ativoOrigem, tipoAtivoOrigem);
-            }
-            }
-        });
-
-        const tmp = {
-            subdominios: subdominios.filter((i, idx) => idx === subdominios.findIndex((item) => item === i)).sort((a, b) => a.split(".").reverse().join(".") > b.split(".").reverse().join(".") ? 1 : -1),
-            ips: ips.filter((i, idx) => idx === ips.findIndex((item) => item === i)).sort(),
-            redes: redes.filter((i, idx) => idx === redes.findIndex((item) => item === i)).sort(),
+        // Cleanup log file
+        if (fs.existsSync(logOutputFile)) {
+            fs.unlinkSync(logOutputFile);
         }
 
-        await Database.adicionarSubdominio(tmp.subdominios, op?.projetoId ?? 0);
-        await Database.adicionarIp(tmp.ips, op?.projetoId ?? 0);
+        const uniqueSubs = [...new Set(subdominios)];
+        // Sort and filter unique IPs
+        const uniqueIps = ips.filter((v, i, a) => a.findIndex(t => t.endereco === v.endereco && t.dominio === v.dominio) === i);
 
-        this.bus.emit('JOB_COMPLETED', {
+        if (uniqueSubs.length > 0) {
+             await Database.adicionarSubdominio(uniqueSubs, op?.projetoId ?? 0);
+        }
+        if (uniqueIps.length > 0) {
+             await Database.adicionarIp(uniqueIps, op?.projetoId ?? 0);
+        }
+
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: jobId,
-            result: tmp,
+            result: { subdominios: uniqueSubs, ips: uniqueIps },
             rawOutput: output,
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
-          this.bus.emit('JOB_FAILED', {
+          // Cleanup on error
+          if (jsonOutputFile && fs.existsSync(jsonOutputFile)) fs.unlinkSync(jsonOutputFile);
+          if (logOutputFile && fs.existsSync(logOutputFile)) fs.unlinkSync(logOutputFile);
+
+          this.bus.emit(NanoEvents.JOB_FAILED, {
               id: jobId,
               error: e.message
           });
@@ -134,8 +148,13 @@ export class AmassService extends NanoService {
   }
 
   private processError(payload: any) {
-      const { executionId, id, error } = payload;
-      this.bus.emit('JOB_FAILED', {
+      const { executionId, id, error, meta } = payload;
+      const { jsonOutputFile, logOutputFile } = meta || {};
+
+      if (jsonOutputFile && fs.existsSync(jsonOutputFile)) fs.unlinkSync(jsonOutputFile);
+      if (logOutputFile && fs.existsSync(logOutputFile)) fs.unlinkSync(logOutputFile);
+
+      this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id ?? executionId,
           error: error
       });

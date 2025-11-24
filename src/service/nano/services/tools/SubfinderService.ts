@@ -3,17 +3,18 @@ import prisma from '@/database';
 import Database from '@/database/Database';
 import path from 'node:path';
 import os from 'node:os';
+import { NanoEvents } from '../../events';
 
 export class SubfinderService extends NanoService {
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', (payload) => {
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'subfinder') {
         this.processCommand(payload);
       }
     });
 
-    this.listen('SUBFINDER_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.listen('SUBFINDER_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen(NanoEvents.SUBFINDER_TERMINAL_RESULT, (payload) => this.processResult(payload));
+    this.listen(NanoEvents.SUBFINDER_TERMINAL_ERROR, (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
@@ -36,18 +37,18 @@ export class SubfinderService extends NanoService {
         const comando = 'subfinder';
         const argumentos = ['-d', dominio, "--all", "-silent"];
 
-        this.bus.emit('EXECUTE_TERMINAL', {
+        this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
-            replyTo: 'SUBFINDER_TERMINAL_RESULT',
-            errorTo: 'SUBFINDER_TERMINAL_ERROR',
+            replyTo: NanoEvents.SUBFINDER_TERMINAL_RESULT,
+            errorTo: NanoEvents.SUBFINDER_TERMINAL_ERROR,
             meta: { projectId, dominio, op }
         });
 
     } catch (e: any) {
-        this.bus.emit('JOB_FAILED', {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
             error: e.message
         });
@@ -66,7 +67,7 @@ export class SubfinderService extends NanoService {
 
         await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
 
-        this.bus.emit('JOB_COMPLETED', {
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
             result: subdominios,
             rawOutput: stdout,
@@ -74,7 +75,7 @@ export class SubfinderService extends NanoService {
         });
 
       } catch (e: any) {
-          this.bus.emit('JOB_FAILED', {
+          this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,
               error: e.message
           });
@@ -83,7 +84,7 @@ export class SubfinderService extends NanoService {
 
   private processError(payload: any) {
       const { id, error } = payload;
-      this.bus.emit('JOB_FAILED', {
+      this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
           error: error
       });

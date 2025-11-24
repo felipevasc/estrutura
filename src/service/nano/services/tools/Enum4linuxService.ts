@@ -4,17 +4,18 @@ import Database from '@/database/Database';
 import path from 'node:path';
 import os from 'node:os';
 import { TipoUsuario } from '@/database/functions/usuario';
+import { NanoEvents } from '../../events';
 
 export class Enum4linuxService extends NanoService {
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', (payload) => {
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'enum4linux') {
         this.processCommand(payload);
       }
     });
 
-    this.listen('ENUM4LINUX_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.listen('ENUM4LINUX_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen(NanoEvents.ENUM4LINUX_TERMINAL_RESULT, (payload) => this.processResult(payload));
+    this.listen(NanoEvents.ENUM4LINUX_TERMINAL_ERROR, (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
@@ -37,18 +38,18 @@ export class Enum4linuxService extends NanoService {
         const comando = 'enum4linux';
         const argumentos = ['-U', '-r', enderecoIp];
 
-        this.bus.emit('EXECUTE_TERMINAL', {
+        this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
-            replyTo: 'ENUM4LINUX_TERMINAL_RESULT',
-            errorTo: 'ENUM4LINUX_TERMINAL_ERROR',
+            replyTo: NanoEvents.ENUM4LINUX_TERMINAL_RESULT,
+            errorTo: NanoEvents.ENUM4LINUX_TERMINAL_ERROR,
             meta: { projectId, enderecoIp, ip, idIp }
         });
 
     } catch (e: any) {
-        this.bus.emit('JOB_FAILED', {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
             error: e.message
         });
@@ -77,7 +78,7 @@ export class Enum4linuxService extends NanoService {
         }
         await Database.adicionarUsuarios(usuarios, Number(idIp));
 
-        this.bus.emit('JOB_COMPLETED', {
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
             result: usuarios,
             rawOutput: stdout,
@@ -85,7 +86,7 @@ export class Enum4linuxService extends NanoService {
         });
 
       } catch (e: any) {
-          this.bus.emit('JOB_FAILED', {
+          this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,
               error: e.message
           });
@@ -94,7 +95,7 @@ export class Enum4linuxService extends NanoService {
 
   private processError(payload: any) {
       const { id, error } = payload;
-      this.bus.emit('JOB_FAILED', {
+      this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
           error: error
       });

@@ -3,16 +3,17 @@ import prisma from '@/database';
 import fs from 'fs';
 import path from 'node:path';
 import os from 'node:os';
+import { NanoEvents } from '../../events';
 
 export class FfufService extends NanoService {
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', (payload) => {
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'ffuf') {
         this.processCommand(payload);
       }
     });
-    this.listen('FFUF_RESULT', (payload) => this.processResult(payload));
-    this.listen('FFUF_ERROR', (payload) => this.processError(payload));
+    this.listen(NanoEvents.FFUF_RESULT, (payload) => this.processResult(payload));
+    this.listen(NanoEvents.FFUF_ERROR, (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
@@ -40,6 +41,7 @@ export class FfufService extends NanoService {
             target = `http://${target}`;
         }
 
+        // TODO: Make wordlist configurable
         const wordlistPath = "/usr/share/wordlists/dirb/common.txt";
 
         // Output path for the JSON results (ffuf writes here)
@@ -48,20 +50,20 @@ export class FfufService extends NanoService {
         // Output path for the terminal logs (TerminalService writes stdout/stderr here)
         const logOutputPath = path.join(os.tmpdir(), `ffuf_log_${id}_${Date.now()}.txt`);
 
-        this.bus.emit('EXECUTE_TERMINAL', {
+        this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: 'ffuf',
             // We use -o to write results to the JSON file.
             // TerminalService will still capture stdout/stderr to logOutputPath.
             args: ['-u', `${target}/FUZZ`, '-w', wordlistPath, '-o', jsonOutputPath, '-of', 'json'],
             outputFile: logOutputPath,
-            replyTo: 'FFUF_RESULT',
-            errorTo: 'FFUF_ERROR',
+            replyTo: NanoEvents.FFUF_RESULT,
+            errorTo: NanoEvents.FFUF_ERROR,
             meta: { projectId, dominio, ip, wordlistPath, jsonOutputPath, logOutputPath }
         });
 
     } catch (e: any) {
-        this.bus.emit('JOB_FAILED', {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
             error: e.message
         });
@@ -76,6 +78,11 @@ export class FfufService extends NanoService {
 
     try {
         if (!fs.existsSync(jsonOutputPath)) {
+             // Check if it failed but created log
+             if (fs.existsSync(logOutputPath)) {
+                 const log = fs.readFileSync(logOutputPath, 'utf8');
+                 throw new Error(`Ffuf did not generate JSON output. Log: ${log.slice(0, 500)}`);
+             }
              throw new Error(`JSON output file not found at ${jsonOutputPath}`);
         }
 
@@ -135,12 +142,10 @@ export class FfufService extends NanoService {
 
         // Clean up files
         if (fs.existsSync(jsonOutputPath)) fs.unlinkSync(jsonOutputPath);
-        // We might want to keep logOutputPath for debugging, or delete it.
-        // For now, let's keep it or delete it? Usually we don't need it if success.
         if (fs.existsSync(logOutputPath)) fs.unlinkSync(logOutputPath);
 
 
-        this.bus.emit('JOB_COMPLETED', {
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
             result: results,
             rawOutput: stdout,
@@ -154,14 +159,13 @@ export class FfufService extends NanoService {
         let logContent = "";
         if (logOutputPath && fs.existsSync(logOutputPath)) {
             logContent = fs.readFileSync(logOutputPath, 'utf8');
-            // clean up log file
             fs.unlinkSync(logOutputPath);
         }
         if (jsonOutputPath && fs.existsSync(jsonOutputPath)) {
              fs.unlinkSync(jsonOutputPath);
         }
 
-        this.bus.emit('JOB_FAILED', { id: id, error: `${e.message}. Log: ${logContent}` });
+        this.bus.emit(NanoEvents.JOB_FAILED, { id: id, error: `${e.message}. Log: ${logContent.slice(0, 1000)}` });
     }
   }
 
@@ -173,7 +177,7 @@ export class FfufService extends NanoService {
       if (jsonOutputPath && fs.existsSync(jsonOutputPath)) fs.unlinkSync(jsonOutputPath);
       if (logOutputPath && fs.existsSync(logOutputPath)) fs.unlinkSync(logOutputPath);
 
-      this.bus.emit('JOB_FAILED', {
+      this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
           error: error
       });
