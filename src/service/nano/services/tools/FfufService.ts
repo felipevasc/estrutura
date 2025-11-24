@@ -89,8 +89,34 @@ export class FfufService extends NanoService {
 
         const results = data.results;
 
-        if (results && Array.isArray(results)) {
-            for (const res of results) {
+        if (results && Array.isArray(results) && results.length > 0) {
+            // Filter logic: remove majority group based on status and size
+            const stats = new Map<string, number>();
+            results.forEach((res: any) => {
+                const key = `${res.status}-${res.length}`;
+                stats.set(key, (stats.get(key) || 0) + 1);
+            });
+
+            let majorityKey = '';
+            let maxCount = -1;
+            stats.forEach((count, key) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    majorityKey = key;
+                }
+            });
+
+            let filteredResults = results;
+            if (maxCount > 1) {
+                filteredResults = results.filter((res: any) => {
+                    const key = `${res.status}-${res.length}`;
+                    return key !== majorityKey;
+                });
+            }
+
+            this.log(`Filtered ${results.length - filteredResults.length} items from ${results.length} total results.`);
+
+            for (const res of filteredResults) {
                 const pathFound = res.input.FUZZ;
                 const status = res.status;
                 const size = res.length;
