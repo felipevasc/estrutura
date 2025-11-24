@@ -4,17 +4,18 @@ import Database from '@/database/Database';
 import path from 'node:path';
 import os from 'node:os';
 import { TipoIp } from '@/database/functions/ip';
+import { NanoEvents } from '../../events';
 
 export class NslookupService extends NanoService {
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', (payload) => {
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'nslookup') {
         this.processCommand(payload);
       }
     });
 
-    this.listen('NSLOOKUP_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.listen('NSLOOKUP_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen(NanoEvents.NSLOOKUP_TERMINAL_RESULT, (payload) => this.processResult(payload));
+    this.listen(NanoEvents.NSLOOKUP_TERMINAL_ERROR, (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
@@ -36,20 +37,21 @@ export class NslookupService extends NanoService {
 
         const comando = 'nslookup';
         // Use Google DNS to avoid local DNS caching/restrictions
-        const argumentos = ['-debug', dominio, "8.8.8.8"];
+        // removed -debug to make parsing easier and standard.
+        const argumentos = [dominio, "8.8.8.8"];
 
-        this.bus.emit('EXECUTE_TERMINAL', {
+        this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: comando,
             args: argumentos,
             outputFile: caminhoSaida,
-            replyTo: 'NSLOOKUP_TERMINAL_RESULT',
-            errorTo: 'NSLOOKUP_TERMINAL_ERROR',
+            replyTo: NanoEvents.NSLOOKUP_TERMINAL_RESULT,
+            errorTo: NanoEvents.NSLOOKUP_TERMINAL_ERROR,
             meta: { projectId, dominio, op }
         });
 
     } catch (e: any) {
-        this.bus.emit('JOB_FAILED', {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
             error: e.message
         });
@@ -65,24 +67,24 @@ export class NslookupService extends NanoService {
       try {
         const linhas = stdout?.split("\n").filter((s: string) => !!s) ?? [];
         const ips: TipoIp[] = [];
-        for (let i = 0; i < linhas.length; i++) {
-            const linha = linhas[i];
-            // nslookup output format varies, but standard is "Address: <ip>"
-            // or "Name: <domain>\nAddress: <ip>"
-            // The existing parser looked for "internet address =". Wait, that looks like `dig` or a specific nslookup version?
-            // Standard Linux nslookup:
-            // Address: 1.2.3.4
+        for (const linha of linhas) {
+            // Standard Linux nslookup output for `nslookup domain 8.8.8.8`:
+            // Server:		8.8.8.8
+            // Address:	8.8.8.8#53
             //
-            // However, the code had: `if (linha.indexOf("internet address") < 0)`
-            // This implies a specific version or maybe `host` command was intended?
-            // Or `nslookup -debug` output format.
+            // Non-authoritative answer:
+            // Name:	google.com
+            // Address: 142.250.217.78
+            // Name:	google.com
+            // Address: 2607:f8b0:400a:80b::200e
 
-            // Let's support standard "Address: "
-            if (linha.toLowerCase().includes("address:")) {
+            // We look for "Address: " that does NOT contain '#' (which is usually the DNS server port)
+            const lower = linha.toLowerCase();
+            if (lower.startsWith("address:") || lower.includes("address:")) {
                 const parts = linha.split(":");
-                if (parts.length > 1) {
+                if (parts.length >= 2) {
                     const ip = parts[1].trim();
-                    // Filter out the DNS server address (often ends with #53)
+                    // Filter out the DNS server address (often ends with #53) and verify it's an IPv4
                     if (!ip.includes('#') && ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
                          ips.push({ endereco: ip, dominio: dominio });
                     }
@@ -90,17 +92,22 @@ export class NslookupService extends NanoService {
             }
         }
 
-        await Database.adicionarIp(ips, op?.projetoId ?? 0);
+        // Filter unique IPs
+        const uniqueIps = ips.filter((v, i, a) => a.findIndex(t => t.endereco === v.endereco) === i);
 
-        this.bus.emit('JOB_COMPLETED', {
+        if (uniqueIps.length > 0) {
+             await Database.adicionarIp(uniqueIps, op?.projetoId ?? 0);
+        }
+
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
-            result: ips,
+            result: uniqueIps,
             rawOutput: stdout,
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
-          this.bus.emit('JOB_FAILED', {
+          this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,
               error: e.message
           });
@@ -109,7 +116,7 @@ export class NslookupService extends NanoService {
 
   private processError(payload: any) {
       const { id, error } = payload;
-      this.bus.emit('JOB_FAILED', {
+      this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
           error: error
       });

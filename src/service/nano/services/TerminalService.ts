@@ -1,10 +1,11 @@
 import { NanoService } from '../NanoService';
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
+import { NanoEvents } from '../events';
 
 export class TerminalService extends NanoService {
   initialize(): void {
-    this.bus.on('EXECUTE_TERMINAL', (payload) => this.execute(payload));
+    this.bus.on(NanoEvents.EXECUTE_TERMINAL, (payload) => this.execute(payload));
   }
 
   private execute(payload: any) {
@@ -43,7 +44,7 @@ export class TerminalService extends NanoService {
       processError += erro.toString();
       if (streamArquivo) streamArquivo.close();
 
-      const errorEvent = errorTo || 'TERMINAL_ERROR';
+      const errorEvent = errorTo || NanoEvents.TERMINAL_ERROR;
       this.bus.emit(errorEvent, {
           id: executionId, // Standardized on id
           executionId,     // Kept for backward compatibility
@@ -61,7 +62,7 @@ export class TerminalService extends NanoService {
       if (streamArquivo) streamArquivo.close();
 
       if (codigo === 0) {
-        const successEvent = replyTo || 'TERMINAL_RESULT';
+        const successEvent = replyTo || NanoEvents.TERMINAL_RESULT;
         this.bus.emit(successEvent, {
             id: executionId,
             executionId,
@@ -74,7 +75,7 @@ export class TerminalService extends NanoService {
             args
         });
       } else {
-        const errorEvent = errorTo || 'TERMINAL_ERROR';
+        const errorEvent = errorTo || NanoEvents.TERMINAL_ERROR;
         this.bus.emit(errorEvent, {
             id: executionId,
             executionId,

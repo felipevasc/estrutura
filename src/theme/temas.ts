@@ -1,5 +1,16 @@
 import { DefaultTheme } from 'styled-components'
 
+// Default layout settings
+const defaultLayout = {
+  gridColumns: "250px 1fr 250px",
+  gridAreas: `
+    "left top right"
+    "left main right"
+    "left footer right"
+  `,
+  direcaoLayout: "column"
+};
+
 const temas: Record<string, DefaultTheme> = {
   classico: {
     colors: {
@@ -9,7 +20,8 @@ const temas: Record<string, DefaultTheme> = {
       panelBackground: '#FFFFFF',
       accentColor: '#000080',
       hoverBackground: '#A0A0A0'
-    }
+    },
+    ...defaultLayout
   },
   hacker: {
     colors: {
@@ -19,7 +31,8 @@ const temas: Record<string, DefaultTheme> = {
       panelBackground: '#000000',
       accentColor: '#00FF00',
       hoverBackground: '#001900'
-    }
+    },
+    ...defaultLayout
   },
   fofinho: {
     colors: {
@@ -29,7 +42,8 @@ const temas: Record<string, DefaultTheme> = {
       panelBackground: '#FFE4F3',
       accentColor: '#F472B6',
       hoverBackground: '#FDEDF6'
-    }
+    },
+    ...defaultLayout
   },
   elegante: {
     colors: {
@@ -39,7 +53,8 @@ const temas: Record<string, DefaultTheme> = {
       panelBackground: '#FFFFFF',
       accentColor: '#6B7280',
       hoverBackground: '#EDEDED'
-    }
+    },
+    ...defaultLayout
   },
   dark: {
     colors: {
@@ -49,7 +64,8 @@ const temas: Record<string, DefaultTheme> = {
       panelBackground: '#141414',
       accentColor: '#FFD700',
       hoverBackground: '#1A1A1A'
-    }
+    },
+    ...defaultLayout
   },
   clean: {
     colors: {
@@ -59,7 +75,8 @@ const temas: Record<string, DefaultTheme> = {
       panelBackground: '#F9FAFB',
       accentColor: '#3B82F6',
       hoverBackground: '#E5E7EB'
-    }
+    },
+    ...defaultLayout
   }
 }
 

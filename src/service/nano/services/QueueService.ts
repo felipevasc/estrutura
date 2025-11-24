@@ -1,6 +1,7 @@
 import { NanoService } from '../NanoService';
 import prisma from '@/database';
 import { CommandStatus } from '@prisma/client';
+import { NanoEvents } from '../events';
 
 export class QueueService extends NanoService {
   private isProcessing = false;
@@ -10,9 +11,9 @@ export class QueueService extends NanoService {
 
   initialize(): void {
     this.recoverQueue();
-    this.listen('KICK_QUEUE', () => this.processQueue());
-    this.listen('JOB_COMPLETED', (payload: any) => this.handleJobCompleted(payload));
-    this.listen('JOB_FAILED', (payload: any) => this.handleJobFailed(payload));
+    this.listen(NanoEvents.KICK_QUEUE, () => this.processQueue());
+    this.listen(NanoEvents.JOB_COMPLETED, (payload: any) => this.handleJobCompleted(payload));
+    this.listen(NanoEvents.JOB_FAILED, (payload: any) => this.handleJobFailed(payload));
   }
 
   /**
@@ -81,7 +82,7 @@ export class QueueService extends NanoService {
             }, this.JOB_TIMEOUT_MS);
 
             // Emit event for tools to pick up
-            this.bus.emit('COMMAND_RECEIVED', {
+            this.bus.emit(NanoEvents.COMMAND_RECEIVED, {
                 id: command.id,
                 command: command.command,
                 args: args,

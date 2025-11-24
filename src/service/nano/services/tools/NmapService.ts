@@ -3,18 +3,20 @@ import prisma from '@/database';
 import Database from '@/database/Database';
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs';
 import { TipoPorta } from '@/database/functions/ip';
+import { NanoEvents } from '../../events';
 
 export class NmapService extends NanoService {
   initialize(): void {
-    this.listen('COMMAND_RECEIVED', (payload) => {
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'nmap') {
         this.processCommand(payload);
       }
     });
 
-    this.listen('NMAP_TERMINAL_RESULT', (payload) => this.processResult(payload));
-    this.listen('NMAP_TERMINAL_ERROR', (payload) => this.processError(payload));
+    this.listen(NanoEvents.NMAP_TERMINAL_RESULT, (payload) => this.processResult(payload));
+    this.listen(NanoEvents.NMAP_TERMINAL_ERROR, (payload) => this.processError(payload));
   }
 
   private async processCommand(payload: any) {
@@ -31,25 +33,31 @@ export class NmapService extends NanoService {
 
         if (!enderecoIp) throw new Error('IP not found');
 
-        const nomeArquivoSaida = `nmap_resultado_${op?.projetoId}_${op?.id}_${enderecoIp}_${Date.now()}.txt`;
-        const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
+        // We will use -oG (Grepable Output) because it's easier to parse reliably than the text table
+        // and simpler than XML.
+        const outputPrefix = path.join(os.tmpdir(), `nmap_${op?.projetoId}_${id}_${Date.now()}`);
+        const grepOutput = `${outputPrefix}.gnmap`;
+        const stdoutFile = `${outputPrefix}.stdout`;
 
         const comando = 'nmap';
-        // Use -Pn to treat host as up (good for firewalled hosts)
-        const argumentos = ['-Pn', enderecoIp, "-p", "1-9999"];
+        // -Pn: treat as up
+        // -oG: Grepable output
+        // -p 1-65535: scan all ports (changed from 1-9999 to be more thorough, or keep 1-9999 if perf is concern)
+        // Let's stick to standard full range or top ports. User had 1-9999.
+        const argumentos = ['-Pn', enderecoIp, "-p", "1-9999", "-oG", grepOutput];
 
-        this.bus.emit('EXECUTE_TERMINAL', {
+        this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: comando,
             args: argumentos,
-            outputFile: caminhoSaida,
-            replyTo: 'NMAP_TERMINAL_RESULT',
-            errorTo: 'NMAP_TERMINAL_ERROR',
-            meta: { projectId, enderecoIp, op, idIp }
+            outputFile: stdoutFile,
+            replyTo: NanoEvents.NMAP_TERMINAL_RESULT,
+            errorTo: NanoEvents.NMAP_TERMINAL_ERROR,
+            meta: { projectId, enderecoIp, op, idIp, grepOutput, stdoutFile }
         });
 
     } catch (e: any) {
-        this.bus.emit('JOB_FAILED', {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
             error: e.message
         });
@@ -57,46 +65,75 @@ export class NmapService extends NanoService {
   }
 
   private async processResult(payload: any) {
-      const { id, stdout, meta, command, args } = payload;
-      const { idIp } = meta;
+      const { id, meta, command, args } = payload;
+      const { idIp, grepOutput, stdoutFile } = meta;
 
       this.log(`Processing result for ${id}`);
 
       try {
-        const linhas = stdout?.split("\n").filter((s: string) => !!s) ?? [];
         const portas: TipoPorta[] = [];
-        for (let i = 0; i < linhas.length; i++) {
-            const linha = linhas[i];
-            // Nmap standard output table
-            // PORT     STATE SERVICE
-            // 80/tcp   open  http
-            if (linha.indexOf("open") < 0) {
-                continue;
-            }
-            // Remove extra spaces and tabs
-            const tmp = linha.replace(/\t/g, " ").replace(/\s+/g, " ").split(" ")
-            if (tmp.length < 3) continue;
 
-            const tmp2 = tmp[0].trim().split("/");
-            const porta = tmp2[0].trim();
-            const protocolo = tmp2[1]?.trim() || "tcp";
-            const servico = tmp[2].trim();
+        if (fs.existsSync(grepOutput)) {
+            const content = fs.readFileSync(grepOutput, 'utf-8');
+            const lines = content.split('\n');
 
-            if (porta && !isNaN(Number(porta))) {
-                portas.push({ porta: Number(porta), servico, versao: "", protocolo });
+            for (const line of lines) {
+                // Grepable output format:
+                // Host: 127.0.0.1 ()	Ports: 22/open/tcp//ssh///, 80/open/tcp//http///
+                if (line.startsWith('#') || !line.includes('Ports:')) continue;
+
+                const parts = line.split('Ports:');
+                if (parts.length < 2) continue;
+
+                const portData = parts[1].trim();
+                // 22/open/tcp//ssh///, 80/open/tcp//http///
+                const portEntries = portData.split(', ');
+
+                for (const entry of portEntries) {
+                    // Format: Port/State/Protocol/Owner/Service/RPC info/Version info/
+                    const fields = entry.split('/');
+                    if (fields.length >= 3) {
+                        const portNum = parseInt(fields[0], 10);
+                        const state = fields[1];
+                        const protocol = fields[2];
+                        const service = fields[4] || "";
+
+                        if (state === 'open' && !isNaN(portNum)) {
+                            portas.push({
+                                porta: portNum,
+                                servico: service,
+                                versao: "",
+                                protocolo: protocol
+                            });
+                        }
+                    }
+                }
             }
+            fs.unlinkSync(grepOutput);
+        } else {
+            // Fallback to stdout parsing if file missing (shouldn't happen)
+            // or just log warning
+            this.log("Warning: Nmap grepable output missing.");
         }
+
+        if (fs.existsSync(stdoutFile)) {
+             fs.unlinkSync(stdoutFile);
+        }
+
         await Database.adicionarPortas(portas, Number(idIp));
 
-        this.bus.emit('JOB_COMPLETED', {
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
             result: portas,
-            rawOutput: stdout,
+            rawOutput: "Output stored in DB", // We don't keep the huge output in JSON
             executedCommand: `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
-          this.bus.emit('JOB_FAILED', {
+          if (grepOutput && fs.existsSync(grepOutput)) fs.unlinkSync(grepOutput);
+          if (stdoutFile && fs.existsSync(stdoutFile)) fs.unlinkSync(stdoutFile);
+
+          this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,
               error: e.message
           });
@@ -104,8 +141,13 @@ export class NmapService extends NanoService {
   }
 
   private processError(payload: any) {
-      const { id, error } = payload;
-      this.bus.emit('JOB_FAILED', {
+      const { id, error, meta } = payload;
+      const { grepOutput, stdoutFile } = meta || {};
+
+      if (grepOutput && fs.existsSync(grepOutput)) fs.unlinkSync(grepOutput);
+      if (stdoutFile && fs.existsSync(stdoutFile)) fs.unlinkSync(stdoutFile);
+
+      this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
           error: error
       });

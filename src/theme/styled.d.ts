@@ -10,5 +10,9 @@ declare module 'styled-components' {
       accentColor: string
       hoverBackground: string
     }
+    // Layout properties
+    gridColumns: string
+    gridAreas: string
+    direcaoLayout: string
   }
 }

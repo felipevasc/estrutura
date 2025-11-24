@@ -1,10 +1,11 @@
-import { executarEnum4linux } from "@/service/tools/ip/enum4linux";
+import { queueCommand } from "@/service/nano/commandHelper";
+import prisma from "@/database";
 import { NextResponse } from "next/server";
 
 export async function POST(requisicao: Request) {
   try {
     const corpo = await requisicao.json();
-    const { ip } = corpo;
+    const { ip, projetoId } = corpo;
 
     if (!ip) {
       return NextResponse.json(
@@ -13,10 +14,19 @@ export async function POST(requisicao: Request) {
       );
     }
 
-    const usuarios = await executarEnum4linux(ip);
+    const where: any = { endereco: ip };
+    if (projetoId) where.projetoId = projetoId;
+
+    const ipObj = await prisma.ip.findFirst({ where });
+
+    if (!ipObj) {
+        return NextResponse.json({ mensagem: 'IP não encontrado.' }, { status: 404 });
+    }
+
+    const command = await queueCommand('enum4linux', { idIp: ipObj.id }, ipObj.projetoId);
 
     return NextResponse.json(
-      usuarios,
+      { message: "Scan started", commandId: command.id },
       { status: 202 }
     );
 
