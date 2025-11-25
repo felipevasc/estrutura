@@ -71,22 +71,26 @@ export abstract class CtiSearchService extends NanoService {
         const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
         if (!apiKey || !searchEngineId) {
-            this.error("Chaves da API do Google não configuradas.");
-            return {};
+            throw new Error("As credenciais GOOGLE_API_KEY e GOOGLE_SEARCH_ENGINE_ID devem ser configuradas no ambiente.");
         }
 
         const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(dork)}`;
 
         try {
             const response = await fetch(url);
+
             if (!response.ok) {
-                this.error(`Erro ao buscar na API do Google: ${response.statusText}`);
-                return {};
+                const errorBody = await response.json().catch(() => null);
+                const errorMessage = errorBody?.error?.message || response.statusText;
+                const detailedError = `Erro na API do Google (${response.status}): ${errorMessage}. Verifique se as suas credenciais (API Key e Search Engine ID) são válidas e se a API está ativada.`;
+                throw new Error(detailedError);
             }
+
             return await response.json();
-        } catch (error) {
-            this.error("Falha na requisição para a API do Google:", error);
-            return {};
+        } catch (error: any) {
+            // Re-lança a exceção para ser capturada pelo handleCheck
+            this.error(`Falha na requisição para a API do Google: ${error.message}`);
+            throw error;
         }
     }
 }
