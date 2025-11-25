@@ -19,8 +19,12 @@ export abstract class CtiSearchService extends NanoService {
     }
 
     async initialize() {
+        this.log(`Inicializado. Ouvindo pelo comando: '${this.command}'`);
         this.listen('COMMAND_RECEIVED', (payload) => {
+            // Log para ver todos os comandos que este serviço recebe
+            // this.log(`Evento COMMAND_RECEIVED capturado com comando: '${payload.command}'`);
             if (payload.command === this.command) {
+                this.log(`Comando '${this.command}' recebido. Iniciando processamento...`);
                 this.handleCheck(payload);
             }
         });
@@ -54,8 +58,10 @@ export abstract class CtiSearchService extends NanoService {
                     createdItems.push(created);
                 }
             }
+            this.log(`Processamento concluído. Encontrados ${createdItems.length} resultados.`);
             this.bus.emit('JOB_COMPLETED', { id, result: createdItems });
         } catch (error: any) {
+            this.error(`Falha no processamento: ${error.message}`);
             this.bus.emit('JOB_FAILED', { id, error: error.message });
         }
     }
