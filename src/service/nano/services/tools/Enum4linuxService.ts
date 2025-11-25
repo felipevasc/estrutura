@@ -7,6 +7,10 @@ import { TipoUsuario } from '@/database/functions/usuario';
 import { NanoEvents } from '../../events';
 
 export class Enum4linuxService extends NanoService {
+  constructor() {
+    super('Enum4linuxService');
+  }
+
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'enum4linux') {

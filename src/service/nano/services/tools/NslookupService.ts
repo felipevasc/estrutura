@@ -7,6 +7,10 @@ import { TipoIp } from '@/database/functions/ip';
 import { NanoEvents } from '../../events';
 
 export class NslookupService extends NanoService {
+  constructor() {
+    super('NslookupService');
+  }
+
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'nslookup') {

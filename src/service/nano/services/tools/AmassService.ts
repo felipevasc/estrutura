@@ -8,6 +8,10 @@ import { TipoIp } from '@/database/functions/ip';
 import { NanoEvents } from '../../events';
 
 export class AmassService extends NanoService {
+  constructor() {
+    super('AmassService');
+  }
+
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'amass') {

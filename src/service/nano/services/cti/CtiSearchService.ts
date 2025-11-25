@@ -65,7 +65,7 @@ export abstract class CtiSearchService extends NanoService {
         const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
         if (!apiKey || !searchEngineId) {
-            console.error(`[${this.name}] Chaves da API do Google não configuradas.`);
+            this.error("Chaves da API do Google não configuradas.");
             return {};
         }
 
@@ -74,12 +74,12 @@ export abstract class CtiSearchService extends NanoService {
         try {
             const response = await fetch(url);
             if (!response.ok) {
-                console.error(`[${this.name}] Erro ao buscar na API do Google: ${response.statusText}`);
+                this.error(`Erro ao buscar na API do Google: ${response.statusText}`);
                 return {};
             }
             return await response.json();
         } catch (error) {
-            console.error(`[${this.name}] Falha na requisição para a API do Google:`, error);
+            this.error("Falha na requisição para a API do Google:", error);
             return {};
         }
     }

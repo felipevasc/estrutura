@@ -6,6 +6,10 @@ import os from 'node:os';
 import { NanoEvents } from '../../events';
 
 export class SubfinderService extends NanoService {
+  constructor() {
+    super('SubfinderService');
+  }
+
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'subfinder') {

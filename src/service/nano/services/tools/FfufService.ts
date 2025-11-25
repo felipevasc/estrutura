@@ -6,6 +6,10 @@ import os from 'node:os';
 import { NanoEvents } from '../../events';
 
 export class FfufService extends NanoService {
+  constructor() {
+    super('FfufService');
+  }
+
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'ffuf') {

@@ -4,6 +4,10 @@ import { createWriteStream } from 'node:fs';
 import { NanoEvents } from '../events';
 
 export class TerminalService extends NanoService {
+  constructor() {
+    super('TerminalService');
+  }
+
   initialize(): void {
     this.bus.on(NanoEvents.EXECUTE_TERMINAL, (payload) => this.execute(payload));
   }

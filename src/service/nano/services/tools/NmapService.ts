@@ -8,6 +8,10 @@ import { TipoPorta } from '@/database/functions/ip';
 import { NanoEvents } from '../../events';
 
 export class NmapService extends NanoService {
+  constructor() {
+    super('NmapService');
+  }
+
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'nmap') {

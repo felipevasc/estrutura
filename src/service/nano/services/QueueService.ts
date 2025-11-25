@@ -9,6 +9,10 @@ export class QueueService extends NanoService {
   private timeoutTimer: NodeJS.Timeout | null = null;
   private readonly JOB_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes timeout
 
+  constructor() {
+    super('QueueService');
+  }
+
   initialize(): void {
     this.recoverQueue();
     this.listen(NanoEvents.KICK_QUEUE, () => this.processQueue());

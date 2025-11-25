@@ -2,9 +2,10 @@ import EventBus from './EventBus';
 
 export abstract class NanoService {
   protected bus = EventBus;
+  public name: string;
 
-  constructor() {
-    this.initialize();
+  constructor(name: string) {
+    this.name = name;
   }
 
   abstract initialize(): void;

@@ -24,8 +24,14 @@ class NanoSystem {
     // Load services from registry
     this.services = [...registeredServices];
 
+    // Initialize each service
+    this.services.forEach(service => {
+      service.initialize();
+      console.log(`[NanoSystem] Service '${service.name}' initialized.`);
+    });
+
     this.initialized = true;
-    console.log(`[NanoSystem] ${this.services.length} services initialized.`);
+    console.log(`[NanoSystem] All ${this.services.length} services initialized.`);
   }
 
   public process() {
