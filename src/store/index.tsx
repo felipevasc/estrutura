@@ -1,11 +1,12 @@
 'use client';
 
 import { ProjetoResponse } from "@/types/ProjetoResponse";
-import { createContext, useState, ReactNode } from "react";
-import { StoreType } from "./types/StoreType";
+import { createContext, useState, ReactNode, useEffect, useMemo } from "react";
+import { ConfiguracoesType, StoreType } from "./types/StoreType";
 import { ExplorerType } from "@/types/ExplorerType";
 import { SelecaoTargetType } from "./types/SelecaoTargetType";
 import { TipoLayout } from "@/types/TipoLayout";
+import useApi from "@/api";
 
 interface StoreProviderProps {
     children: ReactNode;
@@ -18,8 +19,27 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
     const [explorer, setExplorer] = useState<ExplorerType>("domain");
     const [selecaoTarget, setSelecaoTarget] = useState<SelecaoTargetType>();
     const [layout, setLayout] = useState<TipoLayout>('classico');
+    const [configuracoes, setConfiguracoes] = useState<ConfiguracoesType>();
+    const [isConfiguracoesOpen, setIsConfiguracoesOpen] = useState(false);
+    const api = useApi();
 
-    const storeValue: StoreType = {
+    useEffect(() => {
+        const fetchConfig = async () => {
+            try {
+                const config = await api.configuracoes.getConfig();
+                setConfiguracoes(config);
+                if (!config.openaiApiKey || !config.googleApiKey || !config.googleSearchEngineId) {
+                    setIsConfiguracoesOpen(true);
+                }
+            } catch (error) {
+                console.error("Falha ao buscar configurações:", error);
+                setIsConfiguracoesOpen(true); // Abre a modal em caso de erro
+            }
+        };
+        fetchConfig();
+    }, [api.configuracoes]);
+
+    const storeValue: StoreType = useMemo(() => ({
         projeto: {
             get: () => projeto,
             set: setProjeto
@@ -35,8 +55,16 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
         layout: {
             get: () => layout,
             set: (v) => setLayout(v ?? 'classico')
+        },
+        configuracoes: {
+            get: () => configuracoes,
+            set: setConfiguracoes
+        },
+        isConfiguracoesOpen: {
+            get: () => isConfiguracoesOpen,
+            set: setIsConfiguracoesOpen
         }
-    };
+    }), [projeto, explorer, selecaoTarget, layout, configuracoes, isConfiguracoesOpen]);
 
     return (
         <StoreContext.Provider value={storeValue}>

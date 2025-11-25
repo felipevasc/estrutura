@@ -1,0 +1,129 @@
+import { useContext, useEffect, useState } from 'react';
+import { Modal, Form, Input, Button, Alert, Spin } from 'antd';
+import { KeyOutlined, IdcardOutlined, RobotOutlined } from '@ant-design/icons';
+import StoreContext from '@/store';
+import useApi from '@/api';
+import { StoreType } from '@/store/types/StoreType';
+
+export default function Configuracoes() {
+    const { isConfiguracoesOpen, configuracoes } = useContext<StoreType>(StoreContext);
+    const api = useApi();
+    const [form] = Form.useForm();
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const open = isConfiguracoesOpen?.get();
+    const configData = configuracoes?.get();
+
+    // Limpa o formulário e o erro quando a modal é fechada
+    useEffect(() => {
+        if (!open) {
+            form.resetFields();
+            setError('');
+        }
+    }, [open, form]);
+
+    const handleSave = async (values: any) => {
+        setLoading(true);
+        setError('');
+        try {
+            await api.configuracoes.saveConfig(values);
+            isConfiguracoesOpen?.set(false);
+            const newConfig = await api.configuracoes.getConfig();
+            configuracoes?.set(newConfig);
+        } catch (err) {
+            setError('Falha ao salvar. Verifique o console para mais detalhes.');
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCancel = () => {
+        isConfiguracoesOpen?.set(false);
+    };
+
+    const showAlert = !configData?.openaiApiKey || !configData?.googleApiKey || !configData?.googleSearchEngineId;
+
+    return (
+        <Modal
+            title="Configurações"
+            open={open}
+            onCancel={handleCancel}
+            destroyOnClose // Garante que o estado do formulário seja resetado ao fechar
+            footer={[
+                <Button key="back" onClick={handleCancel} disabled={loading}>
+                    Cancelar
+                </Button>,
+                <Button key="submit" type="primary" onClick={() => form.submit()} loading={loading}>
+                    Salvar
+                </Button>,
+            ]}
+        >
+            {!configData ? (
+                <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                    <Spin size="large" />
+                </div>
+            ) : (
+                <Form
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSave}
+                    initialValues={configData} // Define os valores iniciais aqui
+                >
+                    {showAlert && (
+                        <Alert
+                            message="Configuração Necessária"
+                            description="Uma ou mais chaves de API não estão configuradas. Por favor, preencha os campos destacados."
+                            type="warning"
+                            showIcon
+                            style={{ marginBottom: 24 }}
+                        />
+                    )}
+                    <Form.Item
+                        name="openaiApiKey"
+                        label="OpenAI API Key"
+                        validateStatus={!configData?.openaiApiKey ? 'error' : ''}
+                        help={!configData?.openaiApiKey ? 'Chave não configurada' : ''}
+                    >
+                        <Input.Password
+                            prefix={<KeyOutlined />}
+                            placeholder="Deixe em branco para não alterar"
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        name="openaiApiModel"
+                        label="Modelo OpenAI (ex: gpt-4-turbo)"
+                    >
+                        <Input
+                            prefix={<RobotOutlined />}
+                            placeholder="gpt-4-turbo"
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        name="googleApiKey"
+                        label="Google API Key"
+                        validateStatus={!configData?.googleApiKey ? 'error' : ''}
+                    >
+                        <Input.Password
+                            prefix={<KeyOutlined />}
+                            placeholder="Deixe em branco para não alterar"
+                        />
+                    </Form.Item>
+                    <Form.Item
+                        name="googleSearchEngineId"
+                        label="Google Search Engine ID"
+                        validateStatus={!configData?.googleSearchEngineId ? 'error' : ''}
+                        help={!configData?.googleApiKey || !configData?.googleSearchEngineId ? 'Chave ou ID do Google não configurado' : ''}
+                    >
+                        <Input
+                            prefix={<IdcardOutlined />}
+                            placeholder="Deixe em branco para não alterar"
+                        />
+                    </Form.Item>
+                    {error && <Alert message={error} type="error" showIcon />}
+                </Form>
+            )}
+        </Modal>
+    );
+}
