@@ -19,7 +19,11 @@ export abstract class CtiSearchService extends NanoService {
     }
 
     async initialize() {
-        this.listen(this.command, this.handleCheck);
+        this.listen('COMMAND_RECEIVED', (payload) => {
+            if (payload.command === this.command) {
+                this.handleCheck(payload.args);
+            }
+        });
     }
 
     protected abstract getDork(dominio: Dominio): string;
@@ -35,7 +39,7 @@ export abstract class CtiSearchService extends NanoService {
 
         const dork = this.getDork(dominio);
         const fonte = this.getFonte();
-        const result = await this.searchWithApi(dork, dominio);
+        const result = await this.searchWithApi(dork);
 
         if (result.items) {
             for (const item of result.items) {
@@ -50,17 +54,13 @@ export abstract class CtiSearchService extends NanoService {
         }
     }
 
-    private async searchWithApi(dork: string, dominio: Dominio): Promise<SearchApiResult> {
+    private async searchWithApi(dork: string): Promise<SearchApiResult> {
         const apiKey = process.env.GOOGLE_API_KEY;
         const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
         if (!apiKey || !searchEngineId) {
-            console.warn(`[${this.name}] Chaves da API do Google não configuradas. Usando resultado simulado.`);
-            return {
-                items: [
-                    { link: `http://${dominio.endereco}/hacked.html` }
-                ]
-            };
+            console.error(`[${this.name}] Chaves da API do Google não configuradas.`);
+            return {};
         }
 
         const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(dork)}`;
