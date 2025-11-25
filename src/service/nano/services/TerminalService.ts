@@ -56,6 +56,7 @@ export class TerminalService extends NanoService {
           output: combinedOutput, // Backward compatibility
           stdout: stdoutOutput,
           stderr: stderrOutput,
+          outputFile,
           meta,
           command,
           args
@@ -74,6 +75,7 @@ export class TerminalService extends NanoService {
             stdout: stdoutOutput,
             stderr: stderrOutput,
             error: processError,
+            outputFile,
             meta,
             command,
             args
@@ -87,6 +89,7 @@ export class TerminalService extends NanoService {
             output: combinedOutput,
             stdout: stdoutOutput,
             stderr: stderrOutput,
+            outputFile,
             meta,
             command,
             args

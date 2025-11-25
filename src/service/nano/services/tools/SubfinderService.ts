@@ -3,6 +3,7 @@ import prisma from '@/database';
 import Database from '@/database/Database';
 import path from 'node:path';
 import os from 'node:os';
+import { promises as fs } from 'node:fs';
 import { NanoEvents } from '../../events';
 
 export class SubfinderService extends NanoService {
@@ -39,7 +40,7 @@ export class SubfinderService extends NanoService {
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
         const comando = 'subfinder';
-        const argumentos = ['-d', dominio, "--all", "-silent"];
+        const argumentos = ['-d', dominio, "--all", "-silent", "-o", caminhoSaida];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
@@ -60,30 +61,26 @@ export class SubfinderService extends NanoService {
   }
 
   private async processResult(payload: any) {
-      const { id, stdout, meta, command, args } = payload;
-      const { op } = meta;
-
-      this.log(`Processing result for ${id}`);
-
-      try {
-        // stdout contains one domain per line because of -silent
-        const subdominios = stdout?.split("\n").map((s: string) => s.trim()).filter((s: string) => !!s && s.includes('.')) ?? [];
-
-        await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
-
-        this.bus.emit(NanoEvents.JOB_COMPLETED, {
+    const { id, outputFile, meta, command, args } = payload;
+    const { op } = meta;
+    this.log(`Processing result for ${id} from file ${outputFile}`);
+    try {
+      const fileContent = await fs.readFile(outputFile, 'utf-8');
+      await fs.unlink(outputFile);
+      const subdominios = fileContent?.split("\n").map((s: string) => s.trim()).filter((s: string) => !!s && s.includes('.')) ?? [];
+      await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
+      this.bus.emit(NanoEvents.JOB_COMPLETED, {
+          id: id,
+          result: subdominios,
+          rawOutput: fileContent,
+          executedCommand: `${command} ${args.join(' ')}`
+      });
+    } catch (e: any) {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
-            result: subdominios,
-            rawOutput: stdout,
-            executedCommand: `${command} ${args.join(' ')}`
+            error: e.message
         });
-
-      } catch (e: any) {
-          this.bus.emit(NanoEvents.JOB_FAILED, {
-              id: id,
-              error: e.message
-          });
-      }
+    }
   }
 
   private processError(payload: any) {
