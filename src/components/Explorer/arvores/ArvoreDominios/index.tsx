@@ -26,19 +26,31 @@ const ArvoreDominios = () => {
   }, [projeto?.get()?.id])
 
   useEffect(() => {
+    let active = true;
     setElementos([]);
-    dominiosProjeto?.forEach((d) => {
-      elementoDominio.getDominio(d).then(ret => {
-        setElementos(elementos => [...elementos, ret]);
+
+    if (dominiosProjeto) {
+      dominiosProjeto.forEach((d) => {
+        elementoDominio.getDominio(d).then(ret => {
+          if (active) {
+            setElementos(elementos => [...elementos, ret]);
+          }
+        })
       })
     }
-    )
+    return () => {
+      active = false;
+    }
   }, [dominiosProjeto])
 
   const onExpand = (newExpandedKeys: React.Key[]) => {
     setExpandedKeys(newExpandedKeys);
     setAutoExpandParent(false);
   };
+
+  const sortedElementos = useMemo(() => {
+    return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
+  }, [elementos])
 
   return <StyledArvoreDominio>
     <StyledTitleDominio>
@@ -51,7 +63,7 @@ const ArvoreDominios = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={elementos.sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)}
+      treeData={sortedElementos}
       showIcon={true}
       showLine={true}
       switcherIcon={<SendOutlined style={{ transform: "rotate(90deg)" }} />}
