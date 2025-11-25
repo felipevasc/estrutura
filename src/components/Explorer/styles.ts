@@ -7,12 +7,13 @@ export const StyledExplorer = styled.div`
     height: 100%;
     width: 100%;
     overflow: hidden;
+    background: transparent;
 `
 
 export const ExplorerHeader = styled.div`
     flex-shrink: 0;
-    padding: 10px;
-    background-color: ${({ theme }) => theme.colors.panelBackground};
+    padding: 15px;
+    background: ${({ theme }) => theme.glass.card};
     border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
     display: flex;
     flex-direction: column;
@@ -23,6 +24,7 @@ export const ExplorerBody = styled.div`
     flex-grow: 1;
     overflow-y: auto;
     padding: 10px 0;
+    background: transparent;
 
     /* Custom Scrollbar */
     &::-webkit-scrollbar {
@@ -40,31 +42,35 @@ export const ExplorerBody = styled.div`
 export const StyledMenuExplorer = styled.div`
     display: flex;
     background-color: ${({ theme }) => theme.colors.background};
-    border-radius: 6px;
+    border-radius: 8px;
     padding: 4px;
     gap: 4px;
     justify-content: space-between;
+    box-shadow: ${({ theme }) => theme.shadows.inner};
 
     & button {
         flex: 1;
         border: none;
         background: transparent;
-        color: ${({ theme }) => theme.colors.foreground};
-        opacity: 0.6;
-        border-radius: 4px;
-        height: 30px;
-        min-width: 0; /* allows shrinking */
+        color: ${({ theme }) => theme.colors.textSecondary};
+        opacity: 0.8;
+        border-radius: 6px;
+        height: 32px;
+        min-width: 0;
+        font-weight: 500;
+        transition: all 0.2s;
 
         &:hover {
             background-color: ${({ theme }) => theme.colors.hoverBackground};
+            color: ${({ theme }) => theme.colors.text};
             opacity: 1;
         }
 
         &.active {
-            background-color: ${({ theme }) => theme.colors.panelBackground};
-            color: ${({ theme }) => theme.colors.accentColor};
+            background: ${({ theme }) => theme.gradients.primary};
+            color: #ffffff;
             opacity: 1;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: ${({ theme }) => theme.shadows.soft};
         }
     }
 `

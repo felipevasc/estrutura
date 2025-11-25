@@ -6,34 +6,42 @@ export const WorkspaceContainer = styled.div`
     flex-direction: column;
     height: 100%;
     width: 100%;
-    background-color: ${({ theme }) => theme.colors.background};
+    background: transparent;
     overflow: hidden;
 `
 
 export const BreadcrumbBar = styled.div`
     display: flex;
     align-items: center;
-    padding: 8px 15px;
-    background-color: ${({ theme }) => theme.colors.panelBackground};
+    padding: 10px 15px;
+    background: ${({ theme }) => theme.glass.card};
     border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
     gap: 10px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     flex-shrink: 0;
+    backdrop-filter: blur(5px);
 
     .separator {
-        color: ${({ theme }) => theme.colors.borderColor};
+        color: ${({ theme }) => theme.colors.textSecondary};
         font-size: 0.8rem;
     }
 
     .item {
         cursor: pointer;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        color: ${({ theme }) => theme.colors.textSecondary};
+        transition: all 0.2s;
+
         &:hover {
-            background-color: ${({ theme }) => theme.colors.hoverBackground};
+            background: ${({ theme }) => theme.colors.hoverBackground};
+            color: ${({ theme }) => theme.colors.text};
         }
         &.active {
             font-weight: 600;
+            color: ${({ theme }) => theme.colors.text};
+            background: ${({ theme }) => theme.glass.heavy};
+            box-shadow: ${({ theme }) => theme.shadows.soft};
         }
     }
 `

@@ -8,37 +8,49 @@ export const ContainerRecon = styled.div`
         "inventory workspace inspector"
         "status status status";
     width: 100%;
-    /* Remove fixed height: 100% to avoid overflow in flex container */
     flex-grow: 1;
-    min-height: 0; /* Important for grid overflow handling in flex child */
-    gap: 0;
-    background-color: ${({ theme }) => theme.colors.background};
-    /* Ensure borders don't add to width if box-sizing is not border-box (usually it is globally, but safe to assume) */
+    min-height: 0;
+    gap: 15px;
+    padding: 0 15px 15px 15px; /* Top padding is 0 because of navigation */
+    background: transparent;
 `
 
 export const PainelLateral = styled.aside`
     grid-area: inventory;
-    background-color: ${({ theme }) => theme.colors.panelBackground};
-    border-right: 1px solid ${({ theme }) => theme.colors.borderColor};
+    background: ${({ theme }) => theme.glass.default};
+    backdrop-filter: blur(10px);
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
+    border-radius: ${({ theme }) => theme.borders.radius};
+    box-shadow: ${({ theme }) => theme.shadows.soft};
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    transition: all 0.3s ease;
 `
 
 export const ConteudoPrincipal = styled.main`
     grid-area: workspace;
-    background-color: ${({ theme }) => theme.colors.background};
+    background: ${({ theme }) => theme.glass.default};
+    backdrop-filter: blur(10px);
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
+    border-radius: ${({ theme }) => theme.borders.radius};
+    box-shadow: ${({ theme }) => theme.shadows.soft};
     overflow: hidden;
     display: flex;
     flex-direction: column;
     position: relative;
+    transition: all 0.3s ease;
 `
 
 export const PainelInspector = styled.aside`
     grid-area: inspector;
-    background-color: ${({ theme }) => theme.colors.panelBackground};
-    border-left: 1px solid ${({ theme }) => theme.colors.borderColor};
+    background: ${({ theme }) => theme.glass.default};
+    backdrop-filter: blur(10px);
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
+    border-radius: ${({ theme }) => theme.borders.radius};
+    box-shadow: ${({ theme }) => theme.shadows.soft};
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    transition: all 0.3s ease;
 `

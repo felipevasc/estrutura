@@ -2,21 +2,22 @@ import styled from "styled-components";
 
 export const StyledStatusBar = styled.footer`
     grid-area: status;
-    background-color: ${({ theme }) => theme.colors.accentColor};
+    background: ${({ theme }) => theme.gradients.primary};
     color: #fff;
     display: flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 15px;
     font-size: 0.85rem;
     height: 100%;
-
-    // Fallback for contrast if accent is too bright/dark, usually handled by theme,
-    // but here we just ensure basic visibility
+    box-shadow: ${({ theme }) => theme.shadows.glow};
+    border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
+    backdrop-filter: blur(5px);
 `;
 
 export const StatusItem = styled.div`
-    margin-right: 15px;
+    margin-right: 20px;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 8px;
+    font-weight: 500;
 `;
