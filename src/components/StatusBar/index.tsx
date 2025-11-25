@@ -1,6 +1,6 @@
 import { StyledStatusBar, StatusItem } from "./styles";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faTerminal, faCircleNotch, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faTerminal, faCircleNotch, faExclamationTriangle, faCog } from "@fortawesome/free-solid-svg-icons";
 import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import StoreContext from "@/store";
 import useApi from "@/api";
@@ -12,7 +12,7 @@ import { VscTerminal } from "react-icons/vsc";
 const StatusBar = () => {
     const [commands, setCommands] = useState<Command[]>([]);
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const { projeto } = useContext(StoreContext);
+    const { projeto, isConfiguracoesOpen } = useContext(StoreContext);
     const api = useApi();
     const timeout = useRef<NodeJS.Timeout>(null);
 
@@ -130,6 +130,10 @@ const StatusBar = () => {
                 </StatusItem>
 
                 <div style={{ flex: 1 }}></div>
+
+                <StatusItem style={{ cursor: 'pointer' }} onClick={() => isConfiguracoesOpen?.set(true)}>
+                    <FontAwesomeIcon icon={faCog} /> Configurações
+                </StatusItem>
 
                 <StatusItem style={{ cursor: 'pointer' }} onClick={() => setIsDrawerOpen(true)}>
                     <FontAwesomeIcon icon={faTerminal} /> Output / Fila
