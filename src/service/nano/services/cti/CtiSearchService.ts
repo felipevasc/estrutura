@@ -1,4 +1,4 @@
-import { NanoService } from "../..";
+import { NanoService } from "../../NanoService";
 import prisma from "@/database";
 import { Dominio } from "@prisma/client";
 
