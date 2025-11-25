@@ -21,7 +21,7 @@ export abstract class CtiSearchService extends NanoService {
     async initialize() {
         this.listen('COMMAND_RECEIVED', (payload) => {
             if (payload.command === this.command) {
-                this.handleCheck(payload.args);
+                this.handleCheck(payload);
             }
         });
     }
@@ -29,28 +29,34 @@ export abstract class CtiSearchService extends NanoService {
     protected abstract getDork(dominio: Dominio): string;
     protected abstract getFonte(): string;
 
-    private async handleCheck(payload: CheckPayload) {
-        const { dominioId } = payload;
-        const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
-        if (!dominio) {
-            console.error(`[${this.name}] Domínio com ID ${dominioId} não encontrado.`);
-            return;
-        }
-
-        const dork = this.getDork(dominio);
-        const fonte = this.getFonte();
-        const result = await this.searchWithApi(dork);
-
-        if (result.items) {
-            for (const item of result.items) {
-                await prisma.deface.create({
-                    data: {
-                        url: item.link,
-                        fonte,
-                        dominioId: dominio.id,
-                    }
-                });
+    private async handleCheck({ id, args }: { id: number, args: CheckPayload }) {
+        try {
+            const { dominioId } = args;
+            const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
+            if (!dominio) {
+                throw new Error(`Domínio com ID ${dominioId} não encontrado.`);
             }
+
+            const dork = this.getDork(dominio);
+            const fonte = this.getFonte();
+            const result = await this.searchWithApi(dork);
+            const createdItems = [];
+
+            if (result.items) {
+                for (const item of result.items) {
+                    const created = await prisma.deface.create({
+                        data: {
+                            url: item.link,
+                            fonte,
+                            dominioId: dominio.id,
+                        }
+                    });
+                    createdItems.push(created);
+                }
+            }
+            this.bus.emit('JOB_COMPLETED', { id, result: createdItems });
+        } catch (error: any) {
+            this.bus.emit('JOB_FAILED', { id, error: error.message });
         }
     }
 
