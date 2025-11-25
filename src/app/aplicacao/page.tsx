@@ -10,6 +10,7 @@ import Exploracao from "@/modulos/Exploracao";
 import Cti from "@/modulos/Cti";
 import Relatorios from "@/modulos/Relatorios";
 import '@ant-design/v5-patch-for-react-19';
+import Configuracoes from "@/components/Configuracoes";
 
 export default function Aplicacao() {
   const [abaAtiva, setAbaAtiva] = useState('RECONHECIMENTO');
@@ -33,6 +34,7 @@ export default function Aplicacao() {
         <Rodape />
       </StyledEstruturaInicial>
       <ChatWidget />
+      <Configuracoes />
     </>
   );
 }

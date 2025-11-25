@@ -5,6 +5,7 @@ import useIps from "./ips";
 import useProjetos from "./projetos";
 import useQueue from "./queue";
 import useUsuarios from "./usuarios";
+import useConfiguracoes from "./configuracoes";
 
 const useApi = () => {
     const chat = useChat();
@@ -14,6 +15,7 @@ const useApi = () => {
     const ips = useIps();
     const queue = useQueue();
     const usuarios = useUsuarios();
+    const configuracoes = useConfiguracoes();
     return {
         chat: { ...chat },
         projeto: { ...projetos },
@@ -22,6 +24,7 @@ const useApi = () => {
         ips: { ...ips },
         queue: { ...queue },
         usuarios: { ...usuarios },
+        configuracoes: { ...configuracoes },
     }
 }
 
