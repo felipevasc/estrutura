@@ -36,6 +36,7 @@ model Dominio {
 
   ips Ip[]
   diretorios Diretorio[]
+  deface Deface[]
 
   @@map("dominios")
 }
@@ -134,4 +135,15 @@ model Diretorio {
   createdAt   DateTime @default(now())
 
   @@map("diretorios")
+}
+
+model Deface {
+  id        Int      @id @default(autoincrement())
+  url       String
+  fonte     String
+  dominioId Int
+  dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@map("deface")
 }

@@ -7,6 +7,8 @@ import { NslookupService } from './services/tools/NslookupService';
 import { NmapService } from './services/tools/NmapService';
 import { Enum4linuxService } from './services/tools/Enum4linuxService';
 import { FfufService } from './services/tools/FfufService';
+import HackedByService from './services/cti/HackedByService';
+import PwnedByService from './services/cti/PwnedByService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -17,4 +19,6 @@ export const registeredServices: NanoService[] = [
     new NmapService(),
     new Enum4linuxService(),
     new FfufService(),
+    new HackedByService(),
+    new PwnedByService(),
 ];

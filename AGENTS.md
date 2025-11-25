@@ -91,3 +91,20 @@ O `CommandInterpreter` converte estes comandos para a estrutura interna dos Nano
 *   `src/service/nano/services/tools/`: Serviços de Ferramentas (Amass, Nmap).
 *   `src/service/nano/registry.ts`: **Lista de serviços ativos.**
 *   `src/config/viewRegistry.tsx`: **Lista de visualizações ativas.**
+
+## Módulo de CTI (Cyber Threat Intelligence)
+
+O módulo de CTI é projetado para automatizar a coleta de informações de inteligência sobre ameaças relacionadas a um alvo. Ele é composto por uma coleção de nano-serviços independentes, onde cada serviço representa uma única ferramenta ou técnica de coleta.
+
+### Arquitetura
+
+1.  **Serviços de Ferramenta Independentes:** Cada ferramenta de CTI (ex: `HackedByService`, `PwnedByService`) é um nano-serviço autônomo localizado em `src/service/nano/services/cti/`. Não há um serviço orquestrador; cada ferramenta opera de forma independente.
+2.  **Comandos Específicos:** Cada serviço escuta um comando único no EventBus (ex: `hackedby_check`).
+3.  **Modelo de Dados Compartilhado ou Específico:** Ferramentas podem compartilhar um modelo de dados comum (ex: `Deface` para todas as ferramentas de defacement) ou ter seu próprio modelo no `prisma/schema.prisma` se os dados coletados forem únicos.
+
+### Como adicionar uma nova ferramenta de CTI
+
+1.  **Crie o arquivo do serviço:** Crie um novo arquivo, como `src/service/nano/services/cti/MinhaNovaFerramentaService.ts`.
+2.  **Implemente o serviço:** Crie a classe que estende `NanoService`, defina um comando único para ela escutar (ex: `minha_ferramenta_check`) e implemente a lógica de coleta.
+3.  **Registre o novo serviço:** Adicione uma instância do seu novo serviço ao array `registeredServices` em `src/service/nano/registry.ts`.
+4.  **Atualize o Prisma (se necessário):** Se a nova ferramenta precisar de uma nova tabela, adicione o modelo ao `schema.prisma` e execute `npx prisma generate`.
