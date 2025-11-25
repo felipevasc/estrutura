@@ -23,7 +23,12 @@ const CtiModule = () => {
                     <TabPane tab="Deface" key="deface">
                         <DefaceView />
                     </TabPane>
-                    {/* Outras abas de CTI podem ser adicionadas aqui no futuro */}
+                    <TabPane tab="Vazamento de Senhas" key="pass_leak" disabled>
+                        {/* Conteúdo futuro aqui */}
+                    </TabPane>
+                    <TabPane tab="Vazamento de E-mails" key="mail_leak" disabled>
+                        {/* Conteúdo futuro aqui */}
+                    </TabPane>
                 </Tabs>
             </CtiContainer>
         </Layout>
