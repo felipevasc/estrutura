@@ -35,7 +35,7 @@ export abstract class CtiSearchService extends NanoService {
 
         const dork = this.getDork(dominio);
         const fonte = this.getFonte();
-        const result = await this.searchWithApi(dork);
+        const result = await this.searchWithApi(dork, dominio);
 
         if (result.items) {
             for (const item of result.items) {
@@ -50,13 +50,17 @@ export abstract class CtiSearchService extends NanoService {
         }
     }
 
-    private async searchWithApi(dork: string): Promise<SearchApiResult> {
+    private async searchWithApi(dork: string, dominio: Dominio): Promise<SearchApiResult> {
         const apiKey = process.env.GOOGLE_API_KEY;
         const searchEngineId = process.env.GOOGLE_SEARCH_ENGINE_ID;
 
         if (!apiKey || !searchEngineId) {
-            console.error(`[${this.name}] Chaves da API do Google não configuradas.`);
-            return {};
+            console.warn(`[${this.name}] Chaves da API do Google não configuradas. Usando resultado simulado.`);
+            return {
+                items: [
+                    { link: `http://${dominio.endereco}/hacked.html` }
+                ]
+            };
         }
 
         const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(dork)}`;
