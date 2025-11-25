@@ -4,9 +4,18 @@ import { ExplorerType } from "@/types/ExplorerType";
 import { SelecaoTargetType } from "./SelecaoTargetType";
 import { TipoLayout } from "@/types/TipoLayout";
 
+export type ConfiguracoesType = {
+    openaiApiKey: string;
+    openaiApiModel: string;
+    googleApiKey: string;
+    googleSearchEngineId: string;
+};
+
 export type StoreType = {
     projeto?: GenericObjectType<ProjetoResponse>;
     explorer?: GenericObjectType<ExplorerType>;
     selecaoTarget?: GenericObjectType<SelecaoTargetType>;
     layout?: GenericObjectType<TipoLayout>;
+    configuracoes?: GenericObjectType<ConfiguracoesType>;
+    isConfiguracoesOpen?: GenericObjectType<boolean>;
 }
