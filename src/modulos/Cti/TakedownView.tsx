@@ -80,11 +80,16 @@ const TakedownView = () => {
     };
 
     const handleModalOk = async () => {
+        if (!projeto?.id) {
+            message.error('Por favor, selecione um projeto antes de adicionar um takedown.');
+            return;
+        }
+
         try {
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                projetoId: projeto?.id,
+                projetoId: projeto.id,
             };
 
             if (editingTakedown) {
@@ -167,7 +172,11 @@ const TakedownView = () => {
                             </Form.Item>
                         </Col>
                         <Col span={12}>
-                             <Form.Item name="solicitantes" label="Solicitado Para">
+                             <Form.Item
+                                name="solicitantes"
+                                label="Solicitado Para"
+                                rules={[{ required: true, message: 'Por favor, informe para quem foi solicitado' }]}
+                             >
                                 <Select mode="tags" options={solicitantes.map(s => ({label: s.nome, value: s.nome}))} />
                             </Form.Item>
                         </Col>

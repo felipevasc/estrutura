@@ -47,6 +47,15 @@ export const useTakedownApi = (projetoId?: number) => {
         },
     });
 
+    // Lógica reutilizável para tratamento de erro
+    const handleApiResponse = async (res: Response) => {
+        if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ error: 'Erro desconhecido' }));
+            throw new Error(errorData.error || 'Ocorreu um erro');
+        }
+        return res.json();
+    };
+
     // Criar um novo Takedown
     const createMutation = useMutation({
         mutationFn: (newTakedown: Omit<Takedown, 'id' | 'solicitantes'> & { solicitantes: string[] }) =>
@@ -54,12 +63,12 @@ export const useTakedownApi = (projetoId?: number) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newTakedown),
-            }).then(res => res.json()),
+            }).then(handleApiResponse),
         onSuccess: () => {
             message.success('Takedown adicionado com sucesso!');
             queryClient.invalidateQueries({ queryKey: takedownQueryKey });
         },
-        onError: () => message.error('Erro ao adicionar takedown.'),
+        onError: (error: Error) => message.error(error.message),
     });
 
     // Atualizar um Takedown existente
@@ -69,12 +78,12 @@ export const useTakedownApi = (projetoId?: number) => {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedTakedown),
-            }).then(res => res.json()),
+            }).then(handleApiResponse),
         onSuccess: () => {
             message.success('Takedown atualizado com sucesso!');
             queryClient.invalidateQueries({ queryKey: takedownQueryKey });
         },
-        onError: () => message.error('Erro ao atualizar takedown.'),
+        onError: (error: Error) => message.error(error.message),
     });
 
     // Deletar um Takedown

@@ -34,8 +34,16 @@ export async function POST(request: NextRequest) {
     try {
         const { url, solicitantes, projetoId } = await request.json();
 
-        if (!url || !solicitantes || !projetoId) {
-            return NextResponse.json({ error: 'URL, solicitantes e ID do projeto são obrigatórios' }, { status: 400 });
+        const errors = [];
+        if (!url) errors.push('URL');
+        if (!projetoId) errors.push('ID do Projeto');
+        if (!solicitantes || !Array.isArray(solicitantes) || solicitantes.length === 0) {
+            errors.push('Solicitado Para');
+        }
+
+        if (errors.length > 0) {
+            const errorMessage = `Os seguintes campos são obrigatórios: ${errors.join(', ')}.`;
+            return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
         const diasPrevisao = parseInt(process.env.TAKEDOWN_DIAS_PREVISAO || '5', 10);
