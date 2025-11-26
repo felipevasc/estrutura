@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Spin, Tag, Button, Select, message, Card, Space, Typography } from 'antd';
+import { Table, Alert, Button, Select, message, Card, Space, Typography, Dropdown, Menu, Tag } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
@@ -23,6 +23,11 @@ interface DefaceRecord {
     };
 }
 
+const ferramentas = [
+    { key: 'hackedby', label: 'Google-HackBY' },
+    { key: 'pwnedby', label: 'Google-PwnedBy' },
+];
+
 const DefaceView = () => {
     const { projeto } = useStore();
     const projetoId = projeto?.get()?.id;
@@ -32,6 +37,7 @@ const DefaceView = () => {
     const [loading, setLoading] = useState(false);
     const [executing, setExecuting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [selectedFerramenta, setSelectedFerramenta] = useState(ferramentas[0].key);
 
     const fetchDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -65,7 +71,7 @@ const DefaceView = () => {
         fetchData();
     }, [fetchDominios, fetchData]);
 
-    const handleExecute = async (ferramenta: 'hackedby' | 'pwnedby') => {
+    const handleExecute = async () => {
         if (!selectedDominio) {
             message.warning('Por favor, selecione um domínio alvo.');
             return;
@@ -75,16 +81,24 @@ const DefaceView = () => {
             const response = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/executar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: selectedDominio, ferramenta }),
+                body: JSON.stringify({ dominioId: selectedDominio, ferramenta: selectedFerramenta }),
             });
             if (!response.ok) throw new Error('Falha ao enfileirar a tarefa.');
-            message.success(`Tarefa '${ferramenta}' enfileirada com sucesso! Os resultados aparecerão em breve.`);
+            message.success(`Tarefa '${selectedFerramenta}' enfileirada com sucesso! Os resultados aparecerão em breve.`);
         } catch (err) {
             message.error(err instanceof Error ? err.message : 'Erro desconhecido.');
         } finally {
             setExecuting(false);
         }
     };
+
+    const menu = (
+        <Menu onClick={({ key }) => setSelectedFerramenta(key)}>
+            {ferramentas.map(f => (
+                <Menu.Item key={f.key}>{f.label}</Menu.Item>
+            ))}
+        </Menu>
+    );
 
     const columns = [
         { title: 'URL', dataIndex: 'url', key: 'url', render: (text: string) => <a href={text} target="_blank" rel="noopener noreferrer">{text}</a> },
@@ -106,8 +120,9 @@ const DefaceView = () => {
                     >
                         {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
                     </Select>
-                    <Button onClick={() => handleExecute('hackedby')} loading={executing}>Executar Google-HackBY</Button>
-                    <Button onClick={() => handleExecute('pwnedby')} loading={executing}>Executar Google-PwnedBy</Button>
+                    <Dropdown.Button onClick={handleExecute} loading={executing} overlay={menu}>
+                        Executar {ferramentas.find(f => f.key === selectedFerramenta)?.label}
+                    </Dropdown.Button>
                 </Space>
             </Card>
             <Table
