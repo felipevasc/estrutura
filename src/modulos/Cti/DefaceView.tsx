@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Spin, Tag, Button, Select, message, Card, Space, Typography } from 'antd';
+import { Table, Alert, Tag, Button, Select, message, Card, Typography, Row, Col, Flex } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
@@ -96,19 +96,30 @@ const DefaceView = () => {
     return (
         <Container>
             <Card style={{ marginBottom: 24 }}>
-                <Title level={5}>Executar Ferramentas de Deface</Title>
-                <Space>
-                    <Select
-                        style={{ width: 250 }}
-                        placeholder="Selecione um domínio alvo"
-                        onChange={(value) => setSelectedDominio(value)}
-                        allowClear
-                    >
-                        {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
-                    </Select>
-                    <Button onClick={() => handleExecute('hackedby')} loading={executing}>Executar Google-HackBY</Button>
-                    <Button onClick={() => handleExecute('pwnedby')} loading={executing}>Executar Google-PwnedBy</Button>
-                </Space>
+                <Row gutter={[24, 16]} align="bottom">
+                    <Col xs={24} md={8} lg={6}>
+                        <Title level={5} style={{ margin: 0, paddingBottom: '8px' }}>Alvo</Title>
+                        <Select
+                            style={{ width: '100%' }}
+                            placeholder="Selecione um domínio"
+                            onChange={(value) => setSelectedDominio(value)}
+                            allowClear
+                        >
+                            {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
+                        </Select>
+                    </Col>
+                    <Col xs={24} md={16} lg={18}>
+                        <Title level={5} style={{ margin: 0, paddingBottom: '8px' }}>Ferramentas</Title>
+                        <Flex gap="small" wrap="wrap">
+                            <Button onClick={() => handleExecute('hackedby')} loading={executing}>
+                                Google-HackBY
+                            </Button>
+                            <Button onClick={() => handleExecute('pwnedby')} loading={executing}>
+                                Google-PwnedBy
+                            </Button>
+                        </Flex>
+                    </Col>
+                </Row>
             </Card>
             <Table
                 dataSource={data}
