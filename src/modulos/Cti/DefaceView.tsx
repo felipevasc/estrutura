@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Spin, Tag, Button, Select, message, Card, Space, Typography } from 'antd';
+import { Table, Alert, Tag, Button, Select, message, Card, Space, Typography, Row, Col } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
@@ -95,34 +95,55 @@ const DefaceView = () => {
 
     return (
         <Container>
-            <Card style={{ marginBottom: 24 }}>
-                <Title level={5}>Executar Ferramentas de Deface</Title>
-                <Space>
-                    <Select
-                        style={{ width: 250 }}
-                        placeholder="Selecione um domínio alvo"
-                        onChange={(value) => setSelectedDominio(value)}
-                        allowClear
-                    >
-                        {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
-                    </Select>
-                    <Button onClick={() => handleExecute('hackedby')} loading={executing}>Executar Google-HackBY</Button>
-                    <Button onClick={() => handleExecute('pwnedby')} loading={executing}>Executar Google-PwnedBy</Button>
-                </Space>
-            </Card>
-            <Table
-                dataSource={data}
-                columns={columns}
-                rowKey="id"
-                bordered
-                loading={loading}
-                title={() => (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Resultados da Verificação de Deface</span>
-                        <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
-                    </div>
-                )}
-            />
+            <Row gutter={24}>
+                <Col span={18}>
+                    <Card style={{ marginBottom: 24 }}>
+                        <Title level={5}>Alvo</Title>
+                        <Select
+                            style={{ width: '100%' }}
+                            placeholder="Selecione um domínio"
+                            onChange={(value) => setSelectedDominio(value)}
+                            allowClear
+                        >
+                            {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
+                        </Select>
+                    </Card>
+                    <Table
+                        dataSource={data}
+                        columns={columns}
+                        rowKey="id"
+                        bordered
+                        loading={loading}
+                        title={() => (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span>Resultados da Verificação de Deface</span>
+                                <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
+                            </div>
+                        )}
+                    />
+                </Col>
+                <Col span={6}>
+                    <Card>
+                        <Title level={5}>Ferramentas</Title>
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            <Button
+                                block
+                                onClick={() => handleExecute('hackedby')}
+                                loading={executing}
+                            >
+                                Google-HackBY
+                            </Button>
+                            <Button
+                                block
+                                onClick={() => handleExecute('pwnedby')}
+                                loading={executing}
+                            >
+                                Google-PwnedBy
+                            </Button>
+                        </Space>
+                    </Card>
+                </Col>
+            </Row>
             {error && <Alert message="Erro" description={error} type="error" showIcon style={{ marginTop: 16 }} />}
         </Container>
     );
