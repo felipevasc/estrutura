@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { queueCommand } from '@/service/nano/commandHelper';
+import EventBus from '@/service/nano/EventBus';
+import { NanoEvents } from '@/service/nano/events';
 
 // POST /api/v1/cti/takedown/verificar
 export async function POST(request: NextRequest) {
@@ -11,13 +12,19 @@ export async function POST(request: NextRequest) {
         }
 
         for (const id of ids) {
-            await queueCommand('takedown_check', JSON.stringify({ id }), projetoId);
+            // Emite o evento diretamente para execução imediata, sem persistir no banco
+            EventBus.emit(NanoEvents.COMMAND_RECEIVED, {
+                id: `takedown-check-${id}-${Date.now()}`, // ID único e efêmero
+                command: 'takedown_check',
+                args: { id },
+                projectId: projetoId,
+            });
         }
 
-        return NextResponse.json({ message: `${ids.length} verificações de takedown foram enfileiradas.` });
+        return NextResponse.json({ message: `${ids.length} verificações de takedown foram iniciadas.` });
 
     } catch (error) {
-        console.error("Erro ao enfileirar verificação de takedown:", error);
-        return NextResponse.json({ error: 'Erro ao enfileirar verificações' }, { status: 500 });
+        console.error("Erro ao iniciar verificação de takedown:", error);
+        return NextResponse.json({ error: 'Erro ao iniciar verificações' }, { status: 500 });
     }
 }
