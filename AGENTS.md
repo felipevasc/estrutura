@@ -81,6 +81,15 @@ A IA pode sugerir comandos no formato JSON:
 
 O `CommandInterpreter` converte estes comandos para a estrutura interna dos NanoServices (ex: resolvendo nomes de domínio para IDs).
 
+### Contexto da IA
+Para evitar exceder os limites de token da API e manter o desempenho, o contexto enviado para a IA (domínios, IPs, etc.) é limitado.
+
+**Regra:** Sempre que uma nova entidade do banco de dados for adicionada ao contexto em `AiService.ts`, um limite correspondente **deve** ser adicionado:
+1.  **Variável de Ambiente:** Crie uma variável em `.env.local` chamada `CONTEXT_LIMIT_<NOME_DA_ENTIDADE_EM_MAIUSCULO>`.
+2.  **API de Configuração:** Adicione a variável à `GET` e `POST` em `src/app/api/v1/configuracoes/route.ts`.
+3.  **UI de Configuração:** Adicione um campo `InputNumber` em `src/components/Configuracoes/index.tsx`.
+4.  **Serviço da IA:** Use a variável de ambiente com o operador `take` do Prisma em `src/service/ai/AiService.ts`.
+
 ### Como adicionar novos comandos à IA
 1.  Implemente o comando no `src/service/ai/CommandInterpreter.ts`.
 2.  Atualize o Prompt do Sistema em `src/service/ai/AiService.ts` para instruir a IA sobre o novo comando.

@@ -34,6 +34,13 @@ export async function GET() {
         openaiApiModel: env.OPENAI_API_MODEL || '',
         googleApiKey: env.GOOGLE_API_KEY ? '••••••••••••••••' : '',
         googleSearchEngineId: env.GOOGLE_SEARCH_ENGINE_ID || '',
+        // Limites de Contexto da IA
+        contextLimitDominio: env.CONTEXT_LIMIT_DOMINIO || '20',
+        contextLimitIp: env.CONTEXT_LIMIT_IP || '20',
+        contextLimitDiretorio: env.CONTEXT_LIMIT_DIRETORIO || '20',
+        contextLimitUsuario: env.CONTEXT_LIMIT_USUARIO || '20',
+        contextLimitDeface: env.CONTEXT_LIMIT_DEFACE || '20',
+        contextLimitPorta: env.CONTEXT_LIMIT_PORTA || '20',
     };
     return NextResponse.json(clientConfig);
 }
@@ -86,15 +93,21 @@ export async function POST(request: Request) {
             openaiApiModel: 'OPENAI_API_MODEL',
             googleApiKey: 'GOOGLE_API_KEY',
             googleSearchEngineId: 'GOOGLE_SEARCH_ENGINE_ID',
+            contextLimitDominio: 'CONTEXT_LIMIT_DOMINIO',
+            contextLimitIp: 'CONTEXT_LIMIT_IP',
+            contextLimitDiretorio: 'CONTEXT_LIMIT_DIRETORIO',
+            contextLimitUsuario: 'CONTEXT_LIMIT_USUARIO',
+            contextLimitDeface: 'CONTEXT_LIMIT_DEFACE',
+            contextLimitPorta: 'CONTEXT_LIMIT_PORTA',
         };
 
         for (const frontendKey in body) {
             const value = body[frontendKey];
-            if (value && !value.includes('••••')) {
+            if (value && !value.toString().includes('••••')) {
                 const envKey = keyMap[frontendKey];
                 if (envKey) {
-                    envUpdates[envKey] = value;
-                    process.env[envKey] = value; // Atualiza o processo em execução
+                    envUpdates[envKey] = value.toString();
+                    process.env[envKey] = value.toString(); // Atualiza o processo em execução
                 }
             }
         }

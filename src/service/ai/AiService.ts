@@ -11,81 +11,100 @@ export class AiService {
   }
 
   async getProjectContext(projectId: number) {
-    const project = await prisma.projeto.findUnique({
-      where: { id: projectId },
-      include: {
-        dominios: {
-            include: {
-                ips: true
-            }
-        },
-        ips: {
-            include: {
-                portas: true,
-                usuarios: true
-            }
-        }
-      }
+    const contextLimitDominio = parseInt(process.env.CONTEXT_LIMIT_DOMINIO || '20', 10);
+    const contextLimitIp = parseInt(process.env.CONTEXT_LIMIT_IP || '20', 10);
+    const contextLimitPorta = parseInt(process.env.CONTEXT_LIMIT_PORTA || '20', 10);
+    const contextLimitDiretorio = parseInt(process.env.CONTEXT_LIMIT_DIRETORIO || '20', 10);
+    const contextLimitUsuario = parseInt(process.env.CONTEXT_LIMIT_USUARIO || '20', 10);
+    const contextLimitDeface = parseInt(process.env.CONTEXT_LIMIT_DEFACE || '20', 10);
+
+    const projeto = await prisma.projeto.findUnique({ where: { id: projectId } });
+    if (!projeto) return null;
+
+    const dominios = await prisma.dominio.findMany({
+        where: { projetoId: projectId },
+        take: contextLimitDominio
     });
 
-    if (!project) return null;
+    const ips = await prisma.ip.findMany({
+        where: { projetoId: projectId },
+        take: contextLimitIp
+    });
 
-    // Formatting context to be token-efficient but informative
+    const portas = await prisma.porta.findMany({
+        where: { ip: { projetoId: projectId } },
+        take: contextLimitPorta,
+        include: { ip: true }
+    });
+
+    const diretorios = await prisma.diretorio.findMany({
+        where: { OR: [{ dominio: { projetoId: projectId } }, { ip: { projetoId: projectId } }] },
+        take: contextLimitDiretorio,
+        include: { dominio: true, ip: true }
+    });
+
+    const usuarios = await prisma.usuario.findMany({
+        where: { ip: { projetoId: projectId } },
+        take: contextLimitUsuario,
+        include: { ip: true }
+    });
+
+    const defaces = await prisma.deface.findMany({
+        where: { dominio: { projetoId: projectId } },
+        take: contextLimitDeface,
+        include: { dominio: true }
+    });
+
     return {
-        project: project.nome,
-        domains: project.dominios.map(d => ({
-            // We expose ID to the LLM?
-            // Better to keep it using Names/IPs as "Human Language".
-            // The Interpreter will resolve them.
-            name: d.endereco,
-            ips: d.ips.map(ip => ip.endereco)
-        })),
-        ips: project.ips.map(ip => ({
-            address: ip.endereco,
-            ports: ip.portas.map(p => `${p.numero}/${p.protocolo || 'tcp'} (${p.servico || 'unknown'})`),
-            users: ip.usuarios.map(u => u.nome)
-        }))
+        projeto: projeto.nome,
+        dominios: dominios.map(d => d.endereco),
+        ips: ips.map(i => i.endereco),
+        portas: portas.map(p => `${p.ip?.endereco}:${p.numero}/${p.protocolo || 'tcp'} (${p.servico || 'unknown'})`),
+        diretorios: diretorios.map(d => d.caminho),
+        usuarios: usuarios.map(u => `${u.nome}@${u.ip.endereco}`),
+        deface: defaces.map(d => `URL: ${d.url}, Fonte: ${d.fonte}`)
     };
   }
 
   async generateResponse(projectId: number, messages: any[]) {
       const context = await this.getProjectContext(projectId);
       const systemPrompt = `
-You are a Red Team Assistant running on Kali Linux.
-Your goal is to assist the user in CTF or Red Team operations by analyzing the current findings and suggesting next steps.
+Você é um Assistente de Red Team em um Kali Linux.
+Seu objetivo é auxiliar o usuário em operações de CTF ou Red Team, analisando os achados atuais e sugerindo os próximos passos.
 
-CONTEXT (Current Project Findings):
+CONTEXTO (Achados Atuais do Projeto):
 ${JSON.stringify(context, null, 2)}
 
-INSTRUCTIONS:
-1. Analyze the context and the user's request.
-2. Provide insights, explanations, or potential attack vectors.
-3. You can suggest commands to run to gather more info or exploit vulnerabilities.
-4. When you suggest a command, you MUST format it as a valid JSON object on its own line, following this structure exactly:
-   {"COMANDO":"COMMAND_NAME", "PARAMETRO1":"VALUE"}
+INSTRUÇÕES:
+1. Analise o contexto e a solicitação do usuário.
+2. Forneça insights, explicações ou vetores de ataque em potencial.
+3. Você pode sugerir comandos para coletar mais informações ou explorarulnerabilidades.
+4. Ao sugerir um comando, você DEVE formatá-lo como um objeto JSON válido em sua própria linha, seguindo esta estrutura exatamente:
+   {"COMANDO":"NOME_DO_COMANDO", "PARAMETRO1":"VALOR"}
 
-   Supported Commands:
-   - AMASS (Subdomain Enumeration): {"COMANDO":"AMASS", "PARAMETRO1":"domain.com"}
-   - NMAP (Port Scanning): {"COMANDO":"NMAP", "PARAMETRO1":"ip_address"}
+   Comandos Suportados:
+   - AMASS (Enumeração de Subdomínios): {"COMANDO":"AMASS", "PARAMETRO1":"dominio.com"}
+   - NMAP (Scan de Portas): {"COMANDO":"NMAP", "PARAMETRO1":"endereco_ip"}
+   - HACKEDBY (Pesquisa Google Hacking): {"COMANDO":"HACKEDBY", "PARAMETRO1":"dominio.com"}
+   - PWNEDBY (Pesquisa Google Hacking): {"COMANDO":"PWNEDBY", "PARAMETRO1":"dominio.com"}
 
-   Examples:
-   To scan example.com:
+   Exemplos:
+   Para escanear example.com:
    {"COMANDO":"AMASS", "PARAMETRO1":"example.com"}
 
-   To scan IP 192.168.1.1:
+   Para escanear o IP 192.168.1.1:
    {"COMANDO":"NMAP", "PARAMETRO1":"192.168.1.1"}
 
-5. Do NOT wrap the JSON command in markdown code blocks (like \`\`\`json ... \`\`\`). Just write the raw JSON string on a new line.
-6. You can explain why you are suggesting the command before or after the JSON.
+   Para verificar defacement em example.com:
+   {"COMANDO":"HACKEDBY", "PARAMETRO1":"example.com"}
 
-ENVIRONMENT:
-- You are running on a Kali Linux machine.
-- You have access to standard tools (nmap, amass, etc.).
+5. NÃO envolva o comando JSON em blocos de código markdown (como \`\`\`json ... \`\`\`). Apenas escreva a string JSON bruta em uma nova linha.
+6. Você pode explicar por que está sugerindo o comando antes ou depois do JSON.
+
+AMBIENTE:
+- Você está em uma máquina Kali Linux.
+- Você tem acesso a ferramentas padrão (nmap, amass, etc.).
       `;
-
-      // We only keep the last N messages to avoid hitting token limits if context is huge
-      // But for now, let's pass all messages provided by frontend (which usually manages history).
-      // We prepend the system prompt.
 
       const conversation = [
           { role: 'system', content: systemPrompt },
