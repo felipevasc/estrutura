@@ -37,7 +37,7 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
             }
         };
         fetchConfig();
-    }, [api.configuracoes]);
+    }, [api.configuracoes.getConfig]);
 
     const storeValue: StoreType = useMemo(() => ({
         projeto: {

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import useChat from "./chat";
 import useDominios from "./dominios";
 import useFerramentas from "./ferramentas";
@@ -16,16 +17,17 @@ const useApi = () => {
     const queue = useQueue();
     const usuarios = useUsuarios();
     const configuracoes = useConfiguracoes();
-    return {
-        chat: { ...chat },
-        projeto: { ...projetos },
-        dominios: { ...dominios },
-        ferramentas: { ...ferramentas },
-        ips: { ...ips },
-        queue: { ...queue },
-        usuarios: { ...usuarios },
-        configuracoes: { ...configuracoes },
-    }
+
+    return useMemo(() => ({
+        chat,
+        projeto: projetos,
+        dominios,
+        ferramentas,
+        ips,
+        queue,
+        usuarios,
+        configuracoes,
+    }), [chat, projetos, dominios, ferramentas, ips, queue, usuarios, configuracoes]);
 }
 
 export default useApi;
