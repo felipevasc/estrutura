@@ -165,7 +165,7 @@ const TakedownView = () => {
                 onOk={handleModalOk}
                 onCancel={() => setIsModalVisible(false)}
                 width={800}
-                destroyOnClose
+                destroyOnHidden
             >
                 <Form form={form} layout="vertical" name="takedown_form">
                     <Form.Item name="url" label="URL" rules={[{ required: true, message: 'Por favor, insira a URL' }]}>

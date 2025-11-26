@@ -35,7 +35,14 @@ export abstract class CtiSearchService extends NanoService {
 
     private async handleCheck({ id, args }: { id: number, args: string }) {
         try {
-            const parsedArgs: CheckPayload = JSON.parse(args);
+            console.log(typeof args)
+            let parsedArgs: CheckPayload;
+            
+            if (typeof args === 'string') {
+                parsedArgs = JSON.parse(args);
+            } else {
+                parsedArgs = args;
+            }
             const { dominioId } = parsedArgs;
             const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
             if (!dominio) {
@@ -62,7 +69,7 @@ export abstract class CtiSearchService extends NanoService {
             this.log(`Processamento concluído. Encontrados ${createdItems.length} resultados.`);
             this.bus.emit('JOB_COMPLETED', { id, result: createdItems });
         } catch (error: any) {
-            this.error(`Falha no processamento: ${error.message}`);
+            this.error(`Falha no processamento: ${error.message}`, error);
             this.bus.emit('JOB_FAILED', { id, error: error.message });
         }
     }

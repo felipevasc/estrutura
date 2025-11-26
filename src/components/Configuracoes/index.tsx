@@ -56,7 +56,7 @@ export default function Configuracoes() {
             open={open}
             onCancel={handleCancel}
             width={600}
-            destroyOnClose
+            destroyOnHidden
             footer={[
                 <Button key="back" onClick={handleCancel} disabled={loading}>
                     Cancelar
