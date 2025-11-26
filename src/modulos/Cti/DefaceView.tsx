@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Tag, Button, Select, message, Card, Space, Typography, Row, Col } from 'antd';
+import { Table, Alert, Tag, Button, Select, message, Card, Space, Typography, Row, Col, Popconfirm } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
@@ -94,6 +94,26 @@ const DefaceView = () => {
         }
     };
 
+    const handleLimpar = async () => {
+        if (!projetoId) return;
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/v1/projetos/${projetoId}/cti/deface`, {
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Falha ao limpar os dados.');
+            }
+            message.success("Dados de deface limpos com sucesso.");
+            setData([]);
+        } catch (err) {
+            message.error(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const columns = [
         { title: 'URL', dataIndex: 'url', key: 'url', render: (text: string) => <a href={text} target="_blank" rel="noopener noreferrer">{text}</a> },
         { title: 'Domínio', dataIndex: ['dominio', 'endereco'], key: 'dominio' },
@@ -126,7 +146,18 @@ const DefaceView = () => {
                             title={() => (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <span>Resultados da Verificação de Deface</span>
-                                    <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
+                                    <Space>
+                                        <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
+                                        <Popconfirm
+                                            title="Limpar todos os dados?"
+                                            description="Esta ação é irreversível. Deseja continuar?"
+                                            onConfirm={handleLimpar}
+                                            okText="Sim"
+                                            cancelText="Não"
+                                        >
+                                            <Button danger>Limpar</Button>
+                                        </Popconfirm>
+                                    </Space>
                                 </div>
                             )}
                         />
