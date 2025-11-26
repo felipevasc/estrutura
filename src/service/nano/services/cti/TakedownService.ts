@@ -51,7 +51,11 @@ export class TakedownService extends NanoService {
                         }
                     }
 
-                    const response = await fetch(takedown.url, {
+                    let url = takedown.url;
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = `http://${url}`;
+                    }
+                    const response = await fetch(url, {
                         method: takedown.metodoHttp,
                         headers: headers,
                         body: takedown.body,
