@@ -10,6 +10,7 @@ import { FfufService } from './services/tools/FfufService';
 import HackedByService from './services/cti/HackedByService';
 import PwnedByService from './services/cti/PwnedByService';
 import { TakedownService } from "./services/cti/TakedownService";
+import { CriarTakedownService } from './services/cti/CriarTakedownService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -22,4 +23,6 @@ export const registeredServices: NanoService[] = [
     new FfufService(),
     new HackedByService(),
     new PwnedByService(),
+    new TakedownService(),
+    new CriarTakedownService(),
 ];
