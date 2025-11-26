@@ -16,16 +16,10 @@ export class TakedownService extends NanoService {
             }
 
             const { id: jobId, args } = payload;
-            let takedownId: number;
+            const takedownId = Number(args?.id);
 
-            try {
-                const parsedArgs = JSON.parse(args);
-                takedownId = parsedArgs.id;
-                if (!takedownId) {
-                    throw new Error('ID do takedown não fornecido');
-                }
-            } catch (error) {
-                this.emit('JOB_FAILED', { id: jobId, error: 'Argumentos inválidos' });
+            if (!takedownId) {
+                this.bus.emit('JOB_FAILED', { id: jobId, error: 'ID do takedown não fornecido' });
                 return;
             }
 
@@ -35,7 +29,7 @@ export class TakedownService extends NanoService {
                 });
 
                 if (!takedown) {
-                    this.emit('JOB_FAILED', { id: jobId, error: `Takedown com ID ${takedownId} não encontrado` });
+                    this.bus.emit('JOB_FAILED', { id: jobId, error: `Takedown com ID ${takedownId} não encontrado` });
                     return;
                 }
 
@@ -46,25 +40,27 @@ export class TakedownService extends NanoService {
                         try {
                             headers = JSON.parse(takedown.headers);
                         } catch (e) {
-                            this.emit('JOB_FAILED', { id: jobId, error: `JSON de headers inválido para Takedown ID ${takedown.id}` });
+                            this.bus.emit('JOB_FAILED', { id: jobId, error: `JSON de headers inválido para Takedown ID ${takedown.id}` });
                             return;
                         }
                     }
 
-                    const response = await fetch(takedown.url, {
-                        method: takedown.metodoHttp,
+                    let url = takedown.url;
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = `https://${url}`;
+                    }
+                    const response = await fetch(url, {
+                        method: takedown.metodoHttp || 'GET',
                         headers: headers,
                         body: takedown.body,
                         redirect: 'follow', // Segue redirecionamentos
                     });
 
-                    // Consideramos ONLINE se a resposta for bem-sucedida (status 2xx) ou um redirecionamento (3xx)
                     status = response.ok || (response.status >= 300 && response.status < 400)
                         ? TakedownVerificacaoStatus.ONLINE
                         : TakedownVerificacaoStatus.OFFLINE;
 
                 } catch (error) {
-                    // Erros de rede (ex: DNS não encontrado, conexão recusada) indicam que o site está offline
                     status = TakedownVerificacaoStatus.OFFLINE;
                 }
 
@@ -76,11 +72,11 @@ export class TakedownService extends NanoService {
                     },
                 });
 
-                this.emit('JOB_COMPLETED', { id: jobId, result: `Verificação do Takedown ${takedownId} concluída. Status: ${status}` });
+                this.bus.emit('JOB_COMPLETED', { id: jobId, result: `Verificação do Takedown ${takedownId} concluída. Status: ${status}` });
 
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao verificar takedown';
-                this.emit('JOB_FAILED', { id: jobId, error: errorMessage });
+                this.bus.emit('JOB_FAILED', { id: jobId, error: errorMessage });
             }
         });
     }

@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         }
 
         for (const id of ids) {
-            await queueCommand('takedown_check', JSON.stringify({ id }), projetoId);
+            await queueCommand('takedown_check', { id }, projetoId);
         }
 
         return NextResponse.json({ message: `${ids.length} verificações de takedown foram enfileiradas.` });
