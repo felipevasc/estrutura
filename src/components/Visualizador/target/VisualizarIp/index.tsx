@@ -76,7 +76,7 @@ const VisualizarIp = () => {
     const { selecaoTarget } = useContext(StoreContext);
     const api = useApi();
     const idIp = selecaoTarget?.get()?.id;
-    const { data: ip, isLoading, error } = api.ips.getIp(idIp);
+    const { data: ip, isLoading, error } = api.ips.useIp(idIp);
 
     if (isLoading) return <DashboardContainer><h2>Carregando...</h2></DashboardContainer>;
     if (error) return <DashboardContainer><h2>Erro ao carregar dados do IP.</h2></DashboardContainer>;

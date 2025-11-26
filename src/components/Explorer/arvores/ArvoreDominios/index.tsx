@@ -1,7 +1,7 @@
 "use client"
 import { Tree, TreeDataNode } from 'antd';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { GlobalOutlined, SendOutlined } from '@ant-design/icons';
+import { SendOutlined } from '@ant-design/icons';
 import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from './styles';
 import NovoDominio from './NovoDominio';
 import useApi from '@/api';
@@ -10,41 +10,39 @@ import useElementoDominio from '../../target/ElementoDominio';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
-  const [searchValue, setSearchValue] = useState('');
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const api = useApi();
-  const { projeto, selecaoTarget } = useContext(StoreContext);
-  const { data: dominiosProjeto } = api.dominios.getDominios(projeto?.get()?.id);
+  const { projeto } = useContext(StoreContext);
+  const idProjeto = useMemo(() => projeto?.get()?.id, [projeto]);
+  const { data: dominiosProjeto } = api.dominios.useDominiosProjeto(idProjeto);
   const elementoDominio = useElementoDominio();
   const [elementos, setElementos] = useState<TreeDataNode[]>([]);
-
-  const selecionado = selecaoTarget?.get();
 
   useEffect(() => {
     setElementos([]);
     setExpandedKeys([]);
-  }, [projeto?.get()?.id])
+  }, [idProjeto])
 
   useEffect(() => {
-    let active = true;
+    let ativo = true;
 
     if (dominiosProjeto) {
-      const fetchAllDominios = async () => {
-        const promises = dominiosProjeto.map((d) => elementoDominio.getDominio(d));
-        const resolvedElementos = await Promise.all(promises);
-        if (active) {
-          setElementos(resolvedElementos);
+      const buscarDominios = async () => {
+        const promessas = dominiosProjeto.map((dominio) => elementoDominio.getDominio(dominio));
+        const elementosResolvidos = await Promise.all(promessas);
+        if (ativo) {
+          setElementos(elementosResolvidos);
         }
       };
-      fetchAllDominios();
+      buscarDominios();
     } else {
       setElementos([]);
     }
 
     return () => {
-      active = false;
+      ativo = false;
     };
-  }, [dominiosProjeto]);
+  }, [dominiosProjeto, elementoDominio]);
 
   const onExpand = (newExpandedKeys: React.Key[]) => {
     setExpandedKeys(newExpandedKeys);

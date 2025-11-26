@@ -2,50 +2,48 @@
 import { ProjetoRequest } from "@/types/ProjetoRequest";
 import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 
 const useProjetos = () => {
-
-    const getProjetos = () => useQuery({
+    const useProjetosLista = () => useQuery({
         queryKey: ["projetos"],
         queryFn: async (): Promise<ProjetoResponse[]> => {
-            const res = await fetch("/api/v1/projetos");
-            const data = await res.json();
-            return data;
+            const resposta = await fetch("/api/v1/projetos");
+            const dados = await resposta.json();
+            return dados;
         },
     });
-    
-    const postProjeto = () => useMutation({
+
+    const useCriacaoProjeto = () => useMutation({
         mutationKey: ["novoProjeto"],
-        mutationFn: async (request: ProjetoRequest): Promise<ProjetoResponse> => {
-            const res = await fetch('/api/v1/projetos', {
+        mutationFn: async (pedido: ProjetoRequest): Promise<ProjetoResponse> => {
+            const resposta = await fetch('/api/v1/projetos', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(request),
+                body: JSON.stringify(pedido),
             });
-            const data = await res.json();
-            return data;
+            const dados = await resposta.json();
+            return dados;
         },
     });
 
-    const putProjeto = () => useMutation({
+    const useEdicaoProjeto = () => useMutation({
         mutationKey: ["salvaProjeto"],
-        mutationFn: async (request: ProjetoResponse): Promise<ProjetoResponse> => {
-            const res = await fetch(`/api/v1/projetos/${request.id}`, {
+        mutationFn: async (pedido: ProjetoResponse): Promise<ProjetoResponse> => {
+            const resposta = await fetch(`/api/v1/projetos/${pedido.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(request),
+                body: JSON.stringify(pedido),
             });
-            const data = await res.json();
-            return data;
+            const dados = await resposta.json();
+            return dados;
         },
     });
 
-    const deleteProjeto = () => useMutation({
+    const useRemocaoProjeto = () => useMutation({
         mutationKey: ["removeProjeto"],
         mutationFn: async (id: number): Promise<void> => {
             await fetch(`/api/v1/projetos/${id}`, {
@@ -54,8 +52,7 @@ const useProjetos = () => {
         },
     });
 
-
-    return useMemo(() => ({ getProjetos, postProjeto, putProjeto, deleteProjeto }), [getProjetos, postProjeto, putProjeto, deleteProjeto]);
+    return { useProjetosLista, useCriacaoProjeto, useEdicaoProjeto, useRemocaoProjeto };
 }
 
 export default useProjetos

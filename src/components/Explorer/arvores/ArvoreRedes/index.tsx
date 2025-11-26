@@ -1,6 +1,6 @@
 "use client";
 import { Tree, TreeDataNode } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { StyledArvoreDominio, StyledTitleDominio } from "../ArvoreDominios/styles";
 import StoreContext from "@/store";
 import useApi from "@/api";
@@ -11,26 +11,24 @@ import { faNetworkWired } from "@fortawesome/free-solid-svg-icons";
 const ArvoreRedes = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
-  const { data: ipsProjeto } = api.ips.getIps(projeto?.get()?.id);
+  const idProjeto = useMemo(() => projeto?.get()?.id, [projeto]);
+  const { data: ipsProjeto } = api.ips.useIpsProjeto(idProjeto);
   const elementoIp = useElementoIp();
   const [elementos, setElementos] = useState<TreeDataNode[]>([]);
 
   useEffect(() => {
     const carregar = async () => {
-        const elems: TreeDataNode[] = [];
+        const elementosOrdenados: TreeDataNode[] = [];
         if (ipsProjeto) {
-            // Sort by IP address logic could be complex (string vs numeric), simpler string sort for now
-            const sorted = [...ipsProjeto].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
-
-            for (const ip of sorted) {
-                // Pass skipChildrenTypes if needed, but for Network view we want everything (Dominios, Portas, etc)
-                elems.push(await elementoIp.getIp(ip));
+            const ipsOrdenados = [...ipsProjeto].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
+            for (const ip of ipsOrdenados) {
+                elementosOrdenados.push(await elementoIp.getIp(ip));
             }
         }
-        setElementos(elems);
+        setElementos(elementosOrdenados);
     };
     carregar();
-  }, [ipsProjeto]);
+  }, [ipsProjeto, elementoIp]);
 
   return (
     <StyledArvoreDominio>
