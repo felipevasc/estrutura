@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 
 const useChat = () => {
     const sendMessage = useCallback(async (projectId: number, messages: any[]) => {
@@ -37,7 +37,7 @@ const useChat = () => {
         return await response.json();
     }, []);
 
-    return { sendMessage, executeCommand };
+    return useMemo(() => ({ sendMessage, executeCommand }), [sendMessage, executeCommand]);
 };
 
 export default useChat;

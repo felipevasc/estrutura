@@ -2,6 +2,7 @@
 import { ProjetoRequest } from "@/types/ProjetoRequest";
 import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 const useProjetos = () => {
 
@@ -54,7 +55,7 @@ const useProjetos = () => {
     });
 
 
-    return { getProjetos, postProjeto, putProjeto, deleteProjeto };
+    return useMemo(() => ({ getProjetos, postProjeto, putProjeto, deleteProjeto }), [getProjetos, postProjeto, putProjeto, deleteProjeto]);
 }
 
 export default useProjetos

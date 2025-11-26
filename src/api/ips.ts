@@ -1,6 +1,7 @@
 "use client"
 import { IpResponse } from "@/types/IpResponse";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 const useIps = () => {
 
@@ -24,7 +25,7 @@ const useIps = () => {
         enabled: !!idProjeto
     });
 
-    return { getIp, getIps };
+    return useMemo(() => ({ getIp, getIps }), [getIp, getIps]);
 }
 
 export default useIps;

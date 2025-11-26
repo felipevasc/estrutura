@@ -1,5 +1,7 @@
+import { useCallback, useMemo } from "react";
+
 const useFerramentas = () => {
-    const executeAmass = async (idDominio: number) => {
+    const executeAmass = useCallback(async (idDominio: number) => {
 
         const res = await fetch(`/api/v1/ferramentas/domain/amass`, {
             method: "POST",
@@ -12,8 +14,8 @@ const useFerramentas = () => {
         });
         const data = await res.json();
         return data;
-    }
-    const executeSubfinder = async (idDominio: number) => {
+    }, []);
+    const executeSubfinder = useCallback(async (idDominio: number) => {
 
         const res = await fetch(`/api/v1/ferramentas/domain/subfinder`, {
             method: "POST",
@@ -26,8 +28,8 @@ const useFerramentas = () => {
         });
         const data = await res.json();
         return data;
-    }
-    const executeNmap = async (idIp: number) => {
+    }, []);
+    const executeNmap = useCallback(async (idIp: number) => {
         const res = await fetch(`/api/v1/ferramentas/ip/nmap`, {
             method: "POST",
             headers: {
@@ -39,9 +41,9 @@ const useFerramentas = () => {
         });
         const data = await res.json();
         return data;
-    }
+    }, []);
 
-    const executeEnum4linux = async (idIp: number) => {
+    const executeEnum4linux = useCallback(async (idIp: number) => {
         const res = await fetch(`/api/v1/ferramentas/ip/enum4linux`, {
             method: "POST",
             headers: {
@@ -53,14 +55,14 @@ const useFerramentas = () => {
         });
         const data = await res.json();
         return data;
-    }
+    }, []);
 
-    return {
+    return useMemo(() => ({
         executeAmass,
         executeSubfinder,
         executeNmap,
         executeEnum4linux
-    }
+    }), [executeAmass, executeSubfinder, executeNmap, executeEnum4linux]);
 }
 
 export default useFerramentas;

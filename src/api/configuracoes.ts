@@ -1,13 +1,15 @@
+import { useCallback, useMemo } from "react";
+
 const useConfiguracoes = () => {
-    const getConfig = async () => {
+    const getConfig = useCallback(async () => {
         const response = await fetch('/api/v1/configuracoes');
         if (!response.ok) {
             throw new Error('Falha ao buscar configurações');
         }
         return response.json();
-    };
+    }, []);
 
-    const saveConfig = async (data: any) => {
+    const saveConfig = useCallback(async (data: any) => {
         const response = await fetch('/api/v1/configuracoes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -17,12 +19,12 @@ const useConfiguracoes = () => {
             throw new Error('Falha ao salvar configurações');
         }
         return response.json();
-    };
+    }, []);
 
-    return {
+    return useMemo(() => ({
         getConfig,
         saveConfig,
-    };
+    }), [getConfig, saveConfig]);
 };
 
 export default useConfiguracoes;

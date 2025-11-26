@@ -1,6 +1,7 @@
 "use client";
 import { UsuarioResponse } from "@/types/UsuarioResponse";
 import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 const useUsuarios = () => {
     const getUsuariosProjeto = (idProjeto?: number) => useQuery({
@@ -13,7 +14,7 @@ const useUsuarios = () => {
         enabled: !!idProjeto,
     });
 
-    return { getUsuariosProjeto };
+    return useMemo(() => ({ getUsuariosProjeto }), [getUsuariosProjeto]);
 };
 
 export default useUsuarios;

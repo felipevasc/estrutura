@@ -4,6 +4,7 @@ import { DominioResponse } from "@/types/DominioResponse";
 import { IpResponse } from "@/types/IpResponse";
 import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
 
 const useDominios = () => {
     const reactQuery = useQueryClient();
@@ -18,7 +19,7 @@ const useDominios = () => {
         enabled: !!idProjeto
     });
 
-    const postDominios = async (d: DominioRequest): Promise<DominioResponse> => {
+    const postDominios = useCallback(async (d: DominioRequest): Promise<DominioResponse> => {
 
         const res = await fetch("/api/v1/dominios", {
             method: "POST",
@@ -30,7 +31,7 @@ const useDominios = () => {
         const data = await res.json();
         reactQuery.invalidateQueries({ queryKey: ["dominios", d.projetoId] });
         return data;
-    };
+    }, [reactQuery]);
 
     const getDominio = (idDominio?: number) => useQuery({
         queryKey: ["get-dominio", idDominio],
@@ -42,19 +43,19 @@ const useDominios = () => {
         enabled: !!idDominio
     });
 
-    const getSubdominios = async (idDominio?: number): Promise<DominioResponse[]> => {
+    const getSubdominios = useCallback(async (idDominio?: number): Promise<DominioResponse[]> => {
         const res = await fetch("/api/v1/dominios/" + idDominio + "/subdominios");
         const data = await res.json();
         return data;
-    }
+    }, []);
 
-    const getIps = async (idDominio?: number): Promise<IpResponse[]> => {
+    const getIps = useCallback(async (idDominio?: number): Promise<IpResponse[]> => {
         const res = await fetch("/api/v1/dominios/" + idDominio + "/ips");
         const data = await res.json();
         return data;
-    }
+    }, []);
 
-    return { getDominios, postDominios, getDominio, getSubdominios, getIps };
+    return useMemo(() => ({ getDominios, postDominios, getDominio, getSubdominios, getIps }), [getDominios, postDominios, getDominio, getSubdominios, getIps]);
 }
 
 export default useDominios
