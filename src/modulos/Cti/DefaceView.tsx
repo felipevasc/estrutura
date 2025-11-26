@@ -10,7 +10,15 @@ const { Option } = Select;
 const { Title } = Typography;
 
 const Container = styled.div`
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+`;
+
+const TabelaContainer = styled.div`
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
 `;
 
 interface DefaceRecord {
@@ -95,9 +103,9 @@ const DefaceView = () => {
 
     return (
         <Container>
-            <Row gutter={24}>
-                <Col span={18}>
-                    <Card style={{ marginBottom: 24 }}>
+            <Row gutter={24} style={{ height: '100%', display: 'flex' }}>
+                <Col span={18} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <Card style={{ marginBottom: 24, flexShrink: 0 }}>
                         <Title level={5}>Alvo</Title>
                         <Select
                             style={{ width: '100%' }}
@@ -108,19 +116,21 @@ const DefaceView = () => {
                             {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
                         </Select>
                     </Card>
-                    <Table
-                        dataSource={data}
-                        columns={columns}
-                        rowKey="id"
-                        bordered
-                        loading={loading}
-                        title={() => (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span>Resultados da Verificação de Deface</span>
-                                <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
-                            </div>
-                        )}
-                    />
+                    <TabelaContainer>
+                        <Table
+                            dataSource={data}
+                            columns={columns}
+                            rowKey="id"
+                            bordered
+                            loading={loading}
+                            title={() => (
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span>Resultados da Verificação de Deface</span>
+                                    <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
+                                </div>
+                            )}
+                        />
+                    </TabelaContainer>
                 </Col>
                 <Col span={6}>
                     <Card>

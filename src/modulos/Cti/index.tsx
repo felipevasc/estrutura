@@ -1,37 +1,46 @@
 'use client';
 
 import React from 'react';
-import { Tabs, Layout } from 'antd';
+import { Tabs } from 'antd';
 import styled from 'styled-components';
-import DefaceView from './DefaceView'; // Será criado na próxima etapa
+import DefaceView from './DefaceView';
 
-const { Content } = Layout;
 const { TabPane } = Tabs;
 
-const CtiContainer = styled(Content)`
+const CtiContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   padding: 24px;
-  margin: 0;
-  min-height: 280px;
   background: ${({ theme }) => theme.background};
+
+  .ant-tabs, .ant-tabs-content, .ant-tabs-tabpane {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+  }
+
+  .ant-tabs-content {
+    overflow-y: auto;
+    min-height: 0;
+  }
 `;
 
 const CtiModule = () => {
     return (
-        <Layout style={{ padding: '0 24px 24px' }}>
-            <CtiContainer>
-                <Tabs defaultActiveKey="deface">
-                    <TabPane tab="Deface" key="deface">
-                        <DefaceView />
-                    </TabPane>
-                    <TabPane tab="Vazamento de Senhas" key="pass_leak" disabled>
-                        {/* Conteúdo futuro aqui */}
-                    </TabPane>
-                    <TabPane tab="Vazamento de E-mails" key="mail_leak" disabled>
-                        {/* Conteúdo futuro aqui */}
-                    </TabPane>
-                </Tabs>
-            </CtiContainer>
-        </Layout>
+        <CtiContainer>
+            <Tabs defaultActiveKey="deface">
+                <TabPane tab="Deface" key="deface">
+                    <DefaceView />
+                </TabPane>
+                <TabPane tab="Vazamento de Senhas" key="pass_leak" disabled>
+                    {/* Conteúdo futuro aqui */}
+                </TabPane>
+                <TabPane tab="Vazamento de E-mails" key="mail_leak" disabled>
+                    {/* Conteúdo futuro aqui */}
+                </TabPane>
+            </Tabs>
+        </CtiContainer>
     );
 };
 

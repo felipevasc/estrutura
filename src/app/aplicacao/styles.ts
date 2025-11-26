@@ -4,7 +4,6 @@ import styled from "styled-components";
 export const StyledEstruturaInicial = styled.div`
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     min-height: 100vh;
     max-height: 100vh;
     padding: 0;
@@ -17,3 +16,8 @@ export const StyledEstruturaInicial = styled.div`
       display: none;
     }
 `
+export const ModuloContainer = styled.main`
+    flex-grow: 1;
+    min-height: 0;
+    overflow-y: auto;
+`;

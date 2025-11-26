@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react";
-import { StyledEstruturaInicial } from "./styles";
+import { StyledEstruturaInicial, ModuloContainer } from "./styles";
 import Topo from "@/layout/Topo";
 import Rodape from "@/layout/Rodape";
 import ChatWidget from "@/components/Chat";
@@ -30,7 +30,9 @@ export default function Aplicacao() {
       <StyledEstruturaInicial>
         <Topo />
         <Navegacao abaAtiva={abaAtiva} aoTrocarAba={setAbaAtiva} />
-        {renderizarModulo()}
+        <ModuloContainer>
+            {renderizarModulo()}
+        </ModuloContainer>
         <Rodape />
       </StyledEstruturaInicial>
       <ChatWidget />
