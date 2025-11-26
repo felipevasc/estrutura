@@ -9,6 +9,7 @@ import { Enum4linuxService } from './services/tools/Enum4linuxService';
 import { FfufService } from './services/tools/FfufService';
 import HackedByService from './services/cti/HackedByService';
 import PwnedByService from './services/cti/PwnedByService';
+import { TakedownService } from "./services/cti/TakedownService";
 
 export const registeredServices: NanoService[] = [
     new QueueService(),

@@ -177,6 +177,15 @@ export default function Configuracoes() {
                         </Col>
                     </Row>
 
+                    <Divider orientation="left">CTI</Divider>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="takedownDiasPrevisao" label="Dias de Previsão para Takedown">
+                                <InputNumber addonAfter="dias" style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
                     {error && <Alert message={error} type="error" showIcon style={{marginTop: '16px'}}/>}
                 </Form>
             )}

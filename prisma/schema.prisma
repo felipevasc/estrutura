@@ -17,6 +17,7 @@ model Projeto {
   redes    Rede[]
   ips      Ip[]
   commands Command[]
+  takedowns Takedown[]
 
   @@map("projetos")
 }
@@ -146,4 +147,41 @@ model Deface {
   createdAt DateTime @default(now())
 
   @@map("deface")
+}
+
+model Takedown {
+  id                      Int                        @id @default(autoincrement())
+  url                     String
+  solicitadoEm            DateTime                   @default(now())
+  previsao                DateTime
+  derrubadoEm             DateTime?
+  status                  TakedownStatus             @default(SOLICITADO)
+  ultimaVerificacao       DateTime?
+  statusUltimaVerificacao TakedownVerificacaoStatus?
+  metodoHttp              String                     @default("GET")
+  headers                 String?
+  body                    String?
+  projetoId               Int
+  projeto                 Projeto                    @relation(fields: [projetoId], references: [id])
+  solicitantes            TakedownSolicitante[]
+
+  @@map("takedowns")
+}
+
+model TakedownSolicitante {
+  id        Int        @id @default(autoincrement())
+  nome      String     @unique
+  takedowns Takedown[]
+
+  @@map("takedown_solicitantes")
+}
+
+enum TakedownStatus {
+  SOLICITADO
+  DERRUBADO
+}
+
+enum TakedownVerificacaoStatus {
+  ONLINE
+  OFFLINE
 }

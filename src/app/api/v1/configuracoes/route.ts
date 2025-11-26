@@ -41,6 +41,7 @@ export async function GET() {
         contextLimitUsuario: env.CONTEXT_LIMIT_USUARIO || '20',
         contextLimitDeface: env.CONTEXT_LIMIT_DEFACE || '20',
         contextLimitPorta: env.CONTEXT_LIMIT_PORTA || '20',
+        takedownDiasPrevisao: env.TAKEDOWN_DIAS_PREVISAO || '5',
     };
     return NextResponse.json(clientConfig);
 }
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
             contextLimitUsuario: 'CONTEXT_LIMIT_USUARIO',
             contextLimitDeface: 'CONTEXT_LIMIT_DEFACE',
             contextLimitPorta: 'CONTEXT_LIMIT_PORTA',
+            takedownDiasPrevisao: 'TAKEDOWN_DIAS_PREVISAO',
         };
 
         for (const frontendKey in body) {
