@@ -5,26 +5,44 @@ import { useRelatorio } from "./hooks/useRelatorio";
 
 export default function Relatorios() {
     const {
-        groupBy,
-        setGroupBy,
-        filterType,
-        setFilterType,
-        chartData,
-        tableData
+        relatoriosDisponiveis,
+        relatorioAtual,
+        relatorioSelecionado,
+        setRelatorioSelecionado,
+        filtroTipo,
+        setFiltroTipo,
+        agrupamentoTemporal,
+        setAgrupamentoTemporal,
+        limiteTop,
+        setLimiteTop,
+        ordenacao,
+        setOrdenacao,
+        intervaloDatas,
+        setIntervaloDatas,
+        resultado
     } = useRelatorio();
 
     return (
         <ContainerRelatorio>
             <PainelControle
-                groupBy={groupBy}
-                setGroupBy={setGroupBy}
-                filterType={filterType}
-                setFilterType={setFilterType}
+                relatorios={relatoriosDisponiveis}
+                relatorioSelecionado={relatorioSelecionado}
+                setRelatorioSelecionado={setRelatorioSelecionado}
+                filtroTipo={filtroTipo}
+                setFiltroTipo={setFiltroTipo}
+                agrupamentoTemporal={agrupamentoTemporal}
+                setAgrupamentoTemporal={setAgrupamentoTemporal}
+                limiteTop={limiteTop}
+                setLimiteTop={setLimiteTop}
+                ordenacao={ordenacao}
+                setOrdenacao={setOrdenacao}
+                intervaloDatas={intervaloDatas}
+                setIntervaloDatas={setIntervaloDatas}
+                relatorioAtual={relatorioAtual}
             />
             <Visualizacao
-                chartData={chartData}
-                tableData={tableData}
-                groupBy={groupBy as string}
+                relatorio={relatorioAtual}
+                resultado={resultado}
             />
         </ContainerRelatorio>
     );
