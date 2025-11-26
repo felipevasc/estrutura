@@ -13,6 +13,7 @@ export const ContainerRecon = styled.div`
     gap: 15px;
     padding: 0 15px 15px 15px; /* Top padding is 0 because of navigation */
     background: transparent;
+    height: calc(100vh - 100px);
 `
 
 export const PainelLateral = styled.aside`

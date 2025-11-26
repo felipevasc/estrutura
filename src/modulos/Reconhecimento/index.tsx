@@ -19,7 +19,6 @@ export default function Reconhecimento() {
         <Inspector />
       </PainelInspector>
 
-      <StatusBar />
     </ContainerRecon>
   );
 }

@@ -6,7 +6,7 @@ export const StyledStatusBar = styled.footer`
     color: #fff;
     display: flex;
     align-items: center;
-    padding: 0 15px;
+    padding: 8px 15px;
     font-size: 0.85rem;
     height: 100%;
     box-shadow: ${({ theme }) => theme.shadows.glow};

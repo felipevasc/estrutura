@@ -126,7 +126,7 @@ const StatusBar = () => {
         <>
             <StyledStatusBar>
                 <StatusItem style={{ color: statusColor }}>
-                    <FontAwesomeIcon icon={statusIcon} spin={isRunning} /> {statusText}
+                    <FontAwesomeIcon icon={statusIcon} spin={isRunning} /> Threat Weaver
                 </StatusItem>
 
                 <div style={{ flex: 1 }}></div>
