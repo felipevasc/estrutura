@@ -1,16 +1,25 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Spin, Tag, Button, Select, message, Card, Space, Typography } from 'antd';
+import { Table, Alert, Spin, Tag, Button, Select, message, Card, Typography, List, Row, Col } from 'antd';
+import { GoogleOutlined, WarningOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
 
 const { Option } = Select;
-const { Title } = Typography;
+const { Title, Paragraph } = Typography;
 
 const Container = styled.div`
   padding: 24px;
+`;
+
+const ToolCard = styled(Card)`
+  cursor: pointer;
+  transition: transform 0.2s;
+  &:hover {
+    transform: translateY(-5px);
+  }
 `;
 
 interface DefaceRecord {
@@ -23,6 +32,21 @@ interface DefaceRecord {
     };
 }
 
+const ferramentas = [
+    {
+        key: 'hackedby',
+        title: 'Google HackedBy',
+        description: 'Busca por "hacked by" para encontrar páginas indexadas.',
+        icon: <GoogleOutlined />,
+    },
+    {
+        key: 'pwnedby',
+        title: 'Google PwnedBy',
+        description: 'Utiliza a dork "pwned by" para resultados similares.',
+        icon: <WarningOutlined />,
+    },
+];
+
 const DefaceView = () => {
     const { projeto } = useStore();
     const projetoId = projeto?.get()?.id;
@@ -30,7 +54,7 @@ const DefaceView = () => {
     const [selectedDominio, setSelectedDominio] = useState<number | null>(null);
     const [data, setData] = useState<DefaceRecord[]>([]);
     const [loading, setLoading] = useState(false);
-    const [executing, setExecuting] = useState(false);
+    const [executingTool, setExecutingTool] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const fetchDominios = useCallback(async () => {
@@ -70,7 +94,7 @@ const DefaceView = () => {
             message.warning('Por favor, selecione um domínio alvo.');
             return;
         }
-        setExecuting(true);
+        setExecutingTool(ferramenta);
         try {
             const response = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/executar`, {
                 method: 'POST',
@@ -82,7 +106,7 @@ const DefaceView = () => {
         } catch (err) {
             message.error(err instanceof Error ? err.message : 'Erro desconhecido.');
         } finally {
-            setExecuting(false);
+            setExecutingTool(null);
         }
     };
 
@@ -96,19 +120,41 @@ const DefaceView = () => {
     return (
         <Container>
             <Card style={{ marginBottom: 24 }}>
-                <Title level={5}>Executar Ferramentas de Deface</Title>
-                <Space>
-                    <Select
-                        style={{ width: 250 }}
-                        placeholder="Selecione um domínio alvo"
-                        onChange={(value) => setSelectedDominio(value)}
-                        allowClear
-                    >
-                        {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
-                    </Select>
-                    <Button onClick={() => handleExecute('hackedby')} loading={executing}>Executar Google-HackBY</Button>
-                    <Button onClick={() => handleExecute('pwnedby')} loading={executing}>Executar Google-PwnedBy</Button>
-                </Space>
+                <Title level={4}>Painel de Controle de Deface</Title>
+                <Paragraph type="secondary">Selecione um alvo e ative uma das ferramentas abaixo para iniciar a varredura.</Paragraph>
+                <Row style={{ marginBottom: 24 }}>
+                    <Col xs={24} md={12} lg={8}>
+                        <Title level={5} style={{ margin: 0, paddingBottom: '8px' }}>Alvo</Title>
+                        <Select
+                            style={{ width: '100%' }}
+                            placeholder="Selecione um domínio"
+                            onChange={(value) => setSelectedDominio(value)}
+                            allowClear
+                        >
+                            {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
+                        </Select>
+                    </Col>
+                </Row>
+                <List
+                    grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4 }}
+                    dataSource={ferramentas}
+                    renderItem={(ferramenta) => (
+                        <List.Item>
+                            <Spin spinning={executingTool === ferramenta.key} tip="Executando...">
+                                <ToolCard
+                                    hoverable
+                                    onClick={() => handleExecute(ferramenta.key as 'hackedby' | 'pwnedby')}
+                                >
+                                    <Card.Meta
+                                        avatar={ferramenta.icon}
+                                        title={ferramenta.title}
+                                        description={ferramenta.description}
+                                    />
+                                </ToolCard>
+                            </Spin>
+                        </List.Item>
+                    )}
+                />
             </Card>
             <Table
                 dataSource={data}
