@@ -60,3 +60,16 @@ export const Toolbar = styled.div`
     align-items: center;
     margin-bottom: 20px;
 `;
+
+export const CabecalhoVisualizacao = styled.div`
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+`;
+
+export const DescricaoRelatorio = styled.p`
+    color: ${({ theme }) => theme.colors.textSecondary};
+    margin: 0;
+`;
