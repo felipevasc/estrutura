@@ -33,7 +33,7 @@ const TakedownView = () => {
         updateTakedown,
         deleteTakedown,
         checkTakedownStatus
-    } = useTakedownApi(projeto?.id);
+    } = useTakedownApi(projeto?.get()?.id);
 
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
@@ -80,7 +80,7 @@ const TakedownView = () => {
     };
 
     const handleModalOk = async () => {
-        if (!projeto?.id) {
+        if (!projeto?.get()?.id) {
             message.error('Por favor, selecione um projeto antes de adicionar um takedown.');
             return;
         }
@@ -89,7 +89,7 @@ const TakedownView = () => {
             const values = await form.validateFields();
             const payload = {
                 ...values,
-                projetoId: projeto.id,
+                projetoId: projeto?.get()?.id,
             };
 
             if (editingTakedown) {
@@ -137,13 +137,13 @@ const TakedownView = () => {
                         type="primary"
                         onClick={handleAdd}
                         icon={<PlusOutlined />}
-                        disabled={!projeto?.id}
+                        disabled={!projeto?.get()?.id}
                     >
                         Adicionar Takedown
                     </Button>
                     <Button
                         onClick={() => handleCheckStatus(selectedRowKeys as number[])}
-                        disabled={!hasSelected || !projeto?.id}
+                        disabled={!hasSelected || !projeto?.get()?.id}
                         style={{ marginLeft: 8 }}
                     >
                         Verificar Selecionados
