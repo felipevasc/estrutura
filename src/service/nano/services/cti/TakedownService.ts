@@ -6,7 +6,6 @@ import { TakedownVerificacaoStatus } from '@prisma/client';
 export class TakedownService extends NanoService {
     constructor() {
         super('TakedownService');
-        this.initialize();
     }
 
     initialize() {
