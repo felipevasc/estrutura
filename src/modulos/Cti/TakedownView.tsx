@@ -133,8 +133,19 @@ const TakedownView = () => {
         <TakedownContainer>
             <Header>
                 <div>
-                    <Button type="primary" onClick={handleAdd} icon={<PlusOutlined />}>Adicionar Takedown</Button>
-                    <Button onClick={() => handleCheckStatus(selectedRowKeys as number[])} disabled={!hasSelected} style={{ marginLeft: 8 }}>
+                    <Button
+                        type="primary"
+                        onClick={handleAdd}
+                        icon={<PlusOutlined />}
+                        disabled={!projeto?.id}
+                    >
+                        Adicionar Takedown
+                    </Button>
+                    <Button
+                        onClick={() => handleCheckStatus(selectedRowKeys as number[])}
+                        disabled={!hasSelected || !projeto?.id}
+                        style={{ marginLeft: 8 }}
+                    >
                         Verificar Selecionados
                     </Button>
                 </div>
