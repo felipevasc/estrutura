@@ -33,9 +33,10 @@ export abstract class CtiSearchService extends NanoService {
     protected abstract getDork(dominio: Dominio): string;
     protected abstract getFonte(): string;
 
-    private async handleCheck({ id, args }: { id: number, args: CheckPayload }) {
+    private async handleCheck({ id, args }: { id: number, args: string }) {
         try {
-            const { dominioId } = args;
+            const parsedArgs: CheckPayload = JSON.parse(args);
+            const { dominioId } = parsedArgs;
             const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
             if (!dominio) {
                 throw new Error(`Domínio com ID ${dominioId} não encontrado.`);
@@ -76,21 +77,15 @@ export abstract class CtiSearchService extends NanoService {
 
         const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(dork)}`;
 
-        try {
-            const response = await fetch(url);
+        const response = await fetch(url);
 
-            if (!response.ok) {
-                const errorBody = await response.json().catch(() => null);
-                const errorMessage = errorBody?.error?.message || response.statusText;
-                const detailedError = `Erro na API do Google (${response.status}): ${errorMessage}. Verifique se as suas credenciais (API Key e Search Engine ID) são válidas e se a API está ativada.`;
-                throw new Error(detailedError);
-            }
-
-            return await response.json();
-        } catch (error: any) {
-            // Re-lança a exceção para ser capturada pelo handleCheck
-            this.error(`Falha na requisição para a API do Google: ${error.message}`);
-            throw error;
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            const errorMessage = errorBody?.error?.message || response.statusText;
+            const detailedError = `Erro na API do Google (${response.status}): ${errorMessage}. Verifique se as suas credenciais (API Key e Search Engine ID) são válidas e se a API está ativada.`;
+            throw new Error(detailedError);
         }
+
+        return await response.json();
     }
 }

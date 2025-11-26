@@ -27,21 +27,24 @@ const ArvoreDominios = () => {
 
   useEffect(() => {
     let active = true;
-    setElementos([]);
 
     if (dominiosProjeto) {
-      dominiosProjeto.forEach((d) => {
-        elementoDominio.getDominio(d).then(ret => {
-          if (active) {
-            setElementos(elementos => [...elementos, ret]);
-          }
-        })
-      })
+      const fetchAllDominios = async () => {
+        const promises = dominiosProjeto.map((d) => elementoDominio.getDominio(d));
+        const resolvedElementos = await Promise.all(promises);
+        if (active) {
+          setElementos(resolvedElementos);
+        }
+      };
+      fetchAllDominios();
+    } else {
+      setElementos([]);
     }
+
     return () => {
       active = false;
-    }
-  }, [dominiosProjeto])
+    };
+  }, [dominiosProjeto]);
 
   const onExpand = (newExpandedKeys: React.Key[]) => {
     setExpandedKeys(newExpandedKeys);
