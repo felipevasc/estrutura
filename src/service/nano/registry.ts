@@ -22,4 +22,5 @@ export const registeredServices: NanoService[] = [
     new FfufService(),
     new HackedByService(),
     new PwnedByService(),
+    new TakedownService(),
 ];
