@@ -27,7 +27,7 @@ export const useTakedownApi = (projetoId?: number) => {
     const takedownQueryKey = ['takedowns', projetoId];
 
     // Buscar todos os Takedowns
-    const { data: takedowns = [], isLoading, isError } = useQuery<Takedown[]>({
+    const { data: takedowns = [], isLoading, isError, isFetching, refetch } = useQuery<Takedown[]>({
         queryKey: takedownQueryKey,
         queryFn: async () => {
             const response = await fetch(`${API_BASE_URL}?projetoId=${projetoId}`);
@@ -120,5 +120,7 @@ export const useTakedownApi = (projetoId?: number) => {
         updateTakedown: updateMutation.mutateAsync,
         deleteTakedown: deleteMutation.mutateAsync,
         checkTakedownStatus: checkStatusMutation.mutateAsync,
+        recarregarTakedowns: refetch,
+        recarregandoTakedowns: isFetching,
     };
 };

@@ -32,7 +32,9 @@ const TakedownView = () => {
         createTakedown,
         updateTakedown,
         deleteTakedown,
-        checkTakedownStatus
+        checkTakedownStatus,
+        recarregarTakedowns,
+        recarregandoTakedowns
     } = useTakedownApi(projeto?.get()?.id);
 
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -149,7 +151,17 @@ const TakedownView = () => {
                         Verificar Selecionados
                     </Button>
                 </div>
-                <span style={{ marginLeft: 8 }}>{hasSelected ? `${selectedRowKeys.length} itens selecionados` : ''}</span>
+                <Space>
+                    <Button
+                        onClick={() => recarregarTakedowns()}
+                        icon={<SyncOutlined />}
+                        disabled={!projeto?.get()?.id}
+                        loading={recarregandoTakedowns}
+                    >
+                        Atualizar Resultados
+                    </Button>
+                    <span style={{ marginLeft: 8 }}>{hasSelected ? `${selectedRowKeys.length} itens selecionados` : ''}</span>
+                </Space>
             </Header>
             <Table
                 rowKey="id"
