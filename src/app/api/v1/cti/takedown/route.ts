@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/database';
+import { queueCommand } from '@/service/nano/commandHelper';
 
 // GET /api/v1/cti/takedown?projetoId=[id]
 export async function GET(request: NextRequest) {
@@ -46,28 +47,12 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: errorMessage }, { status: 400 });
         }
 
-        const diasPrevisao = parseInt(process.env.TAKEDOWN_DIAS_PREVISAO || '5', 10);
-        const previsao = new Date();
-        previsao.setDate(previsao.getDate() + diasPrevisao);
+        const commandName = 'criar_takedown';
+        const args = { url, solicitantes, projetoId };
 
-        const newTakedown = await prisma.takedown.create({
-            data: {
-                url,
-                previsao,
-                projetoId,
-                solicitantes: {
-                    connectOrCreate: solicitantes.map((nome: string) => ({
-                        where: { nome },
-                        create: { nome },
-                    })),
-                },
-            },
-            include: {
-                solicitantes: true,
-            }
-        });
+        await queueCommand(commandName, args, projetoId);
 
-        return NextResponse.json(newTakedown, { status: 201 });
+        return NextResponse.json({ message: `Comando '${commandName}' enfileirado com sucesso.` });
     } catch (error) {
         console.error("Erro ao criar takedown:", error);
         return NextResponse.json({ error: 'Erro ao criar takedown' }, { status: 500 });
