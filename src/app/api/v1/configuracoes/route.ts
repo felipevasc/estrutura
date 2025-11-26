@@ -38,35 +38,70 @@ export async function GET() {
     return NextResponse.json(clientConfig);
 }
 
+// Função auxiliar para atualizar o .env.local de forma segura
+async function updateEnvFile(newValues: Record<string, string>) {
+    let content = '';
+    try {
+        content = await fs.readFile(envFilePath, 'utf-8');
+    } catch (error) {
+        // Se o arquivo não existir, será criado.
+    }
+
+    const lines = content.split('\n');
+    const keysToUpdate = { ...newValues };
+
+    // Atualiza as chaves existentes usando regex para mais robustez
+    for (let i = 0; i < lines.length; i++) {
+        for (const key in keysToUpdate) {
+            const regex = new RegExp(`^\\s*${key}\\s*=`);
+            if (regex.test(lines[i])) {
+                lines[i] = `${key}="${keysToUpdate[key]}"`;
+                delete keysToUpdate[key]; // Remove a chave que já foi atualizada
+                break; // Passa para a próxima linha
+            }
+        }
+    }
+
+    // Adiciona as novas chaves que não existiam no arquivo
+    for (const key in keysToUpdate) {
+        // Garante que não adiciona linhas em branco se o valor for vazio
+        if (keysToUpdate[key]) {
+            lines.push(`${key}="${keysToUpdate[key]}"`);
+        }
+    }
+
+    const newContent = lines.filter(line => line.trim() !== '').join('\n');
+    await fs.writeFile(envFilePath, newContent);
+}
+
+
 // Atualiza o arquivo .env.local e o process.env
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const currentEnv = await readEnvFile();
+        const envUpdates: Record<string, string> = {};
 
-        // Atualiza apenas as chaves que foram enviadas e não são placeholders
-        for (const key in body) {
-            const value = body[key];
+        const keyMap: Record<string, string> = {
+            openaiApiKey: 'OPENAI_API_KEY',
+            openaiApiModel: 'OPENAI_API_MODEL',
+            googleApiKey: 'GOOGLE_API_KEY',
+            googleSearchEngineId: 'GOOGLE_SEARCH_ENGINE_ID',
+        };
+
+        for (const frontendKey in body) {
+            const value = body[frontendKey];
             if (value && !value.includes('••••')) {
-                const envKey = {
-                    openaiApiKey: 'OPENAI_API_KEY',
-                    openaiApiModel: 'OPENAI_API_MODEL',
-                    googleApiKey: 'GOOGLE_API_KEY',
-                    googleSearchEngineId: 'GOOGLE_SEARCH_ENGINE_ID',
-                }[key];
-
+                const envKey = keyMap[frontendKey];
                 if (envKey) {
-                    currentEnv[envKey] = value;
-                    process.env[envKey] = value; // Atualiza o process.env em tempo de execução
+                    envUpdates[envKey] = value;
+                    process.env[envKey] = value; // Atualiza o processo em execução
                 }
             }
         }
 
-        const newEnvContent = Object.entries(currentEnv)
-            .map(([key, value]) => `${key}="${value}"`)
-            .join('\n');
-
-        await fs.writeFile(envFilePath, newEnvContent);
+        if (Object.keys(envUpdates).length > 0) {
+            await updateEnvFile(envUpdates);
+        }
 
         return NextResponse.json({ message: 'Configurações salvas com sucesso!' });
     } catch (error) {
