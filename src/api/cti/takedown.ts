@@ -104,7 +104,10 @@ export const useTakedownApi = (projetoId?: number) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids, projetoId }),
             }).then(res => res.json()),
-        onSuccess: (data) => message.info(data.message || 'Verificação enfileirada.'),
+        onSuccess: (data) => {
+            message.info(data.message || 'Verificação enfileirada.');
+            queryClient.invalidateQueries({ queryKey: takedownQueryKey });
+        },
         onError: () => message.error('Erro ao enfileirar verificação.'),
     });
 

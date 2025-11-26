@@ -10,7 +10,8 @@ export class TakedownService extends NanoService {
     }
 
     initialize() {
-        this.listen('COMMAND_RECEIVED', async (payload) => {
+        const self = this;
+        self.listen('COMMAND_RECEIVED', async (payload) => {
             if (payload.command !== 'takedown_check') {
                 return;
             }
@@ -25,7 +26,7 @@ export class TakedownService extends NanoService {
                     throw new Error('ID do takedown não fornecido');
                 }
             } catch (error) {
-                this.emit('JOB_FAILED', { id: jobId, error: 'Argumentos inválidos' });
+                self.emit('JOB_FAILED', { id: jobId, error: 'Argumentos inválidos' });
                 return;
             }
 
@@ -35,7 +36,7 @@ export class TakedownService extends NanoService {
                 });
 
                 if (!takedown) {
-                    this.emit('JOB_FAILED', { id: jobId, error: `Takedown com ID ${takedownId} não encontrado` });
+                    self.emit('JOB_FAILED', { id: jobId, error: `Takedown com ID ${takedownId} não encontrado` });
                     return;
                 }
 
@@ -46,12 +47,17 @@ export class TakedownService extends NanoService {
                         try {
                             headers = JSON.parse(takedown.headers);
                         } catch (e) {
-                            this.emit('JOB_FAILED', { id: jobId, error: `JSON de headers inválido para Takedown ID ${takedown.id}` });
+                            self.emit('JOB_FAILED', { id: jobId, error: `JSON de headers inválido para Takedown ID ${takedown.id}` });
                             return;
                         }
                     }
 
-                    const response = await fetch(takedown.url, {
+                    let url = takedown.url;
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = `http://${url}`;
+                    }
+
+                    const response = await fetch(url, {
                         method: takedown.metodoHttp,
                         headers: headers,
                         body: takedown.body,
@@ -76,11 +82,11 @@ export class TakedownService extends NanoService {
                     },
                 });
 
-                this.emit('JOB_COMPLETED', { id: jobId, result: `Verificação do Takedown ${takedownId} concluída. Status: ${status}` });
+                self.emit('JOB_COMPLETED', { id: jobId, result: `Verificação do Takedown ${takedownId} concluída. Status: ${status}` });
 
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao verificar takedown';
-                this.emit('JOB_FAILED', { id: jobId, error: errorMessage });
+                self.emit('JOB_FAILED', { id: jobId, error: errorMessage });
             }
         });
     }
