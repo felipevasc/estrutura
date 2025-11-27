@@ -3,7 +3,7 @@ import { queueCommand } from "@/service/nano/commandHelper";
 
 interface ExecutePayload {
     dominioId: number;
-    ferramenta: 'hackedby' | 'pwnedby';
+    ferramenta: string;
 }
 
 export async function POST(
@@ -25,23 +25,16 @@ export async function POST(
             return NextResponse.json({ error: "Parâmetros inválidos" }, { status: 400 });
         }
 
-        let commandName = '';
-        switch (ferramenta) {
-            case 'hackedby':
-                commandName = 'hackedby_check';
-                break;
-            case 'pwnedby':
-                commandName = 'pwnedby_check';
-                break;
-            default:
-                return NextResponse.json({ error: "Ferramenta desconhecida" }, { status: 400 });
-        }
+        // Antes 'ferramenta' era 'hackedby' ou 'pwnedby'.
+        // Agora 'ferramenta' é a categoria da dork (ex: 'assinaturas', 'apostas').
+        // O comando agora é sempre 'deface_dork_check', mas passamos a categoria nos args.
 
-        const args = { dominioId };
+        const commandName = 'deface_dork_check';
+        const args = { dominioId, category: ferramenta };
 
         await queueCommand(commandName, args, projetoId);
 
-        return NextResponse.json({ message: `Comando '${commandName}' enfileirado com sucesso.` });
+        return NextResponse.json({ message: `Comando '${commandName}' (Categoria: ${ferramenta}) enfileirado com sucesso.` });
 
     } catch (error) {
         console.error("Erro ao enfileirar comando de deface:", error);
