@@ -141,6 +141,39 @@ export default function Configuracoes() {
                         </Col>
                     </Row>
 
+                    <Divider orientation="left">Telegram</Divider>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="telegramApiId" label="Telegram API ID">
+                                <Input prefix={<IdcardOutlined />} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="telegramApiHash" label="Telegram API Hash">
+                                <Input.Password prefix={<KeyOutlined />} placeholder="Deixe em branco para não alterar" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="telegramNumero" label="Número do Telegram">
+                                <Input prefix={<IdcardOutlined />} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="telegramCodigoPais" label="Código do País">
+                                <Input prefix={<IdcardOutlined />} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="telegramSenha" label="Senha ou token de sessão">
+                                <Input.Password prefix={<KeyOutlined />} placeholder="Deixe em branco para não alterar" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
                     <Divider orientation="left">Limites de Contexto da IA</Divider>
                     <Row gutter={16}>
                         <Col span={8}>

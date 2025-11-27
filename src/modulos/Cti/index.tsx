@@ -5,6 +5,7 @@ import { Tabs } from 'antd';
 import styled from 'styled-components';
 import DefaceView from './DefaceView';
 import TakedownView from './TakedownView';
+import VazamentoSenhasView from './VazamentoSenhasView';
 
 const { TabPane } = Tabs;
 
@@ -41,8 +42,8 @@ const CtiModule = () => {
                 <TabPane tab="Takedown" key="takedown">
                     <TakedownView />
                 </TabPane>
-                <TabPane tab="Vazamento de Senhas" key="pass_leak" disabled>
-                    {/* Conteúdo futuro aqui */}
+                <TabPane tab="Vazamento de Senhas" key="pass_leak">
+                    <VazamentoSenhasView />
                 </TabPane>
                 <TabPane tab="Vazamento de E-mails" key="mail_leak" disabled>
                     {/* Conteúdo futuro aqui */}

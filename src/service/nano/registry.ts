@@ -10,6 +10,11 @@ import { FfufService } from './services/tools/FfufService';
 import HackedByService from './services/cti/HackedByService';
 import PwnedByService from './services/cti/PwnedByService';
 import { TakedownService } from "./services/cti/TakedownService";
+import { FontesDadosVazamentoService } from './services/cti/vazamentoSenhas/FontesDadosVazamentoService';
+import { BuscaAtivaVazamentoService } from './services/cti/vazamentoSenhas/BuscaAtivaVazamentoService';
+import { TratamentoVazamentoService } from './services/cti/vazamentoSenhas/TratamentoVazamentoService';
+import { BaseVazamentosService } from './services/cti/vazamentoSenhas/BaseVazamentosService';
+import { ComunicacaoVazamentosService } from './services/cti/vazamentoSenhas/ComunicacaoVazamentosService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -23,4 +28,9 @@ export const registeredServices: NanoService[] = [
     new HackedByService(),
     new PwnedByService(),
     new TakedownService(),
+    new FontesDadosVazamentoService(),
+    new BuscaAtivaVazamentoService(),
+    new TratamentoVazamentoService(),
+    new BaseVazamentosService(),
+    new ComunicacaoVazamentosService(),
 ];
