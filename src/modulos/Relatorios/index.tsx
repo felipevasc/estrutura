@@ -19,7 +19,8 @@ export default function Relatorios() {
         setOrdenacao,
         intervaloDatas,
         setIntervaloDatas,
-        resultado
+        resultado,
+        resumoControles
     } = useRelatorio();
 
     return (
@@ -39,6 +40,7 @@ export default function Relatorios() {
                 intervaloDatas={intervaloDatas}
                 setIntervaloDatas={setIntervaloDatas}
                 relatorioAtual={relatorioAtual}
+                resumo={resumoControles}
             />
             <Visualizacao
                 relatorio={relatorioAtual}

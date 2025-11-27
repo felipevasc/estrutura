@@ -237,6 +237,17 @@ export function useRelatorio() {
         return { ...base, tipoGrafico: relatorioAtual.tipoGrafico };
     }, [relatorioAtual, geradores, tabelaOrdenada]);
 
+    const resumoControles = useMemo(() => {
+        const tipos = new Set(registrosFiltrados.map(item => item.tipo)).size;
+        const intervalo = intervaloDatas[0] || intervaloDatas[1] ? 'Período selecionado' : 'Todos os períodos';
+        return {
+            totalRegistros: items.length,
+            totalFiltrados: registrosFiltrados.length,
+            totalTipos: tipos,
+            contexto: intervalo
+        };
+    }, [items, registrosFiltrados, intervaloDatas]);
+
     return {
         items,
         isLoading,
@@ -255,6 +266,7 @@ export function useRelatorio() {
         setOrdenacao,
         intervaloDatas,
         setIntervaloDatas,
-        resultado
+        resultado,
+        resumoControles
     };
 }

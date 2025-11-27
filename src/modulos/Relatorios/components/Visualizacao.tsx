@@ -1,5 +1,5 @@
 import { Tabs, Table, Typography, Empty } from "antd";
-import { AreaVisualizacao as Container, ChartContainer, CabecalhoVisualizacao, DescricaoRelatorio } from "../styles";
+import { AreaVisualizacao as Container, ChartContainer, CabecalhoVisualizacao, DescricaoRelatorio, LinhaResumoVisualizacao, BlocoResumoVisualizacao, TituloResumoVisualizacao, ValorResumoVisualizacao, CorpoVisualizacao, ConteudoTabela, TagSituacao } from "../styles";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell, LineChart, Line, PieChart, Pie, AreaChart, Area, Legend } from 'recharts';
 import { ConfiguracaoRelatorio, ResultadoRelatorio } from "@/types/Relatorio";
 
@@ -21,6 +21,17 @@ export function Visualizacao({ relatorio, resultado }: VisualizacaoProps) {
         { title: 'Porta', dataIndex: 'porta', key: 'porta', width: 80 },
         { title: 'Status', dataIndex: 'status', key: 'status', width: 80 },
         { title: 'Serviço', dataIndex: 'servico', key: 'servico', width: 120 },
+    ];
+
+    const totalGrafico = resultado.dadosGrafico.length;
+    const somaValores = resultado.dadosGrafico.reduce((total, atual) => total + (Number(atual.valor) || 0), 0);
+    const mediaValores = totalGrafico ? somaValores / totalGrafico : 0;
+    const maiorValor = totalGrafico ? Math.max(...resultado.dadosGrafico.map(item => Number(item.valor) || 0)) : 0;
+    const indicadores = [
+        { titulo: 'Entradas listadas', valor: resultado.dadosTabela.length.toLocaleString('pt-BR') },
+        { titulo: 'Pontos no gráfico', valor: totalGrafico.toLocaleString('pt-BR') },
+        { titulo: 'Maior valor', valor: maiorValor.toLocaleString('pt-BR') },
+        { titulo: 'Média geral', valor: mediaValores.toFixed(1) }
     ];
 
     const renderizarGrafico = () => {
@@ -93,35 +104,48 @@ export function Visualizacao({ relatorio, resultado }: VisualizacaoProps) {
                     <Title level={4} style={{ margin: 0, color: '#fff' }}>{relatorio.titulo}</Title>
                     <DescricaoRelatorio>{relatorio.descricao}</DescricaoRelatorio>
                 </div>
-                {resultado.destaque && <Text style={{ color: '#fff', fontWeight: 700 }}>{resultado.destaque}</Text>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <TagSituacao>{relatorio.tipoGrafico === 'pizza' ? 'Distribuição' : 'Tendência'}</TagSituacao>
+                    {resultado.destaque && <Text style={{ color: '#fff', fontWeight: 700 }}>{resultado.destaque}</Text>}
+                </div>
             </CabecalhoVisualizacao>
-            <Tabs defaultActiveKey="1" items={[
-                {
-                    key: '1',
-                    label: 'Visualização',
-                    children: (
-                        <ChartContainer>
-                            {renderizarGrafico()}
-                        </ChartContainer>
-                    )
-                },
-                {
-                    key: '2',
-                    label: 'Dados Detalhados',
-                    children: (
-                        <div style={{ height: '100%', overflow: 'hidden' }}>
-                            <Table
-                                dataSource={resultado.dadosTabela}
-                                columns={colunas}
-                                rowKey="id"
-                                size="small"
-                                pagination={{ pageSize: 50 }}
-                                scroll={{ y: 500 }}
-                            />
-                        </div>
-                    )
-                }
-            ]} />
+            <LinhaResumoVisualizacao>
+                {indicadores.map(item => (
+                    <BlocoResumoVisualizacao key={item.titulo}>
+                        <TituloResumoVisualizacao>{item.titulo}</TituloResumoVisualizacao>
+                        <ValorResumoVisualizacao>{item.valor}</ValorResumoVisualizacao>
+                    </BlocoResumoVisualizacao>
+                ))}
+            </LinhaResumoVisualizacao>
+            <CorpoVisualizacao>
+                <Tabs defaultActiveKey="1" items={[
+                    {
+                        key: '1',
+                        label: 'Visualização',
+                        children: (
+                            <ChartContainer>
+                                {renderizarGrafico()}
+                            </ChartContainer>
+                        )
+                    },
+                    {
+                        key: '2',
+                        label: 'Dados detalhados',
+                        children: (
+                            <ConteudoTabela>
+                                <Table
+                                    dataSource={resultado.dadosTabela}
+                                    columns={colunas}
+                                    rowKey="id"
+                                    size="small"
+                                    pagination={{ pageSize: 50 }}
+                                    scroll={{ y: 500 }}
+                                />
+                            </ConteudoTabela>
+                        )
+                    }
+                ]} />
+            </CorpoVisualizacao>
         </Container>
     );
 }
