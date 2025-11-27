@@ -62,7 +62,13 @@ const camposPorTipo: Record<TipoFonteVazamento, CampoParametro[]> = {
                 { label: 'Bot HTTP', value: 'BOT' },
             ],
         },
-        { chave: 'nomeSessao', rotulo: 'Etiqueta da sessão', obrigatorio: true, apenasQuandoMetodo: 'SESSAO', ajuda: 'sessao' },
+        {
+            chave: 'nomeSessao',
+            rotulo: 'Etiqueta da sessão (apelido)',
+            obrigatorio: true,
+            apenasQuandoMetodo: 'SESSAO',
+            ajuda: 'sessao',
+        },
         { chave: 'tokenBot', rotulo: 'Token do bot', obrigatorio: true, apenasQuandoMetodo: 'BOT', ajuda: 'tokenBot' },
         { chave: 'canalOuGrupo', rotulo: 'Canal ou grupo', obrigatorio: true },
         { chave: 'idGrupo', rotulo: 'ID do grupo/canal', obrigatorio: true, ajuda: 'idGrupo' },
@@ -102,10 +108,10 @@ const ajudas: Record<AjudaCampo, { titulo: string; conteudo: React.ReactNode }> 
         titulo: 'Como obter o token do bot',
         conteudo: (
             <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                <Text>1. No Telegram, fale com @BotFather e envie /newbot.</Text>
-                <Text>2. Escolha nome e username terminando com bot.</Text>
-                <Text>3. Copie o token HTTP mostrado.</Text>
-                <Text>4. Execute /setprivacy no BotFather e escolha Disable para ler mensagens em grupos.</Text>
+                <Text>1. Use esta opção apenas se preferir bots; a sessão direta dispensa bot.</Text>
+                <Text>2. No Telegram, fale com @BotFather e envie /newbot.</Text>
+                <Text>3. Escolha nome e username terminando com bot e copie o token HTTP exibido.</Text>
+                <Text>4. Execute /setprivacy no BotFather e escolha Disable para que o bot leia mensagens em grupos.</Text>
             </Space>
         ),
     },
@@ -113,10 +119,10 @@ const ajudas: Record<AjudaCampo, { titulo: string; conteudo: React.ReactNode }> 
         titulo: 'Como descobrir o ID do grupo ou canal',
         conteudo: (
             <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                <Text>1. Garanta que a conta (ou o bot, se usar) esteja dentro do grupo ou canal.</Text>
-                <Text>2. Envie qualquer mensagem no grupo/canal para gerar atividade recente.</Text>
-                <Text>3. Dentro do grupo, chame @RawDataBot ou @getidsbot e leia o chat_id retornado.</Text>
-                <Text>4. Para canais públicos, o chat_id começa com -100; para grupos, também costuma iniciar com -100.</Text>
+                <Text>1. Estando logado com a conta que fará a coleta, entre no grupo ou canal.</Text>
+                <Text>2. Envie uma mensagem para gerar atividade ou copie o link público t.me/nome.</Text>
+                <Text>3. Se preferir via bot, chame @RawDataBot ou @getidsbot no grupo e leia o chat_id retornado.</Text>
+                <Text>4. Para canais ou grupos privados sem bot, abra o link de convite, copie a parte após / e consulte em ferramentas como https://t.me/username_to_id_bot.</Text>
             </Space>
         ),
     },
@@ -124,10 +130,11 @@ const ajudas: Record<AjudaCampo, { titulo: string; conteudo: React.ReactNode }> 
         titulo: 'Como preparar uma sessão direta do Telegram',
         conteudo: (
             <Space direction="vertical" size={8} style={{ width: '100%' }}>
-                <Text>1. Gere API ID e API Hash em https://my.telegram.org com a conta já presente nos grupos.</Text>
-                <Text>2. Preencha API ID, API Hash, número, código do país e senha/token de sessão em Configurações → Telegram.</Text>
-                <Text>3. Defina uma etiqueta de sessão para identificar qual conta será usada nas coletas.</Text>
-                <Text>4. Confirme que a conta está nos grupos desejados para evitar expulsões por uso de bot.</Text>
+                <Text>1. Faça login com o número já presente nos grupos e acesse https://my.telegram.org → API Development Tools.</Text>
+                <Text>2. Gere API ID e API Hash e copie ambos.</Text>
+                <Text>3. Abra Configurações → Telegram aqui no sistema e preencha API ID, API Hash, número, código do país e senha ou token de sessão (se usar 2FA, informe a senha).</Text>
+                <Text>4. Volte ao cadastro da fonte e escolha um apelido em Etiqueta da sessão para identificar essa conta.</Text>
+                <Text>5. Garanta que a conta está nos grupos antes de coletar; não é necessário adicionar bot.</Text>
             </Space>
         ),
     },
