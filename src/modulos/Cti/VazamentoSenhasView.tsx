@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Typography, message } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Tooltip, Typography, message } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { FonteVazamento, TipoFonteVazamento, useFontesVazamento } from '@/api/cti/fontesVazamento';
@@ -81,6 +81,13 @@ const camposPorTipo: Record<TipoFonteVazamento, CampoParametro[]> = {
 const rotuloTipo = (tipo: TipoFonteVazamento) => tiposFonte.find((t) => t.valor === tipo)?.rotulo || tipo;
 
 const corTipo = (tipo: TipoFonteVazamento) => tiposFonte.find((t) => t.valor === tipo)?.cor;
+
+const ajudaCampos: Record<string, string> = {
+    tokenBot:
+        'Crie um bot com @BotFather usando /newbot, copie o token HTTP retornado e, se for coletar mensagens em grupo, desative a privacidade com /setprivacy.',
+    idGrupo:
+        'Adicione o bot ao grupo ou canal, envie uma mensagem e use um bot como @RawDataBot/@getidsbot para ler o chat_id (começa com -100 em grupos).',
+};
 
 const resumoParametros = (fonte: FonteVazamento) => {
     const { parametros, tipo } = fonte;
@@ -446,7 +453,18 @@ const VazamentoSenhasView = () => {
                             <Col span={12} key={campo.chave}>
                                 <Form.Item
                                     name={['parametros', campo.chave]}
-                                    label={campo.rotulo}
+                                    label={
+                                        ajudaCampos[campo.chave] ? (
+                                            <Space size={6}>
+                                                <span>{campo.rotulo}</span>
+                                                <Tooltip title={ajudaCampos[campo.chave]} trigger="click">
+                                                    <Button type="link" size="small" icon={<InfoCircleOutlined />} />
+                                                </Tooltip>
+                                            </Space>
+                                        ) : (
+                                            campo.rotulo
+                                        )
+                                    }
                                     rules={campo.obrigatorio ? [{ required: true, message: 'Campo obrigatório' }] : []}
                                 >
                                     {campo.tipo === 'numero' && <InputNumber style={{ width: '100%' }} min={0} />}
