@@ -9,6 +9,11 @@ import { Enum4linuxService } from './services/tools/Enum4linuxService';
 import { FfufService } from './services/tools/FfufService';
 import DefaceDorkService from './services/cti/DefaceDorkService';
 import { TakedownService } from "./services/cti/TakedownService";
+import { FontesDadosVazamentoService } from './services/cti/vazamentoSenhas/FontesDadosVazamentoService';
+import { BuscaAtivaVazamentoService } from './services/cti/vazamentoSenhas/BuscaAtivaVazamentoService';
+import { TratamentoVazamentoService } from './services/cti/vazamentoSenhas/TratamentoVazamentoService';
+import { BaseVazamentosService } from './services/cti/vazamentoSenhas/BaseVazamentosService';
+import { ComunicacaoVazamentosService } from './services/cti/vazamentoSenhas/ComunicacaoVazamentosService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -21,4 +26,9 @@ export const registeredServices: NanoService[] = [
     new FfufService(),
     new DefaceDorkService(),
     new TakedownService(),
+    new FontesDadosVazamentoService(),
+    new BuscaAtivaVazamentoService(),
+    new TratamentoVazamentoService(),
+    new BaseVazamentosService(),
+    new ComunicacaoVazamentosService(),
 ];

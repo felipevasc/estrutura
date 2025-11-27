@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { Modal, Form, Input, Button, Alert, Spin, InputNumber, Divider, Row, Col } from 'antd';
-import { KeyOutlined, IdcardOutlined, RobotOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { KeyOutlined, IdcardOutlined, RobotOutlined, DatabaseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import StoreContext from '@/store';
 import useApi from '@/api';
 import { StoreType } from '@/store/types/StoreType';
@@ -49,6 +49,65 @@ export default function Configuracoes() {
     };
 
     const showAlert = !configData?.openaiApiKey || !configData?.googleApiKey || !configData?.googleSearchEngineId;
+
+    const abrirAjudaApiTelegram = () => {
+        Modal.info({
+            title: 'Como obter API ID e API Hash do Telegram',
+            content: (
+                <div>
+                    <p>Use as credenciais oficiais do Telegram para operar via número.</p>
+                    <ol>
+                        <li>Acesse my.telegram.org e faça login com o número que já está nos grupos.</li>
+                        <li>Escolha API Development e gere um novo app.</li>
+                        <li>Copie o API ID e o API Hash exibidos após a criação.</li>
+                        <li>Insira os valores nos campos abaixo para autenticar as coletas.</li>
+                    </ol>
+                </div>
+            ),
+            okText: 'Entendi',
+        });
+    };
+
+    const abrirAjudaNumeroTelegram = () => {
+        Modal.info({
+            title: 'Como configurar o número do Telegram',
+            content: (
+                <div>
+                    <p>Informe o mesmo número que já participa dos grupos/canais de coleta.</p>
+                    <ol>
+                        <li>Digite o número completo no campo Número do Telegram.</li>
+                        <li>Preencha o Código do País incluindo o sinal de mais, por exemplo +55.</li>
+                        <li>Certifique-se de que o número possui acesso aos grupos desejados.</li>
+                    </ol>
+                </div>
+            ),
+            okText: 'Entendi',
+        });
+    };
+
+    const abrirAjudaSessaoTelegram = () => {
+        Modal.info({
+            title: 'Senha ou token de sessão do Telegram',
+            content: (
+                <div>
+                    <p>Escolha o modo de autenticação direta pelo número.</p>
+                    <ol>
+                        <li>Se a conta tiver senha em duas etapas, informe a senha no campo.</li>
+                        <li>Se preferir token de sessão, gere-o com uma biblioteca MTProto como Telethon e cole o valor aqui.</li>
+                        <li>Mantenha o token seguro; ele substitui o uso do bot para evitar remoções dos grupos.</li>
+                    </ol>
+                </div>
+            ),
+            okText: 'Entendi',
+        });
+    };
+
+    const rotuloComAjuda = (texto: string, onClick: () => void) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>{texto}</span>
+            <Button type="link" size="small" icon={<InfoCircleOutlined />} onClick={onClick} />
+        </div>
+    );
 
     return (
         <Modal
@@ -137,6 +196,39 @@ export default function Configuracoes() {
                                     prefix={<IdcardOutlined />}
                                     placeholder="Deixe em branco para não alterar"
                                 />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
+                    <Divider orientation="left">Telegram</Divider>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="telegramApiId" label={rotuloComAjuda('Telegram API ID', abrirAjudaApiTelegram)}>
+                                <Input prefix={<IdcardOutlined />} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="telegramApiHash" label={rotuloComAjuda('Telegram API Hash', abrirAjudaApiTelegram)}>
+                                <Input.Password prefix={<KeyOutlined />} placeholder="Deixe em branco para não alterar" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="telegramNumero" label={rotuloComAjuda('Número do Telegram', abrirAjudaNumeroTelegram)}>
+                                <Input prefix={<IdcardOutlined />} />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="telegramCodigoPais" label={rotuloComAjuda('Código do País', abrirAjudaNumeroTelegram)}>
+                                <Input prefix={<IdcardOutlined />} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="telegramSenha" label={rotuloComAjuda('Senha ou token de sessão', abrirAjudaSessaoTelegram)}>
+                                <Input.Password prefix={<KeyOutlined />} placeholder="Deixe em branco para não alterar" />
                             </Form.Item>
                         </Col>
                     </Row>

@@ -18,6 +18,7 @@ model Projeto {
   ips      Ip[]
   commands Command[]
   takedowns Takedown[]
+  fontesVazamento FonteVazamento[]
 
   @@map("projetos")
 }
@@ -176,6 +177,21 @@ model TakedownSolicitante {
   @@map("takedown_solicitantes")
 }
 
+model FonteVazamento {
+  id           Int                  @id @default(autoincrement())
+  nome         String
+  tipo         FonteVazamentoTipo
+  parametros   Json
+  observacoes  String?
+  projetoId    Int?
+  projeto      Projeto?             @relation(fields: [projetoId], references: [id])
+  buscaAtiva   BuscaAtivaTelegram?
+  criadoEm     DateTime             @default(now())
+  atualizadoEm DateTime             @updatedAt
+
+  @@map("fontes_vazamento")
+}
+
 enum TakedownStatus {
   SOLICITADO
   DERRUBADO
@@ -184,4 +200,23 @@ enum TakedownStatus {
 enum TakedownVerificacaoStatus {
   ONLINE
   OFFLINE
+}
+
+enum FonteVazamentoTipo {
+  TELEGRAM
+  FORUM_SURFACE
+  FORUM_DARKWEB
+}
+
+model BuscaAtivaTelegram {
+  id                   Int             @id @default(autoincrement())
+  fonteId              Int             @unique
+  fonte                FonteVazamento  @relation(fields: [fonteId], references: [id])
+  extensoes            Json
+  ultimaCapturaSucesso DateTime?
+  destinoCentral       String?
+  criadoEm             DateTime        @default(now())
+  atualizadoEm         DateTime        @updatedAt
+
+  @@map("busca_ativa_telegram")
 }
