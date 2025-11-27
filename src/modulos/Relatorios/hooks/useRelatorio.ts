@@ -84,8 +84,10 @@ export function useRelatorio() {
         { chave: 'diversidade_valor', titulo: 'Diversidade por tipo', descricao: 'Valores únicos por categoria', tipoGrafico: 'barra' },
         { chave: 'deface_ativos', titulo: 'Páginas acessíveis', descricao: 'Diretórios com resposta ativa', tipoGrafico: 'barra' },
         { chave: 'deface_status', titulo: 'Status críticos de deface', descricao: 'Erros e bloqueios por domínio', tipoGrafico: 'barra' },
-        { chave: 'takedown_dominios', titulo: 'Prioridade de takedown por domínio', descricao: 'Superfície exposta por domínio', tipoGrafico: 'barra' },
-        { chave: 'takedown_ips', titulo: 'Prioridade de takedown por IP', descricao: 'Superfície exposta por IP', tipoGrafico: 'barra' },
+        { chave: 'takedown_status', titulo: 'Status de takedown', descricao: 'Quantidades por status monitorado', tipoGrafico: 'barra' },
+        { chave: 'takedown_verificacao', titulo: 'Situação da verificação', descricao: 'Alvos online versus offline', tipoGrafico: 'pizza' },
+        { chave: 'takedown_prazo', titulo: 'Prazo médio de resolução', descricao: 'Tempo médio aberto até solução', tipoGrafico: 'barra' },
+        { chave: 'takedown_tempo_solucao', titulo: 'Tempo de solução por alvo', descricao: 'Itens pendentes há mais tempo', tipoGrafico: 'barra' },
     ]), []);
 
     const relatorioAtual = useMemo(() => {
@@ -163,16 +165,49 @@ export function useRelatorio() {
         return agrupar(criticos, 'dominio');
     }, [agrupar]);
 
-    const gerarSuperficie = useCallback((dados: ItemRelatorio[], campo: 'dominio' | 'ip') => {
-        const grupos: Record<string, number> = {};
+    const calcularIdades = useCallback((dados: ItemRelatorio[]) => {
+        return dados
+            .filter(item => !!item.criadoEm)
+            .map(item => ({ item, idadeDias: dayjs().diff(dayjs(item.criadoEm), 'hour') / 24 }));
+    }, []);
+
+    const gerarStatusTakedown = useCallback((dados: ItemRelatorio[]) => {
+        const alvos = dados.filter(d => d.tipo === 'Diretorio' && d.status !== null && d.status !== undefined);
+        return agrupar(alvos, 'status');
+    }, [agrupar]);
+
+    const gerarVerificacao = useCallback((dados: ItemRelatorio[]) => {
+        let ativos = 0;
+        let inativos = 0;
         dados.forEach(item => {
-            const chave = normalizarValor(item[campo] as string | number | null | undefined);
-            if (chave === 'N/A') return;
-            const peso = item.tipo === 'Diretorio' ? 2 : 1;
-            grupos[chave] = (grupos[chave] || 0) + peso;
+            if (item.tipo !== 'Diretorio') return;
+            if (item.status !== null && item.status !== undefined && item.status < 400) {
+                ativos += 1;
+            } else {
+                inativos += 1;
+            }
         });
-        return ordenarDados(Object.entries(grupos).map(([nome, valor]) => ({ nome, valor })), true);
+        return ordenarDados([
+            { nome: 'Ativo', valor: ativos },
+            { nome: 'Inativo', valor: inativos }
+        ], false);
     }, [ordenarDados]);
+
+    const gerarPrazoMedioTakedown = useCallback((dados: ItemRelatorio[]) => {
+        const idades = calcularIdades(dados.filter(d => d.tipo === 'Diretorio'));
+        if (!idades.length) return [];
+        const media = idades.reduce((total, atual) => total + atual.idadeDias, 0) / idades.length;
+        return [{ nome: 'Prazo médio (dias)', valor: Number(media.toFixed(1)) }];
+    }, [calcularIdades]);
+
+    const gerarTempoSolucao = useCallback((dados: ItemRelatorio[]) => {
+        const idades = calcularIdades(dados.filter(d => d.tipo === 'Diretorio'));
+        const lista = idades.map(({ item, idadeDias }) => ({
+            nome: normalizarValor(item.dominio || item.ip || item.valor),
+            valor: Number(idadeDias.toFixed(1))
+        }));
+        return ordenarDados(lista, true);
+    }, [calcularIdades, ordenarDados]);
 
     const geradores = useMemo<Record<string, () => ResultadoRelatorio>>(() => ({
         resumo_tipo: () => ({ dadosGrafico: agrupar(registrosFiltrados, 'tipo'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Categorias', eixoY: 'Quantidade' }),
@@ -189,9 +224,11 @@ export function useRelatorio() {
         diversidade_valor: () => ({ dadosGrafico: gerarDiversidadeValor(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Tipo', eixoY: 'Valores únicos' }),
         deface_ativos: () => ({ dadosGrafico: gerarDefaceAtivos(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Domínio', eixoY: 'Páginas ativas' }),
         deface_status: () => ({ dadosGrafico: gerarDefaceCriticos(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Domínio', eixoY: 'Ocorrências críticas' }),
-        takedown_dominios: () => ({ dadosGrafico: gerarSuperficie(registrosFiltrados, 'dominio'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Domínio', eixoY: 'Superfície' }),
-        takedown_ips: () => ({ dadosGrafico: gerarSuperficie(registrosFiltrados, 'ip'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'IP', eixoY: 'Superfície' })
-    }), [agrupar, gerarCobertura, gerarDefaceAtivos, gerarDefaceCriticos, gerarDensidadePortas, gerarDiversidadeValor, gerarLinhaDoTempo, gerarSuperficie, gerarTamanhoMedio, registrosFiltrados, tabelaOrdenada]);
+        takedown_status: () => ({ dadosGrafico: gerarStatusTakedown(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Status', eixoY: 'Ocorrências' }),
+        takedown_verificacao: () => ({ dadosGrafico: gerarVerificacao(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'pizza', eixoX: 'Situação', eixoY: 'Quantidade' }),
+        takedown_prazo: () => ({ dadosGrafico: gerarPrazoMedioTakedown(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Prazo médio (dias)', eixoY: 'Dias' }),
+        takedown_tempo_solucao: () => ({ dadosGrafico: gerarTempoSolucao(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Alvo', eixoY: 'Dias em aberto' })
+    }), [agrupar, gerarCobertura, gerarDefaceAtivos, gerarDefaceCriticos, gerarDensidadePortas, gerarDiversidadeValor, gerarLinhaDoTempo, gerarPrazoMedioTakedown, gerarStatusTakedown, gerarTempoSolucao, gerarVerificacao, gerarTamanhoMedio, registrosFiltrados, tabelaOrdenada]);
 
     const resultado = useMemo<ResultadoRelatorio>(() => {
         const gerador = geradores[relatorioAtual.chave];
