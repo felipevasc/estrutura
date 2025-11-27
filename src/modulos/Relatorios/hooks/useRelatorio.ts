@@ -82,6 +82,10 @@ export function useRelatorio() {
         { chave: 'cobertura', titulo: 'Cobertura de contexto', descricao: 'Presença de domínios, IPs e serviços', tipoGrafico: 'pizza' },
         { chave: 'densidade_portas', titulo: 'Densidade de portas por IP', descricao: 'Quantidade média de portas por IP', tipoGrafico: 'barra' },
         { chave: 'diversidade_valor', titulo: 'Diversidade por tipo', descricao: 'Valores únicos por categoria', tipoGrafico: 'barra' },
+        { chave: 'deface_ativos', titulo: 'Páginas acessíveis', descricao: 'Diretórios com resposta ativa', tipoGrafico: 'barra' },
+        { chave: 'deface_status', titulo: 'Status críticos de deface', descricao: 'Erros e bloqueios por domínio', tipoGrafico: 'barra' },
+        { chave: 'takedown_dominios', titulo: 'Prioridade de takedown por domínio', descricao: 'Superfície exposta por domínio', tipoGrafico: 'barra' },
+        { chave: 'takedown_ips', titulo: 'Prioridade de takedown por IP', descricao: 'Superfície exposta por IP', tipoGrafico: 'barra' },
     ]), []);
 
     const relatorioAtual = useMemo(() => {
@@ -149,6 +153,27 @@ export function useRelatorio() {
         return ordenarDados(lista, false);
     }, [ordenarDados]);
 
+    const gerarDefaceAtivos = useCallback((dados: ItemRelatorio[]) => {
+        const ativos = dados.filter(d => d.tipo === 'Diretorio' && d.status !== null && d.status !== undefined && d.status >= 200 && d.status < 300);
+        return agrupar(ativos, 'dominio');
+    }, [agrupar]);
+
+    const gerarDefaceCriticos = useCallback((dados: ItemRelatorio[]) => {
+        const criticos = dados.filter(d => d.tipo === 'Diretorio' && d.status !== null && d.status !== undefined && d.status >= 400);
+        return agrupar(criticos, 'dominio');
+    }, [agrupar]);
+
+    const gerarSuperficie = useCallback((dados: ItemRelatorio[], campo: 'dominio' | 'ip') => {
+        const grupos: Record<string, number> = {};
+        dados.forEach(item => {
+            const chave = normalizarValor(item[campo] as string | number | null | undefined);
+            if (chave === 'N/A') return;
+            const peso = item.tipo === 'Diretorio' ? 2 : 1;
+            grupos[chave] = (grupos[chave] || 0) + peso;
+        });
+        return ordenarDados(Object.entries(grupos).map(([nome, valor]) => ({ nome, valor })), true);
+    }, [ordenarDados]);
+
     const geradores = useMemo<Record<string, () => ResultadoRelatorio>>(() => ({
         resumo_tipo: () => ({ dadosGrafico: agrupar(registrosFiltrados, 'tipo'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Categorias', eixoY: 'Quantidade' }),
         linha_tempo: () => ({ dadosGrafico: gerarLinhaDoTempo(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'linha', eixoX: 'Período', eixoY: 'Eventos' }),
@@ -161,8 +186,12 @@ export function useRelatorio() {
         tamanho_medio: () => ({ dadosGrafico: gerarTamanhoMedio(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'area', eixoX: 'Tipo', eixoY: 'Tamanho médio' }),
         cobertura: () => ({ dadosGrafico: gerarCobertura(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'pizza', eixoX: 'Cobertura', eixoY: 'Quantidade' }),
         densidade_portas: () => ({ dadosGrafico: gerarDensidadePortas(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'IP', eixoY: 'Portas únicas' }),
-        diversidade_valor: () => ({ dadosGrafico: gerarDiversidadeValor(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Tipo', eixoY: 'Valores únicos' })
-    }), [agrupar, gerarCobertura, gerarDensidadePortas, gerarDiversidadeValor, gerarLinhaDoTempo, gerarTamanhoMedio, registrosFiltrados, tabelaOrdenada]);
+        diversidade_valor: () => ({ dadosGrafico: gerarDiversidadeValor(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Tipo', eixoY: 'Valores únicos' }),
+        deface_ativos: () => ({ dadosGrafico: gerarDefaceAtivos(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Domínio', eixoY: 'Páginas ativas' }),
+        deface_status: () => ({ dadosGrafico: gerarDefaceCriticos(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Domínio', eixoY: 'Ocorrências críticas' }),
+        takedown_dominios: () => ({ dadosGrafico: gerarSuperficie(registrosFiltrados, 'dominio'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Domínio', eixoY: 'Superfície' }),
+        takedown_ips: () => ({ dadosGrafico: gerarSuperficie(registrosFiltrados, 'ip'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'IP', eixoY: 'Superfície' })
+    }), [agrupar, gerarCobertura, gerarDefaceAtivos, gerarDefaceCriticos, gerarDensidadePortas, gerarDiversidadeValor, gerarLinhaDoTempo, gerarSuperficie, gerarTamanhoMedio, registrosFiltrados, tabelaOrdenada]);
 
     const resultado = useMemo<ResultadoRelatorio>(() => {
         const gerador = geradores[relatorioAtual.chave];
