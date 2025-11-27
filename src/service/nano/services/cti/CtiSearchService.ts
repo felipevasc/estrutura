@@ -4,6 +4,8 @@ import { Dominio } from "@prisma/client";
 
 type CheckPayload = {
     dominioId: number;
+    // Permitir argumentos extras na payload base
+    [key: string]: any;
 }
 
 type SearchApiResult = {
@@ -21,52 +23,79 @@ export abstract class CtiSearchService extends NanoService {
     async initialize() {
         this.log(`Inicializado. Ouvindo pelo comando: '${this.command}'`);
         this.listen('COMMAND_RECEIVED', (payload) => {
-            // Log para ver todos os comandos que este serviço recebe
-            // this.log(`Evento COMMAND_RECEIVED capturado com comando: '${payload.command}'`);
             if (payload.command === this.command) {
                 this.log(`Comando '${this.command}' recebido. Iniciando processamento...`);
-                this.handleCheck(payload);
+                // Precisamos garantir que o 'this' no handleCheck seja a instância do serviço
+                this.handleCheck(payload).catch(err => {
+                    this.error(`Erro não tratado em handleCheck: ${err.message}`, err);
+                });
             }
         });
     }
 
-    protected abstract getDork(dominio: Dominio): string;
-    protected abstract getFonte(): string;
+    // Agora getDork pode receber args opcionais
+    protected abstract getDork(dominio: Dominio, args?: any): string | Promise<string>;
+    protected abstract getFonte(args?: any): string;
 
-    private async handleCheck({ id, args }: { id: number, args: string }) {
+    private async handleCheck({ id, args }: { id: number, args: any }) {
         try {
-            console.log(typeof args)
             let parsedArgs: CheckPayload;
             
             if (typeof args === 'string') {
-                parsedArgs = JSON.parse(args);
+                try {
+                    parsedArgs = JSON.parse(args);
+                } catch (e) {
+                    throw new Error("Falha ao fazer parse dos argumentos JSON");
+                }
             } else {
                 parsedArgs = args;
             }
+
             const { dominioId } = parsedArgs;
+            if (!dominioId) {
+                throw new Error("dominioId é obrigatório");
+            }
+
             const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
             if (!dominio) {
                 throw new Error(`Domínio com ID ${dominioId} não encontrado.`);
             }
 
-            const dork = this.getDork(dominio);
-            const fonte = this.getFonte();
+            const dork = await this.getDork(dominio, parsedArgs);
+            const fonte = this.getFonte(parsedArgs);
+
+            this.log(`Executando busca com Dork: ${dork} (Fonte: ${fonte})`);
+
+            // Limitar a busca se a dork for muito longa ou dividir em múltiplas chamadas é algo
+            // que pode ser tratado aqui ou na implementação da dork.
+            // O Google Custom Search tem limite de ~2048 chars na URL.
+
             const result = await this.searchWithApi(dork);
             const createdItems = [];
 
             if (result.items) {
                 for (const item of result.items) {
-                    const created = await prisma.deface.create({
-                        data: {
+                    // Evitar duplicatas óbvias
+                    const exists = await prisma.deface.findFirst({
+                        where: {
                             url: item.link,
-                            fonte,
-                            dominioId: dominio.id,
+                            dominioId: dominio.id
                         }
                     });
-                    createdItems.push(created);
+
+                    if (!exists) {
+                        const created = await prisma.deface.create({
+                            data: {
+                                url: item.link,
+                                fonte,
+                                dominioId: dominio.id,
+                            }
+                        });
+                        createdItems.push(created);
+                    }
                 }
             }
-            this.log(`Processamento concluído. Encontrados ${createdItems.length} resultados.`);
+            this.log(`Processamento concluído. Encontrados ${createdItems.length} novos resultados.`);
             this.bus.emit('JOB_COMPLETED', { id, result: createdItems });
         } catch (error: any) {
             this.error(`Falha no processamento: ${error.message}`, error);
@@ -82,6 +111,7 @@ export abstract class CtiSearchService extends NanoService {
             throw new Error("As credenciais GOOGLE_API_KEY e GOOGLE_SEARCH_ENGINE_ID devem ser configuradas no ambiente.");
         }
 
+        // Codificar corretamente a dork
         const url = `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${searchEngineId}&q=${encodeURIComponent(dork)}`;
 
         const response = await fetch(url);
@@ -89,7 +119,7 @@ export abstract class CtiSearchService extends NanoService {
         if (!response.ok) {
             const errorBody = await response.json().catch(() => null);
             const errorMessage = errorBody?.error?.message || response.statusText;
-            const detailedError = `Erro na API do Google (${response.status}): ${errorMessage}. Verifique se as suas credenciais (API Key e Search Engine ID) são válidas e se a API está ativada.`;
+            const detailedError = `Erro na API do Google (${response.status}): ${errorMessage}`;
             throw new Error(detailedError);
         }
 
