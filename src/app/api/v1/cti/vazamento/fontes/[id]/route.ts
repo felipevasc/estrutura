@@ -3,7 +3,7 @@ import prisma from '@/database';
 import { FonteVazamentoTipo } from '@prisma/client';
 
 const camposObrigatorios: Record<FonteVazamentoTipo, string[]> = {
-    TELEGRAM: ['tokenBot', 'canalOuGrupo', 'idGrupo', 'estrategiaDownload', 'intervaloMinutos', 'limiteArquivos'],
+    TELEGRAM: ['canalOuGrupo', 'idGrupo', 'estrategiaDownload', 'intervaloMinutos', 'limiteArquivos', 'metodoAutenticacao'],
     FORUM_SURFACE: ['url', 'frequenciaMinutos'],
     FORUM_DARKWEB: ['endereco', 'proxy', 'frequenciaMinutos'],
 };
@@ -11,6 +11,13 @@ const camposObrigatorios: Record<FonteVazamentoTipo, string[]> = {
 const tiposValidos = Object.keys(camposObrigatorios) as FonteVazamentoTipo[];
 
 const validarParametros = (tipo: FonteVazamentoTipo, parametros: Record<string, unknown>) => {
+    if (tipo === FonteVazamentoTipo.TELEGRAM) {
+        const metodo = parametros.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
+        const basicos = camposObrigatorios[tipo];
+        const especificos = metodo === 'BOT' ? ['tokenBot'] : ['nomeSessao'];
+        const faltando = [...basicos, ...especificos].filter((campo) => !parametros[campo]);
+        return faltando;
+    }
     const faltando = camposObrigatorios[tipo].filter((campo) => !parametros[campo]);
     return faltando;
 };
