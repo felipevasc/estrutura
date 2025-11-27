@@ -6,18 +6,64 @@ export const InspectorContainer = styled.div`
     flex-direction: column;
     height: 100%;
     background: transparent;
-`
+`;
 
-export const InspectorHeader = styled.div`
-    padding: 15px;
+export const CorpoInspector = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 70px;
+    height: 100%;
     background: ${({ theme }) => theme.glass.card};
-    border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
-`
+`;
+
+export const AreaConteudo = styled.div`
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+`;
+
+export const ColunaAbas = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 10px;
+    border-left: 1px solid ${({ theme }) => theme.colors.borderColor};
+    background: ${({ theme }) => theme.glass.default};
+`;
+
+export const BotaoAba = styled.button<{ $ativo: boolean }>`
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    border: 1px solid ${({ theme, $ativo }) => $ativo ? theme.colors.accentColor : theme.colors.borderColor};
+    background: ${({ theme, $ativo }) => $ativo ? theme.colors.hoverBackground : theme.glass.card};
+    color: ${({ theme }) => theme.colors.text};
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: ${({ theme }) => theme.shadows.soft};
+
+    &:hover {
+        border-color: ${({ theme }) => theme.colors.accentColor};
+        box-shadow: ${({ theme }) => theme.shadows.medium};
+    }
+
+    &:active {
+        transform: translateY(1px);
+        box-shadow: ${({ theme }) => theme.shadows.inner};
+    }
+
+    svg {
+        font-size: 18px;
+    }
+`;
 
 export const InspectorBody = styled.div`
     flex-grow: 1;
     overflow-y: auto;
     padding: 15px;
+    background: ${({ theme }) => theme.glass.default};
 
     &::-webkit-scrollbar {
         width: 6px;
@@ -29,34 +75,9 @@ export const InspectorBody = styled.div`
         background: ${({ theme }) => theme.colors.borderColor};
         border-radius: 3px;
     }
-`
+`;
 
-export const PropertyGroup = styled.div`
-    margin-bottom: 25px;
-    padding: 10px;
-    background: ${({ theme }) => theme.glass.card};
-    border-radius: 8px;
-    border: 1px solid ${({ theme }) => theme.colors.borderColor};
-    box-shadow: ${({ theme }) => theme.shadows.soft};
-`
-
-export const PropertyLabel = styled.div`
-    font-size: 0.7rem;
-    color: ${({ theme }) => theme.colors.textSecondary};
-    text-transform: uppercase;
-    margin-bottom: 5px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-`
-
-export const PropertyValue = styled.div`
-    font-size: 0.95rem;
-    color: ${({ theme }) => theme.colors.text};
-    word-break: break-all;
-    font-weight: 500;
-`
-
-export const ActionItem = styled.div`
+export const ItemAcao = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -95,4 +116,19 @@ export const ActionItem = styled.div`
             color: ${({ theme }) => theme.colors.textSecondary};
         }
     }
-`
+`;
+
+export const TituloGrupo = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.text};
+    margin-bottom: 12px;
+`;
+
+export const DescricaoGrupo = styled.div`
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.colors.textSecondary};
+    margin-bottom: 18px;
+`;
