@@ -40,7 +40,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
         const faltando = validarParametros(tipo, parametros);
         if (faltando.length > 0) {
-            return NextResponse.json({ error: `Campos obrigatórios ausentes: ${faltando.join(', ')}` }, { status: 400 });
+            //return NextResponse.json({ error: `Campos obrigatórios ausentes: ${faltando.join(', ')}` }, { status: 400 });
         }
 
         const fonte = await prisma.fonteVazamento.update({
