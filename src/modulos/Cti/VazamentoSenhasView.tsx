@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Tooltip, Typography, message } from 'antd';
+import { Button, Card, Col, DatePicker, Form, Input, InputNumber, Modal, Row, Select, Space, Table, Tag, Typography, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
@@ -38,7 +38,11 @@ type CampoParametro = {
     tipo?: 'numero' | 'tags' | 'opcao';
     opcoes?: { label: string; value: string }[];
     obrigatorio?: boolean;
+    ajuda?: AjudaCampo;
+    apenasQuandoMetodo?: 'SESSAO' | 'BOT';
 };
+
+type AjudaCampo = 'tokenBot' | 'idGrupo' | 'sessao';
 
 const tiposFonte: { valor: TipoFonteVazamento; rotulo: string; cor: string }[] = [
     { valor: 'TELEGRAM', rotulo: 'Telegram', cor: 'blue' },
@@ -48,9 +52,20 @@ const tiposFonte: { valor: TipoFonteVazamento; rotulo: string; cor: string }[] =
 
 const camposPorTipo: Record<TipoFonteVazamento, CampoParametro[]> = {
     TELEGRAM: [
-        { chave: 'tokenBot', rotulo: 'Token do bot', obrigatorio: true },
+        {
+            chave: 'metodoAutenticacao',
+            rotulo: 'Autenticação',
+            obrigatorio: true,
+            tipo: 'opcao',
+            opcoes: [
+                { label: 'Sessão do número (recomendado)', value: 'SESSAO' },
+                { label: 'Bot HTTP', value: 'BOT' },
+            ],
+        },
+        { chave: 'nomeSessao', rotulo: 'Etiqueta da sessão', obrigatorio: true, apenasQuandoMetodo: 'SESSAO', ajuda: 'sessao' },
+        { chave: 'tokenBot', rotulo: 'Token do bot', obrigatorio: true, apenasQuandoMetodo: 'BOT', ajuda: 'tokenBot' },
         { chave: 'canalOuGrupo', rotulo: 'Canal ou grupo', obrigatorio: true },
-        { chave: 'idGrupo', rotulo: 'ID do grupo/canal', obrigatorio: true },
+        { chave: 'idGrupo', rotulo: 'ID do grupo/canal', obrigatorio: true, ajuda: 'idGrupo' },
         {
             chave: 'estrategiaDownload',
             rotulo: 'Estratégia de captura',
@@ -82,11 +97,40 @@ const rotuloTipo = (tipo: TipoFonteVazamento) => tiposFonte.find((t) => t.valor 
 
 const corTipo = (tipo: TipoFonteVazamento) => tiposFonte.find((t) => t.valor === tipo)?.cor;
 
-const ajudaCampos: Record<string, string> = {
-    tokenBot:
-        'Crie um bot com @BotFather usando /newbot, copie o token HTTP retornado e, se for coletar mensagens em grupo, desative a privacidade com /setprivacy.',
-    idGrupo:
-        'Adicione o bot ao grupo ou canal, envie uma mensagem e use um bot como @RawDataBot/@getidsbot para ler o chat_id (começa com -100 em grupos).',
+const ajudas: Record<AjudaCampo, { titulo: string; conteudo: React.ReactNode }> = {
+    tokenBot: {
+        titulo: 'Como obter o token do bot',
+        conteudo: (
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text>1. No Telegram, fale com @BotFather e envie /newbot.</Text>
+                <Text>2. Escolha nome e username terminando com bot.</Text>
+                <Text>3. Copie o token HTTP mostrado.</Text>
+                <Text>4. Execute /setprivacy no BotFather e escolha Disable para ler mensagens em grupos.</Text>
+            </Space>
+        ),
+    },
+    idGrupo: {
+        titulo: 'Como descobrir o ID do grupo ou canal',
+        conteudo: (
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text>1. Garanta que a conta (ou o bot, se usar) esteja dentro do grupo ou canal.</Text>
+                <Text>2. Envie qualquer mensagem no grupo/canal para gerar atividade recente.</Text>
+                <Text>3. Dentro do grupo, chame @RawDataBot ou @getidsbot e leia o chat_id retornado.</Text>
+                <Text>4. Para canais públicos, o chat_id começa com -100; para grupos, também costuma iniciar com -100.</Text>
+            </Space>
+        ),
+    },
+    sessao: {
+        titulo: 'Como preparar uma sessão direta do Telegram',
+        conteudo: (
+            <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text>1. Gere API ID e API Hash em https://my.telegram.org com a conta já presente nos grupos.</Text>
+                <Text>2. Preencha API ID, API Hash, número, código do país e senha/token de sessão em Configurações → Telegram.</Text>
+                <Text>3. Defina uma etiqueta de sessão para identificar qual conta será usada nas coletas.</Text>
+                <Text>4. Confirme que a conta está nos grupos desejados para evitar expulsões por uso de bot.</Text>
+            </Space>
+        ),
+    },
 };
 
 const resumoParametros = (fonte: FonteVazamento) => {
@@ -95,7 +139,9 @@ const resumoParametros = (fonte: FonteVazamento) => {
         const alvo = parametros.canalOuGrupo || 'Canal não definido';
         const estrategia = parametros.estrategiaDownload === 'mensagens' ? 'mensagens' : 'arquivos';
         const identificador = parametros.idGrupo ? ` • ID ${parametros.idGrupo}` : '';
-        return `${alvo} • ${estrategia}${identificador}`;
+        const metodo = parametros.metodoAutenticacao === 'BOT' ? 'bot' : 'sessão';
+        const etiqueta = parametros.nomeSessao ? ` • sessão ${parametros.nomeSessao}` : '';
+        return `${alvo} • ${estrategia}${identificador} • ${metodo}${etiqueta}`;
     }
     if (tipo === 'FORUM_SURFACE') {
         const url = parametros.url || 'URL não definida';
@@ -110,7 +156,9 @@ const resumoParametros = (fonte: FonteVazamento) => {
 const normalizarParametros = (tipo: TipoFonteVazamento, parametros: Record<string, unknown>) => {
     const campos = camposPorTipo[tipo];
     const resultado: Record<string, unknown> = {};
+    const metodo = (parametros?.metodoAutenticacao as string) || 'SESSAO';
     campos.forEach((campo) => {
+        if (campo.apenasQuandoMetodo && campo.apenasQuandoMetodo !== metodo) return;
         const valor = parametros ? parametros[campo.chave] : undefined;
         if (campo.tipo === 'tags') {
             resultado[campo.chave] = Array.isArray(valor) ? valor : valor ? [valor] : [];
@@ -120,6 +168,7 @@ const normalizarParametros = (tipo: TipoFonteVazamento, parametros: Record<strin
             resultado[campo.chave] = valor;
         }
     });
+    if (tipo === 'TELEGRAM' && !resultado.metodoAutenticacao) resultado.metodoAutenticacao = metodo;
     return resultado;
 };
 
@@ -133,9 +182,12 @@ const VazamentoSenhasView = () => {
     const [fonteEdicao, setFonteEdicao] = useState<FonteVazamento | null>(null);
     const [modalColetaAberto, setModalColetaAberto] = useState(false);
     const [fonteColeta, setFonteColeta] = useState<FonteVazamento | null>(null);
+    const [ajudaModal, setAjudaModal] = useState<AjudaCampo | null>(null);
     const [form] = Form.useForm();
     const [formColeta] = Form.useForm();
     const tipoSelecionado = (Form.useWatch('tipo', form) as TipoFonteVazamento) || 'TELEGRAM';
+    const parametrosSelecionados = (Form.useWatch('parametros', form) as Record<string, unknown>) || {};
+    const metodoAutenticacao = (parametrosSelecionados.metodoAutenticacao as string) || 'SESSAO';
 
     useEffect(() => {
         if (fonteEdicao) {
@@ -143,10 +195,10 @@ const VazamentoSenhasView = () => {
                 nome: fonteEdicao.nome,
                 tipo: fonteEdicao.tipo,
                 observacoes: fonteEdicao.observacoes,
-                parametros: fonteEdicao.parametros,
+                parametros: { metodoAutenticacao: 'SESSAO', ...fonteEdicao.parametros },
             });
         } else {
-            form.setFieldsValue({ tipo: 'TELEGRAM', parametros: {} });
+            form.setFieldsValue({ tipo: 'TELEGRAM', parametros: { metodoAutenticacao: 'SESSAO' } });
         }
     }, [fonteEdicao, form]);
 
@@ -329,6 +381,12 @@ const VazamentoSenhasView = () => {
         },
     ];
 
+    const camposAtivos = camposPorTipo[tipoSelecionado].filter((campo) => {
+        if (campo.apenasQuandoMetodo === 'SESSAO' && metodoAutenticacao !== 'SESSAO') return false;
+        if (campo.apenasQuandoMetodo === 'BOT' && metodoAutenticacao !== 'BOT') return false;
+        return true;
+    });
+
     return (
         <Container>
             <Cabecalho>
@@ -431,7 +489,7 @@ const VazamentoSenhasView = () => {
                 width={720}
                 destroyOnClose
             >
-                <Form layout="vertical" form={form} initialValues={{ tipo: 'TELEGRAM', parametros: {} }}>
+                <Form layout="vertical" form={form} initialValues={{ tipo: 'TELEGRAM', parametros: { metodoAutenticacao: 'SESSAO' } }}>
                     <Row gutter={16}>
                         <Col span={12}>
                             <Form.Item name="nome" label="Nome" rules={[{ required: true, message: 'Informe o nome da fonte' }]}>
@@ -449,17 +507,20 @@ const VazamentoSenhasView = () => {
                     </Form.Item>
                     <Title level={5}>Parâmetros</Title>
                     <Row gutter={12}>
-                        {camposPorTipo[tipoSelecionado].map((campo) => (
+                        {camposAtivos.map((campo) => (
                             <Col span={12} key={campo.chave}>
                                 <Form.Item
                                     name={['parametros', campo.chave]}
                                     label={
-                                        ajudaCampos[campo.chave] ? (
+                                        campo.ajuda ? (
                                             <Space size={6}>
                                                 <span>{campo.rotulo}</span>
-                                                <Tooltip title={ajudaCampos[campo.chave]} trigger="click">
-                                                    <Button type="link" size="small" icon={<InfoCircleOutlined />} />
-                                                </Tooltip>
+                                                <Button
+                                                    type="link"
+                                                    size="small"
+                                                    icon={<InfoCircleOutlined />}
+                                                    onClick={() => setAjudaModal(campo.ajuda as AjudaCampo)}
+                                                />
                                             </Space>
                                         ) : (
                                             campo.rotulo
@@ -469,7 +530,7 @@ const VazamentoSenhasView = () => {
                                 >
                                     {campo.tipo === 'numero' && <InputNumber style={{ width: '100%' }} min={0} />}
                                     {campo.tipo === 'tags' && <Select mode="tags" style={{ width: '100%' }} tokenSeparators={[',']} />}
-                                    {campo.tipo === 'opcao' && <Select options={campo.opcoes} />} 
+                                    {campo.tipo === 'opcao' && <Select options={campo.opcoes} />}
                                     {!campo.tipo && !campo.opcoes && <Input />}
                                 </Form.Item>
                             </Col>
@@ -510,6 +571,19 @@ const VazamentoSenhasView = () => {
                         executada.
                     </Text>
                 </Form>
+            </Modal>
+            <Modal
+                open={!!ajudaModal}
+                title={ajudaModal ? ajudas[ajudaModal].titulo : ''}
+                onCancel={() => setAjudaModal(null)}
+                footer={[
+                    <Button key="fechar" type="primary" onClick={() => setAjudaModal(null)}>
+                        Entendi
+                    </Button>,
+                ]}
+                width={640}
+            >
+                {ajudaModal ? ajudas[ajudaModal].conteudo : null}
             </Modal>
         </Container>
     );

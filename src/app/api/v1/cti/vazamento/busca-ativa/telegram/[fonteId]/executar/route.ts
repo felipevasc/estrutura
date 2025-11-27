@@ -5,6 +5,14 @@ import { FonteVazamentoTipo } from '@prisma/client';
 
 const comando = 'busca_ativa_vazamento_telegram';
 
+const credenciaisTelegram = () => ({
+    apiId: process.env.TELEGRAM_API_ID,
+    apiHash: process.env.TELEGRAM_API_HASH,
+    numero: process.env.TELEGRAM_NUMERO,
+    codigoPais: process.env.TELEGRAM_CODIGO_PAIS,
+    senha: process.env.TELEGRAM_SENHA,
+});
+
 export async function POST(_request: Request, { params }: { params: { fonteId: string } }) {
     const fonteId = parseInt(params.fonteId, 10);
     if (Number.isNaN(fonteId)) return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
@@ -21,6 +29,14 @@ export async function POST(_request: Request, { params }: { params: { fonteId: s
         if (!fonte.buscaAtiva)
             return NextResponse.json({ error: 'Configure extensões e última captura antes de executar' }, { status: 400 });
 
+        const metodoAutenticacao = fonte.parametros?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
+        const credenciais = credenciaisTelegram();
+        if (
+            metodoAutenticacao === 'SESSAO' &&
+            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
+        )
+            return NextResponse.json({ error: 'Configure API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
+
         const command = await prisma.command.create({
             data: {
                 command: comando,
@@ -31,6 +47,10 @@ export async function POST(_request: Request, { params }: { params: { fonteId: s
                     destinoCentral: fonte.buscaAtiva.destinoCentral,
                     parametrosFonte: fonte.parametros,
                     projetoId: fonte.projetoId,
+                    metodoAutenticacao,
+                    credenciais,
+                    tokenBot: fonte.parametros?.tokenBot,
+                    nomeSessao: fonte.parametros?.nomeSessao,
                 }),
                 projectId: fonte.projetoId,
             },
