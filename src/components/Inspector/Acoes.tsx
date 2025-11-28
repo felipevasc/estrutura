@@ -31,6 +31,7 @@ export const gruposAcoes: GrupoAcao[] = [
     { chave: "dns", titulo: "Resolução e DNS", icone: <SearchOutlined /> },
     { chave: "fuzzing", titulo: "Fuzzing", icone: <BugOutlined /> },
     { chave: "ips", titulo: "Busca por IPs", icone: <RadarChartOutlined /> },
+    { chave: "usuarios", titulo: "Busca de Usuários", icone: <UserSwitchOutlined /> },
 ];
 
 const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
@@ -95,6 +96,8 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
             icone: <RadarChartOutlined />,
         },
+    ],
+    usuarios: [
         {
             chave: "enum4linux",
             titulo: "Enum4Linux",
