@@ -6,7 +6,9 @@ import { StyledToolsGrid } from "../styles";
 import {
     RadarChartOutlined,
     UserSwitchOutlined,
-    FileSearchOutlined
+    FileSearchOutlined,
+    ThunderboltOutlined,
+    FolderOpenOutlined
 } from "@ant-design/icons";
 
 const FerramentasIp = () => {
@@ -76,6 +78,19 @@ const FerramentasIp = () => {
 
             <Card
                 className="interactive"
+                onClick={() => showConfirmationModal('rustscan', { idIp: getId().toString() })}
+            >
+                <div className="tool-icon">
+                    <ThunderboltOutlined />
+                </div>
+                <Card.Meta
+                    title="Rustscan"
+                    description="Scan rápido de portas."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
                 onClick={() => showConfirmationModal('enum4linux', { idIp: getId().toString() })}
             >
                 <div className="tool-icon">
@@ -97,6 +112,19 @@ const FerramentasIp = () => {
                 <Card.Meta
                     title="Ffuf"
                     description="Fuzzing de diretórios."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
+                onClick={() => showConfirmationModal('gobuster', { idIp: getId().toString() })}
+            >
+                <div className="tool-icon">
+                    <FolderOpenOutlined />
+                </div>
+                <Card.Meta
+                    title="Gobuster"
+                    description="Descoberta de diretórios."
                 />
             </Card>
 

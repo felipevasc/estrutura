@@ -7,6 +7,8 @@ import { NslookupService } from './services/tools/NslookupService';
 import { NmapService } from './services/tools/NmapService';
 import { Enum4linuxService } from './services/tools/Enum4linuxService';
 import { FfufService } from './services/tools/FfufService';
+import { RustscanService } from './services/tools/RustscanService';
+import { GobusterService } from './services/tools/GobusterService';
 import DefaceDorkService from './services/cti/DefaceDorkService';
 import { TakedownService } from "./services/cti/TakedownService";
 import { FontesDadosVazamentoService } from './services/cti/vazamentoSenhas/FontesDadosVazamentoService';
@@ -22,6 +24,8 @@ export const registeredServices: NanoService[] = [
     new SubfinderService(),
     new NslookupService(),
     new NmapService(),
+    new RustscanService(),
+    new GobusterService(),
     new Enum4linuxService(),
     new FfufService(),
     new DefaceDorkService(),

@@ -6,6 +6,10 @@ RUN apt install nodejs npm -y
 
 RUN apt install git -y
 
+RUN apt install rustscan -y
+
+RUN apt install gobuster -y
+
 WORKDIR /app
 
 # Forçar atualização dessas etapas sempre que houver novo commit

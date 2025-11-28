@@ -1,6 +1,6 @@
 import { ReactNode, useContext, useMemo, useState } from "react";
 import { Empty, Modal, notification } from "antd";
-import { BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, GlobalOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import { BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import { DescricaoGrupo, InspectorBody, ItemAcao, TituloGrupo } from "./styles";
@@ -77,6 +77,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <FileSearchOutlined />,
         },
         {
+            chave: "gobusterDominio",
+            titulo: "Gobuster",
+            descricao: "Descoberta de diretórios",
+            comando: "gobuster",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <FolderOpenOutlined />,
+        },
+        {
             chave: "ffufIp",
             titulo: "Ffuf",
             descricao: "Fuzzing de diretórios",
@@ -84,6 +93,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             tiposAlvo: ["ip"],
             gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
             icone: <FileSearchOutlined />,
+        },
+        {
+            chave: "gobusterIp",
+            titulo: "Gobuster",
+            descricao: "Descoberta de diretórios",
+            comando: "gobuster",
+            tiposAlvo: ["ip"],
+            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <FolderOpenOutlined />,
         },
     ],
     ips: [
@@ -95,6 +113,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             tiposAlvo: ["ip"],
             gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
             icone: <RadarChartOutlined />,
+        },
+        {
+            chave: "rustscan",
+            titulo: "Rustscan",
+            descricao: "Scan rápido de portas",
+            comando: "rustscan",
+            tiposAlvo: ["ip"],
+            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <ThunderboltOutlined />,
         },
     ],
     usuarios: [

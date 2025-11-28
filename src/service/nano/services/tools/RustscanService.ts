@@ -8,112 +8,95 @@ import { TipoPorta } from '@/database/functions/ip';
 import { NanoEvents } from '../../events';
 import { extrairPortasGrep } from './parserPortas';
 
-export class NmapService extends NanoService {
+export class RustscanService extends NanoService {
   constructor() {
-    super('NmapService');
+    super('RustscanService');
   }
 
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
-      if (payload.command === 'nmap') {
-        this.processCommand(payload);
+      if (payload.command === 'rustscan') {
+        this.processarComando(payload);
       }
     });
 
-    this.listen(NanoEvents.NMAP_TERMINAL_RESULT, (payload) => this.processResult(payload));
-    this.listen(NanoEvents.NMAP_TERMINAL_ERROR, (payload) => this.processError(payload));
+    this.listen(NanoEvents.RUSTSCAN_TERMINAL_RESULT, (payload) => this.processarResultado(payload));
+    this.listen(NanoEvents.RUSTSCAN_TERMINAL_ERROR, (payload) => this.processarErro(payload));
   }
 
-  private async processCommand(payload: any) {
+  private async processarComando(payload: any) {
     const { id, args, projectId } = payload;
     const idIp = args.idIp;
 
-    this.log(`Processing Nmap for IP ID: ${idIp}`);
+    this.log(`Iniciando Rustscan para IP ${idIp}`);
 
     try {
-        const op = await prisma.ip.findFirst({
-            where: { id: Number(idIp) }
-        });
-        const enderecoIp = op?.endereco ?? "";
+        const ipBanco = await prisma.ip.findFirst({ where: { id: Number(idIp) } });
+        const enderecoIp = ipBanco?.endereco ?? "";
 
         if (!enderecoIp) throw new Error('IP not found');
-        const outputPrefix = path.join(os.tmpdir(), `nmap_${op?.projetoId}_${id}_${Date.now()}`);
+        const outputPrefix = path.join(os.tmpdir(), `rustscan_${ipBanco?.projetoId}_${id}_${Date.now()}`);
         const grepOutput = `${outputPrefix}.gnmap`;
         const stdoutFile = `${outputPrefix}.stdout`;
 
-        const comando = 'nmap';
-        const argumentos = ['-Pn', enderecoIp, "-p", "1-9999", "-oG", grepOutput];
+        const comando = 'rustscan';
+        const argumentos = ['-a', enderecoIp, '-r', '1-65535', '--', '-Pn', '-sV', '-oG', grepOutput];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
-            id: id,
+            id,
             command: comando,
             args: argumentos,
             outputFile: stdoutFile,
-            replyTo: NanoEvents.NMAP_TERMINAL_RESULT,
-            errorTo: NanoEvents.NMAP_TERMINAL_ERROR,
-            meta: { projectId, enderecoIp, op, idIp, grepOutput, stdoutFile }
+            replyTo: NanoEvents.RUSTSCAN_TERMINAL_RESULT,
+            errorTo: NanoEvents.RUSTSCAN_TERMINAL_ERROR,
+            meta: { projectId, idIp, grepOutput, stdoutFile }
         });
-
     } catch (e: any) {
-        this.bus.emit(NanoEvents.JOB_FAILED, {
-            id: id,
-            error: e.message
-        });
+        this.bus.emit(NanoEvents.JOB_FAILED, { id, error: e.message });
     }
   }
 
-  private async processResult(payload: any) {
+  private async processarResultado(payload: any) {
       const { id, meta, command, args } = payload;
       const { idIp, grepOutput, stdoutFile } = meta;
 
-      this.log(`Processing result for ${id}`);
+      this.log(`Finalizando Rustscan ${id}`);
 
       try {
         const portas: TipoPorta[] = [];
 
         if (fs.existsSync(grepOutput)) {
-            const content = fs.readFileSync(grepOutput, 'utf-8');
-            const extraidas = extrairPortasGrep(content);
+            const conteudo = fs.readFileSync(grepOutput, 'utf-8');
+            const extraidas = extrairPortasGrep(conteudo);
             portas.push(...extraidas);
             fs.unlinkSync(grepOutput);
-        } else {
-            this.log("Warning: Nmap grepable output missing.");
         }
 
-        if (fs.existsSync(stdoutFile)) {
-             fs.unlinkSync(stdoutFile);
-        }
+        if (fs.existsSync(stdoutFile)) fs.unlinkSync(stdoutFile);
 
         await Database.adicionarPortas(portas, Number(idIp));
 
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
-            id: id,
+            id,
             result: portas,
             rawOutput: "Output stored in DB",
             executedCommand: `${command} ${args.join(' ')}`
         });
-
       } catch (e: any) {
           if (grepOutput && fs.existsSync(grepOutput)) fs.unlinkSync(grepOutput);
           if (stdoutFile && fs.existsSync(stdoutFile)) fs.unlinkSync(stdoutFile);
 
-          this.bus.emit(NanoEvents.JOB_FAILED, {
-              id: id,
-              error: e.message
-          });
+          this.bus.emit(NanoEvents.JOB_FAILED, { id, error: e.message });
       }
   }
 
-  private processError(payload: any) {
+  private processarErro(payload: any) {
       const { id, error, meta } = payload;
       const { grepOutput, stdoutFile } = meta || {};
 
       if (grepOutput && fs.existsSync(grepOutput)) fs.unlinkSync(grepOutput);
       if (stdoutFile && fs.existsSync(stdoutFile)) fs.unlinkSync(stdoutFile);
 
-      this.bus.emit(NanoEvents.JOB_FAILED, {
-          id: id,
-          error: error
-      });
+      this.bus.emit(NanoEvents.JOB_FAILED, { id, error });
   }
 }

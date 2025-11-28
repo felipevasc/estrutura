@@ -57,12 +57,27 @@ const useFerramentas = () => {
         return data;
     }, []);
 
+    const executeRustscan = useCallback(async (idIp: number) => {
+        const res = await fetch(`/api/v1/ferramentas/ip/rustscan`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                ip: idIp
+            }),
+        });
+        const data = await res.json();
+        return data;
+    }, []);
+
     return useMemo(() => ({
         executeAmass,
         executeSubfinder,
         executeNmap,
-        executeEnum4linux
-    }), [executeAmass, executeSubfinder, executeNmap, executeEnum4linux]);
+        executeEnum4linux,
+        executeRustscan
+    }), [executeAmass, executeSubfinder, executeNmap, executeEnum4linux, executeRustscan]);
 }
 
 export default useFerramentas;

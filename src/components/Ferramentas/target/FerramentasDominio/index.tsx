@@ -8,7 +8,8 @@ import {
     NodeIndexOutlined,
     SearchOutlined,
     AimOutlined,
-    FileSearchOutlined
+    FileSearchOutlined,
+    FolderOpenOutlined
 } from "@ant-design/icons";
 
 const FerramentasDominio = () => {
@@ -90,7 +91,6 @@ const FerramentasDominio = () => {
             </Card>
 
             <Card
-                // Not interactive as per original code (no onClick)
             >
                 <div className="tool-icon">
                     <AimOutlined />
@@ -124,6 +124,19 @@ const FerramentasDominio = () => {
                 <Card.Meta
                     title="Ffuf"
                     description="Fuzzing de diretórios."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
+                onClick={() => showConfirmationModal('gobuster', { idDominio: getDomainId().toString() })}
+            >
+                <div className="tool-icon">
+                    <FolderOpenOutlined />
+                </div>
+                <Card.Meta
+                    title="Gobuster"
+                    description="Descoberta de diretórios."
                 />
             </Card>
 
