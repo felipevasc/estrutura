@@ -31,10 +31,9 @@ export async function POST(_request: Request, { params }: { params: { fonteId: s
 
         const metodoAutenticacao = fonte.parametros?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
         const credenciais = credenciaisTelegram();
-        if (
-            metodoAutenticacao === 'SESSAO' &&
-            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
-        )
+        if (metodoAutenticacao === 'BOT')
+            return NextResponse.json({ error: 'Autenticação por bot ainda não está disponível' }, { status: 400 });
+        if (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
             return NextResponse.json({ error: 'Configure API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
 
         const command = await prisma.command.create({
