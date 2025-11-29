@@ -127,6 +127,7 @@ model Diretorio {
   caminho     String
   status      Int?
   tamanho     Int?
+  tipo        TipoDiretorio @default(diretorio)
 
   dominioId   Int?
   dominio     Dominio? @relation(fields: [dominioId], references: [id])
@@ -200,6 +201,11 @@ enum TakedownStatus {
 enum TakedownVerificacaoStatus {
   ONLINE
   OFFLINE
+}
+
+enum TipoDiretorio {
+  diretorio
+  arquivo
 }
 
 enum FonteVazamentoTipo {

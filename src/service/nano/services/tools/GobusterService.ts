@@ -52,7 +52,7 @@ export class GobusterService extends NanoService {
 
   private async processarResultado(payload: any) {
     const { id, meta, command, args } = payload;
-    const { dominio, ip, arquivoResultado, arquivoLog, alvo, caminhoBase } = meta;
+    const { dominio, ip, arquivoResultado, arquivoLog, alvo, caminhoBase, tipoFuzz } = meta;
 
     try {
       if (!arquivoResultado || !fs.existsSync(arquivoResultado)) throw new Error('Saída não encontrada');
@@ -73,7 +73,8 @@ export class GobusterService extends NanoService {
             status: resultado.status,
             tamanho: resultado.tamanho,
             dominioId: dominio ? dominio.id : null,
-            ipId: ip ? ip.id : null
+            ipId: ip ? ip.id : null,
+            tipo: tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio'
           }
         });
       }

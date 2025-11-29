@@ -5,4 +5,5 @@ export type DiretorioResponse = {
     tamanho?: number | null;
     dominioId?: number | null;
     ipId?: number | null;
+    tipo?: 'diretorio' | 'arquivo';
 }

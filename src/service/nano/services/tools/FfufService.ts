@@ -50,7 +50,7 @@ export class FfufService extends NanoService {
 
   private async processarResultado(payload: any) {
     const { id, stdout, meta, command, args } = payload;
-    const { dominio, ip, caminhoBase, saidaJson, saidaLog } = meta;
+    const { dominio, ip, caminhoBase, saidaJson, saidaLog, tipoFuzz } = meta;
 
     this.log(`Processando resultado ${id}`);
 
@@ -69,7 +69,8 @@ export class FfufService extends NanoService {
             status: resultado.status,
             tamanho: resultado.tamanho,
             dominioId: dominio ? dominio.id : null,
-            ipId: ip ? ip.id : null
+            ipId: ip ? ip.id : null,
+            tipo: tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio'
           }
         });
       }
