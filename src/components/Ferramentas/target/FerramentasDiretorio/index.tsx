@@ -3,7 +3,7 @@ import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import { StyledToolsGrid } from "../styles";
-import { FileSearchOutlined, FolderOpenOutlined } from "@ant-design/icons";
+import { FileSearchOutlined, FolderOpenOutlined, SearchOutlined } from "@ant-design/icons";
 
 const FerramentasDiretorio = () => {
     const api = useApi();
@@ -105,6 +105,19 @@ const FerramentasDiretorio = () => {
                 <Card.Meta
                     title="Gobuster Arquivos"
                     description="Descoberta de arquivos."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
+                onClick={() => abrirModal('whatweb', { idDiretorio: idAtual().toString() })}
+            >
+                <div className="tool-icon">
+                    <SearchOutlined />
+                </div>
+                <Card.Meta
+                    title="WhatWeb"
+                    description="Fingerprint do caminho."
                 />
             </Card>
 

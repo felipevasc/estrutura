@@ -8,7 +8,8 @@ import {
     UserSwitchOutlined,
     FileSearchOutlined,
     ThunderboltOutlined,
-    FolderOpenOutlined
+    FolderOpenOutlined,
+    SearchOutlined
 } from "@ant-design/icons";
 
 const FerramentasIp = () => {
@@ -86,6 +87,19 @@ const FerramentasIp = () => {
                 <Card.Meta
                     title="Rustscan"
                     description="Scan rápido de portas."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
+                onClick={() => showConfirmationModal('whatweb', { idIp: getId().toString() })}
+            >
+                <div className="tool-icon">
+                    <SearchOutlined />
+                </div>
+                <Card.Meta
+                    title="WhatWeb"
+                    description="Fingerprint do host."
                 />
             </Card>
 

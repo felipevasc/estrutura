@@ -15,6 +15,8 @@ export class CommandInterpreter {
               return this.interpretRustscan(payload, projectId);
           case 'GOBUSTER':
               return this.interpretGobuster(payload, projectId);
+          case 'WHATWEB':
+              return this.interpretWhatweb(payload, projectId);
           default:
               throw new Error(`Command ${commandName} not supported.`);
       }
@@ -136,6 +138,46 @@ export class CommandInterpreter {
 
       return {
           command: 'gobuster',
+          args: JSON.stringify(args),
+          projectId
+      };
+  }
+
+  private async interpretWhatweb(payload: any, projectId: number) {
+      const alvo = payload.PARAMETRO1;
+      if (!alvo) throw new Error("Missing target parameter");
+
+      const normalizado = this.normalizarAlvo(alvo);
+      let dominio = await prisma.dominio.findFirst({
+          where: { endereco: normalizado, projetoId: projectId }
+      });
+
+      let ip = dominio ? null : await prisma.ip.findFirst({
+          where: { endereco: normalizado, projetoId: projectId }
+      });
+
+      if (!dominio && !ip) {
+          if (this.verificarIp(normalizado)) {
+              ip = await prisma.ip.create({
+                  data: {
+                      endereco: normalizado,
+                      projetoId: projectId
+                  }
+              });
+          } else {
+              await Database.adicionarSubdominio([normalizado], projectId);
+              dominio = await prisma.dominio.findFirst({
+                  where: { endereco: normalizado, projetoId: projectId }
+              });
+          }
+      }
+
+      if (!dominio && !ip) throw new Error(`Could not find or create target ${normalizado}`);
+
+      const args = dominio ? { idDominio: dominio.id } : { idIp: ip?.id };
+
+      return {
+          command: 'whatweb',
           args: JSON.stringify(args),
           projectId
       };

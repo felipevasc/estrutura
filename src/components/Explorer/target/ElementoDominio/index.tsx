@@ -7,11 +7,13 @@ import React, { useContext } from "react";
 import useElementoIp from "../ElementoIp";
 import useElementoDiretorio from "../ElementoDiretorio";
 import { NoCarregavel } from "../tipos";
+import useElementoWhatweb from "../ElementoWhatweb";
 
 const useElementoDominio = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoIp = useElementoIp();
   const elementoDiretorio = useElementoDiretorio();
+  const elementoWhatweb = useElementoWhatweb();
 
   const getDominio = async (dominio: DominioResponse, anteriores: string[] = []): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
@@ -19,7 +21,8 @@ const useElementoDominio = () => {
     const possuiSubdominios = (dominio.subDominios?.length ?? 0) > 0;
     const possuiIps = !anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0;
     const possuiDiretorios = !anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0;
-    const possuiFilhos = possuiSubdominios || possuiIps || possuiDiretorios;
+    const possuiWhatweb = (dominio.whatwebResultados?.length ?? 0) > 0;
+    const possuiFilhos = possuiSubdominios || possuiIps || possuiDiretorios || possuiWhatweb;
 
     const carregar = async () => {
       const filhos: NoCarregavel[] = [];
@@ -70,6 +73,11 @@ const useElementoDominio = () => {
           className: "folder",
           isLeaf: filhosDiretorios.length === 0
         });
+      }
+
+      if (possuiWhatweb) {
+        const pasta = elementoWhatweb.getResultados(dominio.whatwebResultados ?? [], `${dominio.endereco}-${dominio.id}`);
+        if (pasta) filhos.push(pasta);
       }
 
       return filhos;

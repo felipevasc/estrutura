@@ -91,6 +91,19 @@ const FerramentasDominio = () => {
             </Card>
 
             <Card
+                className="interactive"
+                onClick={() => showConfirmationModal('whatweb', { idDominio: getDomainId().toString() })}
+            >
+                <div className="tool-icon">
+                    <SearchOutlined />
+                </div>
+                <Card.Meta
+                    title="WhatWeb"
+                    description="Fingerprint do domínio."
+                />
+            </Card>
+
+            <Card
             >
                 <div className="tool-icon">
                     <AimOutlined />
