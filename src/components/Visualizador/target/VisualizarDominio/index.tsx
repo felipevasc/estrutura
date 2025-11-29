@@ -92,7 +92,7 @@ const VisualizarDominio = () => {
     const { selecaoTarget } = useContext(StoreContext);
     const api = useApi();
     const idDominio = selecaoTarget?.get()?.id;
-    const { data: dominio, isLoading, error } = api.dominios.getDominio(idDominio);
+    const { data: dominio, isLoading, error } = api.dominios.useDominio(idDominio);
 
     if (isLoading) return <DashboardContainer><h2>Carregando...</h2></DashboardContainer>;
     if (error) return <DashboardContainer><h2>Erro ao carregar dados do domínio.</h2></DashboardContainer>;

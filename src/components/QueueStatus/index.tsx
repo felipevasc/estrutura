@@ -1,77 +1,83 @@
-import { Badge, Drawer, Button, Tabs, List, Tag, Popconfirm, Collapse } from 'antd';
+import { Drawer, Button, Tabs, List, Tag, Popconfirm } from 'antd';
 import { UnorderedListOutlined, DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import useApi from '@/api';
 import { Command, CommandStatus } from '@prisma/client';
 import { StyledQueueStatus } from './styles';
 import StoreContext from '@/store';
 import { VscTerminal } from "react-icons/vsc";
-const { Panel } = Collapse;
 
 const QueueStatus = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [commands, setCommands] = useState<Command[]>([]);
+    const [aberto, setAberto] = useState(false);
+    const [comandos, setComandos] = useState<Command[]>([]);
     const api = useApi();
     const { projeto } = useContext(StoreContext);
-    const timeout = useRef<NodeJS.Timeout>(null)
+    const agendamento = useRef<NodeJS.Timeout | null>(null);
 
-    const projectId = projeto?.get()?.id;
+    const idProjeto = projeto?.get()?.id;
 
-    const fetchCommands = async () => {
-        if (!projectId) return;
-        try {
-            const data = await api.queue.getCommands(projectId);
-            setCommands(data);
-            timeout.current && clearTimeout(timeout.current);
-            timeout.current = setTimeout(fetchCommands, 30000);
-        } catch (error) {
-            console.error("Failed to fetch commands", error);
+    const limparAgendamento = useCallback(() => {
+        if (agendamento.current) {
+            clearTimeout(agendamento.current);
+            agendamento.current = null;
         }
-    };
+    }, []);
+
+    const buscarComandos = useCallback(async () => {
+        if (!idProjeto) return;
+        try {
+            const dados = await api.queue.getCommands(idProjeto);
+            setComandos(dados);
+            limparAgendamento();
+            agendamento.current = setTimeout(buscarComandos, 30000);
+        } catch (erro) {
+            console.error("Falha ao buscar comandos", erro);
+        }
+    }, [idProjeto, api.queue, limparAgendamento]);
 
     useEffect(() => {
-        fetchCommands();
+        buscarComandos();
         return () => {
-            timeout.current && clearTimeout(timeout.current);
+            limparAgendamento();
         }
-    }, [projectId]);
+    }, [buscarComandos, limparAgendamento]);
 
-    const handleCancelCommand = async (commandId: number) => {
+    const cancelarComando = useCallback(async (idComando: number) => {
         try {
-            await api.queue.cancelCommand(commandId);
-            fetchCommands(); // Refresh the list
-        } catch (error) {
-            console.error("Failed to cancel command", error);
+            await api.queue.cancelCommand(idComando);
+            buscarComandos();
+        } catch (erro) {
+            console.error("Falha ao cancelar comando", erro);
         }
+    }, [api.queue, buscarComandos]);
+
+    const abrirPainel = () => setAberto(true);
+    const fecharPainel = () => setAberto(false);
+
+    const comandosEmExecucao = useMemo(() => comandos?.filter(c => c.status === 'RUNNING'), [comandos]);
+    const comandosPendentes = useMemo(() => comandos?.filter(c => c.status === 'PENDING'), [comandos]);
+    const historicoComandos = useMemo(() => comandos?.filter(c => c.status === 'COMPLETED' || c.status === 'FAILED'), [comandos]);
+
+    const gerarEtiquetaStatus = (status: CommandStatus) => {
+        if (status === 'RUNNING') return <Tag icon={<LoadingOutlined spin />} color="processing">Executando</Tag>;
+        if (status === 'PENDING') return <Tag color="warning">Aguardando</Tag>;
+        if (status === 'COMPLETED') return <Tag icon={<CheckCircleOutlined />} color="success">Concluído</Tag>;
+        if (status === 'FAILED') return <Tag icon={<CloseCircleOutlined />} color="error">Falhou</Tag>;
+        return <Tag>Desconhecido</Tag>;
     };
 
-    const showDrawer = () => setIsOpen(true);
-    const onClose = () => setIsOpen(false);
-
-    const runningCommands = commands?.filter(c => c.status === 'RUNNING');
-    const pendingCommands = commands?.filter(c => c.status === 'PENDING');
-    const historyCommands = commands?.filter(c => c.status === 'COMPLETED' || c.status === 'FAILED');
-
-    const getStatusTag = (status: CommandStatus) => {
-        switch (status) {
-            case 'RUNNING': return <Tag icon={<LoadingOutlined spin />} color="processing">Executando</Tag>;
-            case 'PENDING': return <Tag color="warning">Aguardando</Tag>;
-            case 'COMPLETED': return <Tag icon={<CheckCircleOutlined />} color="success">Concluído</Tag>;
-            case 'FAILED': return <Tag icon={<CloseCircleOutlined />} color="error">Falhou</Tag>;
-            default: return <Tag>Desconhecido</Tag>;
-        }
-    };
-
-    const renderCommandList = (data: Command[], showCancel: boolean) => (
+    const renderizarLista = (dados: Command[], permitirCancelamento: boolean) => (
         <List
             itemLayout="horizontal"
-            dataSource={data}
+            dataSource={dados}
             renderItem={item => (
                 <List.Item
-                    actions={showCancel ? [
+                    key={item.id}
+                    actions={permitirCancelamento ? [
                         <Popconfirm
+                            key="cancelar"
                             title="Cancelar comando?"
-                            onConfirm={() => handleCancelCommand(item.id)}
+                            onConfirm={() => cancelarComando(item.id)}
                             okText="Sim"
                             cancelText="Não"
                         >
@@ -82,24 +88,26 @@ const QueueStatus = () => {
                     <List.Item.Meta
                         avatar={<VscTerminal />}
                         title={item.command}
-                        description={getStatusTag(item.status)}
+                        description={gerarEtiquetaStatus(item.status)}
                     />
                 </List.Item>
             )}
         />
     );
 
-    const renderCommandListHistory = (data: Command[], showCancel: boolean) => (
+    const renderizarHistorico = (dados: Command[], permitirCancelamento: boolean) => (
         <List
             itemLayout="horizontal"
-            dataSource={data}
+            dataSource={dados}
             renderItem={item => (
                 <List.Item
+                    key={item.id}
                     style={{display: "flex", flexDirection: "column"}}
-                    actions={showCancel ? [
+                    actions={permitirCancelamento ? [
                         <Popconfirm
+                            key="cancelar"
                             title="Cancelar comando?"
-                            onConfirm={() => handleCancelCommand(item.id)}
+                            onConfirm={() => cancelarComando(item.id)}
                             okText="Sim"
                             cancelText="Não"
                         >
@@ -111,7 +119,7 @@ const QueueStatus = () => {
                         style={{width: "100%"}}
                         avatar={<VscTerminal />}
                         title={item.executedCommand || item.command}
-                        description={getStatusTag(item.status)}
+                        description={gerarEtiquetaStatus(item.status)}
                     />
                     {(item.rawOutput || item.output) && (
                         <pre style={{
@@ -133,38 +141,38 @@ const QueueStatus = () => {
         />
     );
 
-    const items = [
+    const secoes = [
         {
             key: '1',
-            label: `Executando (${runningCommands.length})`,
-            children: renderCommandList(runningCommands, false),
+            label: `Executando (${comandosEmExecucao.length})`,
+            children: renderizarLista(comandosEmExecucao, false),
         },
         {
             key: '2',
-            label: `Aguardando (${pendingCommands.length})`,
-            children: renderCommandList(pendingCommands, true),
+            label: `Aguardando (${comandosPendentes.length})`,
+            children: renderizarLista(comandosPendentes, true),
         },
         {
             key: '3',
             label: 'Histórico',
-            children: renderCommandListHistory(historyCommands, false),
+            children: renderizarHistorico(historicoComandos, false),
         },
     ];
 
-    const pendingCount = runningCommands.length + pendingCommands.length;
+    const pendentes = comandosEmExecucao.length + comandosPendentes.length;
 
     return (
         <StyledQueueStatus>
             <Button
                 type="primary"
                 icon={<UnorderedListOutlined />}
-                onClick={showDrawer}
+                onClick={abrirPainel}
                 size="large"
             >
-                Fila de Execução ({pendingCount})
+                Fila de Execução ({pendentes})
             </Button>
-            <Drawer title="Fila de Execução" placement="right" onClose={onClose} open={isOpen} width={800}>
-                <Tabs defaultActiveKey="1" items={items} />
+            <Drawer title="Fila de Execução" placement="right" onClose={fecharPainel} open={aberto} width={800}>
+                <Tabs defaultActiveKey="1" items={secoes} />
             </Drawer>
         </StyledQueueStatus>
     );

@@ -11,9 +11,9 @@ import { ProjetoResponse } from "@/types/ProjetoResponse";
 
 const SelecaoProjetos = () => {
     const api = useApi();
-    const { data, isLoading, refetch } = api.projeto.getProjetos();
-    const { mutate: postProjeto } = api.projeto.postProjeto();
-    const { mutate: putProjeto } = api.projeto.putProjeto();
+    const { data, isLoading, refetch } = api.projeto.useProjetosLista();
+    const { mutate: postProjeto } = api.projeto.useCriacaoProjeto();
+    const { mutate: putProjeto } = api.projeto.useEdicaoProjeto();
     const { projeto } = useContext(StoreContext);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);

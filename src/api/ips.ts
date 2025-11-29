@@ -1,31 +1,29 @@
 "use client"
 import { IpResponse } from "@/types/IpResponse";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 
 const useIps = () => {
-
-    const getIp = (idIp?: number) => useQuery({
+    const useIp = (idIp?: number) => useQuery({
         queryKey: ["get-ip", idIp],
         queryFn: async (): Promise<IpResponse> => {
-            const res = await fetch("/api/v1/ips/" + idIp);
-            const data = await res.json();
-            return data;
+            const resposta = await fetch("/api/v1/ips/" + idIp);
+            const dados = await resposta.json();
+            return dados;
         },
         enabled: !!idIp
     });
 
-    const getIps = (idProjeto?: number) => useQuery({
+    const useIpsProjeto = (idProjeto?: number) => useQuery({
         queryKey: ["get-ips-projeto", idProjeto],
         queryFn: async (): Promise<IpResponse[]> => {
-            const res = await fetch(`/api/v1/projetos/${idProjeto}/ips`);
-            const data = await res.json();
-            return data;
+            const resposta = await fetch(`/api/v1/projetos/${idProjeto}/ips`);
+            const dados = await resposta.json();
+            return dados;
         },
         enabled: !!idProjeto
     });
 
-    return useMemo(() => ({ getIp, getIps }), [getIp, getIps]);
+    return { useIp, useIpsProjeto };
 }
 
 export default useIps;

@@ -1,6 +1,6 @@
 "use client";
 import { Tree, TreeDataNode } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { StyledArvoreUsuario, StyledTitleUsuario } from "./styles";
 import StoreContext from "@/store";
 import useApi from "@/api";
@@ -8,23 +8,24 @@ import useElementoUsuario from "../../target/ElementoUsuario";
 
 const ArvoreUsuarios = () => {
   const api = useApi();
-  const { projeto, selecaoTarget } = useContext(StoreContext);
-  const { data: usuariosProjeto } = api.usuarios.getUsuariosProjeto(projeto?.get()?.id);
+  const { projeto } = useContext(StoreContext);
+  const idProjeto = useMemo(() => projeto?.get()?.id, [projeto]);
+  const { data: usuariosProjeto } = api.usuarios.useUsuariosProjeto(idProjeto);
   const [elementos, setElementos] = useState<TreeDataNode[]>([]);
   const elementoUsuario = useElementoUsuario();
 
   useEffect(() => {
     const carregar = async () => {
-        const elems: TreeDataNode[] = [];
+        const itens: TreeDataNode[] = [];
         if (usuariosProjeto) {
-            for (const u of usuariosProjeto) {
-                elems.push(await elementoUsuario.getUsuario(u));
+            for (const usuario of usuariosProjeto) {
+                itens.push(await elementoUsuario.getUsuario(usuario));
             }
         }
-        setElementos(elems);
+        setElementos(itens);
     };
     carregar();
-  }, [usuariosProjeto]);
+  }, [usuariosProjeto, elementoUsuario]);
 
   return (
     <StyledArvoreUsuario>
