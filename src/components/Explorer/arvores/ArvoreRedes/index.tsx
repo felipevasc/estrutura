@@ -14,7 +14,7 @@ import { atualizarFilhos } from "../../target/atualizarArvore";
 const ArvoreRedes = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
-  const { data: ipsProjeto } = api.ips.getIps(projeto?.get()?.id);
+  const { data: ipsProjeto, refetch: recarregarIps } = api.ips.getIps(projeto?.get()?.id);
   const elementoIp = useElementoIp();
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -56,16 +56,19 @@ const ArvoreRedes = () => {
     setExpandedKeys(novasChaves);
   };
 
-  const refresh = () => {
+  const refresh = async () => {
     setCarregando(true);
     setExpandedKeys([]);
-    if (ipsProjeto) {
-      const sorted = [...ipsProjeto].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
-      Promise.all(sorted.map(ip => elementoIp.getIp(ip))).then(res => setElementos(res)).finally(() => setCarregando(false));
+    const resposta = await recarregarIps();
+    const lista = resposta.data || ipsProjeto;
+    if (lista) {
+      const sorted = [...lista].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
+      const resolvidos = await Promise.all(sorted.map(ip => elementoIp.getIp(ip)));
+      setElementos(resolvidos);
     } else {
       setElementos([]);
-      setCarregando(false);
     }
+    setCarregando(false);
   };
 
   return (

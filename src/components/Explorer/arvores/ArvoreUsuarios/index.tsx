@@ -12,7 +12,7 @@ import { atualizarFilhos } from "../../target/atualizarArvore";
 const ArvoreUsuarios = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
-  const { data: usuariosProjeto } = api.usuarios.getUsuariosProjeto(projeto?.get()?.id);
+  const { data: usuariosProjeto, refetch: recarregarUsuarios } = api.usuarios.getUsuariosProjeto(projeto?.get()?.id);
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const elementoUsuario = useElementoUsuario();
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -51,15 +51,18 @@ const ArvoreUsuarios = () => {
     setExpandedKeys(novasChaves);
   };
 
-  const refresh = () => {
+  const refresh = async () => {
     setCarregando(true);
     setExpandedKeys([]);
-    if (usuariosProjeto) {
-      Promise.all(usuariosProjeto.map(u => elementoUsuario.getUsuario(u))).then(res => setElementos(res)).finally(() => setCarregando(false));
+    const resposta = await recarregarUsuarios();
+    const lista = resposta.data || usuariosProjeto;
+    if (lista) {
+      const resolvidos = await Promise.all(lista.map(u => elementoUsuario.getUsuario(u)));
+      setElementos(resolvidos);
     } else {
       setElementos([]);
-      setCarregando(false);
     }
+    setCarregando(false);
   };
 
   return (

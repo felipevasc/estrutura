@@ -16,7 +16,7 @@ const ArvoreDominios = () => {
   const [carregando, setCarregando] = useState(false);
   const api = useApi();
   const { projeto } = useContext(StoreContext);
-  const { data: dominiosProjeto } = api.dominios.getDominios(projeto?.get()?.id);
+  const { data: dominiosProjeto, refetch: recarregarDominios } = api.dominios.getDominios(projeto?.get()?.id);
   const elementoDominio = useElementoDominio();
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
@@ -63,15 +63,19 @@ const ArvoreDominios = () => {
     return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
   }, [elementos]);
 
-  const refresh = () => {
+  const refresh = async () => {
     setAutoExpandParent(false);
     setExpandedKeys([]);
-    if (dominiosProjeto) {
-      setCarregando(true);
-      Promise.all(dominiosProjeto.map(d => elementoDominio.getDominio(d))).then(res => setElementos(res)).finally(() => setCarregando(false));
+    setCarregando(true);
+    const resposta = await recarregarDominios();
+    const lista = resposta.data || dominiosProjeto;
+    if (lista) {
+      const resolvidos = await Promise.all(lista.map(d => elementoDominio.getDominio(d)));
+      setElementos(resolvidos);
     } else {
       setElementos([]);
     }
+    setCarregando(false);
   };
 
   return <StyledArvoreDominio>
