@@ -1,4 +1,4 @@
-import { Agent } from 'undici';
+import https from 'node:https';
 
 type Medicao = { status: number; tamanho: number };
 
@@ -10,7 +10,7 @@ export type ReferenciaErro = {
 
 const caminhosErro = ['essapaginaehdeerro', 'essapaginaehdeerro2', 'essapaginaehdeerro03', 'essapaginaehdeerro004', 'essapaginaehdeerro0005'];
 
-const agenteInseguro = new Agent({ connect: { rejectUnauthorized: false } });
+const agenteInseguro = new https.Agent({ rejectUnauthorized: false });
 
 const normalizarUrl = (base: string, caminho: string) => {
   const alvo = base.endsWith('/') ? base.slice(0, -1) : base;
@@ -21,7 +21,7 @@ const normalizarUrl = (base: string, caminho: string) => {
 
 const medirResposta = async (url: string): Promise<Medicao | null> => {
   try {
-    const resposta = await fetch(url, { dispatcher: agenteInseguro });
+    const resposta = await fetch(url, { agent: agenteInseguro });
     const corpo = await resposta.text();
     const tamanho = Buffer.byteLength(corpo);
     return { status: resposta.status, tamanho };
