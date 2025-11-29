@@ -1,93 +1,96 @@
-import useApi from "@/api";
 import StoreContext from "@/store";
-import { DominioResponse } from "@/types/DominioResponse"
-import { GlobalOutlined, DeploymentUnitOutlined } from "@ant-design/icons";
-import { faNetworkWired, faPlug, faRoute } from "@fortawesome/free-solid-svg-icons";
+import { DominioResponse } from "@/types/DominioResponse";
+import { GlobalOutlined } from "@ant-design/icons";
+import { faFolderOpen, faNetworkWired, faRoute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { TreeDataNode } from "antd";
 import React, { useContext } from "react";
 import useElementoIp from "../ElementoIp";
 import useElementoDiretorio from "../ElementoDiretorio";
-import { faFolderOpen } from "@fortawesome/free-solid-svg-icons";
-
-type ElementoDominioProps = {
-  dominio: DominioResponse;
-}
+import { NoCarregavel } from "../tipos";
 
 const useElementoDominio = () => {
   const { selecaoTarget } = useContext(StoreContext);
-  const api = useApi();
   const elementoIp = useElementoIp();
   const elementoDiretorio = useElementoDiretorio();
 
-  const selecionado = selecaoTarget?.get()
-
-  const getDominio = async (dominio: DominioResponse): Promise<TreeDataNode> => {
+  const getDominio = async (dominio: DominioResponse, anteriores: string[] = []): Promise<NoCarregavel> => {
+    const selecionado = selecaoTarget?.get();
     const checked = selecionado?.tipo === "domain" && selecionado?.id === dominio.id;
-    
-    const filhos: TreeDataNode[] = [];
-    
-    const subdominios = dominio.subDominios ?? []; 
-    if (subdominios.length) {
-      const filhosSubdominios: TreeDataNode[] = [];
-      for (let i = 0; i < subdominios.length; i++) {
-        const subdominio = subdominios[i];
-        filhosSubdominios.push(await getDominio(subdominio));
-      }
-      filhos.push({
-        key: `${dominio.endereco}-${dominio.id}-subdominios}`,
-        title: <div><FontAwesomeIcon icon={faRoute} />{' '}Subdominios</div>,
-        children: filhosSubdominios,
-        className: "folder"
-      })
-    }
+    const possuiSubdominios = (dominio.subDominios?.length ?? 0) > 0;
+    const possuiIps = !anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0;
+    const possuiDiretorios = !anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0;
+    const possuiFilhos = possuiSubdominios || possuiIps || possuiDiretorios;
 
-    const ips = dominio.ips ?? []; 
-    if (ips.length) {
-      const filhosIp: TreeDataNode[] = [];
-      for (let i = 0; i < ips.length; i++) {
-        const ip = ips[i];
-        filhosIp.push(await elementoIp.getIp(ip));
-      }
-      filhos.push({
-        key: `${dominio.endereco}-${dominio.id}}-ips`,
-        title: <div><FontAwesomeIcon icon={faNetworkWired} />{' '}IPs</div>,
-        children: filhosIp,
-        className: "folder"
-      })
-    }
+    const carregar = async () => {
+      const filhos: NoCarregavel[] = [];
 
-    const diretorios = dominio.diretorios ?? [];
-    if (diretorios.length) {
-      const filhosDiretorios: TreeDataNode[] = [];
-      for (let i = 0; i < diretorios.length; i++) {
-        const dir = diretorios[i];
-        filhosDiretorios.push(await elementoDiretorio.getDiretorio(dir));
+      if (possuiSubdominios) {
+        const subdominios = dominio.subDominios ?? [];
+        const filhosSubdominios: NoCarregavel[] = [];
+        for (let i = 0; i < subdominios.length; i++) {
+          const subdominio = subdominios[i];
+          filhosSubdominios.push(await getDominio(subdominio, [...anteriores, "dominio"]));
+        }
+        filhos.push({
+          key: `${dominio.endereco}-${dominio.id}-subdominios`,
+          title: <div><FontAwesomeIcon icon={faRoute} /> Subdomínios</div>,
+          children: filhosSubdominios,
+          className: "folder",
+          isLeaf: filhosSubdominios.length === 0
+        });
       }
-      filhos.push({
-        key: `${dominio.endereco}-${dominio.id}-diretorios`,
-        title: <div><FontAwesomeIcon icon={faFolderOpen} />{' '}Diretórios</div>,
-        children: filhosDiretorios,
-        className: "folder"
-      })
-    }
+
+      if (possuiIps) {
+        const ips = dominio.ips ?? [];
+        const filhosIp: NoCarregavel[] = [];
+        for (let i = 0; i < ips.length; i++) {
+          const ip = ips[i];
+          filhosIp.push(await elementoIp.getIp(ip, ["dominio", ...anteriores]));
+        }
+        filhos.push({
+          key: `${dominio.endereco}-${dominio.id}-ips`,
+          title: <div><FontAwesomeIcon icon={faNetworkWired} /> IPs</div>,
+          children: filhosIp,
+          className: "folder",
+          isLeaf: filhosIp.length === 0
+        });
+      }
+
+      if (possuiDiretorios) {
+        const diretorios = dominio.diretorios ?? [];
+        const filhosDiretorios: NoCarregavel[] = [];
+        for (let i = 0; i < diretorios.length; i++) {
+          const dir = diretorios[i];
+          filhosDiretorios.push(await elementoDiretorio.getDiretorio(dir));
+        }
+        filhos.push({
+          key: `${dominio.endereco}-${dominio.id}-diretorios`,
+          title: <div><FontAwesomeIcon icon={faFolderOpen} /> Diretórios</div>,
+          children: filhosDiretorios,
+          className: "folder",
+          isLeaf: filhosDiretorios.length === 0
+        });
+      }
+
+      return filhos;
+    };
 
     return {
-      key: `${dominio.endereco}-${dominio.id}}`,
+      key: `${dominio.endereco}-${dominio.id}`,
       title: <div onClick={() => {
-        selecaoTarget?.set({ tipo: "domain", id: dominio.id })
+        selecaoTarget?.set({ tipo: "domain", id: dominio.id });
       }}>
-        <GlobalOutlined />{' '}
-        {dominio.endereco}
+        <GlobalOutlined /> {dominio.endereco}
       </div>,
       className: "dominio " + (checked ? "checked " : ""),
-      children: filhos
-    }
-  }
+      isLeaf: !possuiFilhos,
+      carregar: possuiFilhos ? carregar : undefined
+    };
+  };
 
   return {
     getDominio
-  }
-}
+  };
+};
 
-export default useElementoDominio
+export default useElementoDominio;

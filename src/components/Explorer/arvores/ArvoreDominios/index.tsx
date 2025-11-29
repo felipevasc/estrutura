@@ -1,64 +1,84 @@
 "use client"
-import { Tree, TreeDataNode } from 'antd';
+import { Button, Tree } from 'antd';
 import { useContext, useEffect, useMemo, useState } from 'react';
-import { GlobalOutlined, SendOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from './styles';
 import NovoDominio from './NovoDominio';
 import useApi from '@/api';
 import StoreContext from '@/store';
 import useElementoDominio from '../../target/ElementoDominio';
+import { NoCarregavel } from '../../target/tipos';
+import { atualizarFilhos } from '../../target/atualizarArvore';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
-  const [searchValue, setSearchValue] = useState('');
-  const [autoExpandParent, setAutoExpandParent] = useState(true);
+  const [autoExpandParent, setAutoExpandParent] = useState(false);
+  const [carregando, setCarregando] = useState(false);
   const api = useApi();
-  const { projeto, selecaoTarget } = useContext(StoreContext);
+  const { projeto } = useContext(StoreContext);
   const { data: dominiosProjeto } = api.dominios.getDominios(projeto?.get()?.id);
   const elementoDominio = useElementoDominio();
-  const [elementos, setElementos] = useState<TreeDataNode[]>([]);
-
-  const selecionado = selecaoTarget?.get();
+  const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
   useEffect(() => {
     setElementos([]);
     setExpandedKeys([]);
-  }, [projeto?.get()?.id])
+  }, [projeto?.get()?.id]);
 
   useEffect(() => {
-    let active = true;
-
-    if (dominiosProjeto) {
-      const fetchAllDominios = async () => {
-        const promises = dominiosProjeto.map((d) => elementoDominio.getDominio(d));
-        const resolvedElementos = await Promise.all(promises);
-        if (active) {
-          setElementos(resolvedElementos);
-        }
-      };
-      fetchAllDominios();
-    } else {
-      setElementos([]);
-    }
-
+    let ativo = true;
+    const carregar = async () => {
+      setCarregando(true);
+      if (dominiosProjeto && ativo) {
+        const resolvidos = await Promise.all(dominiosProjeto.map(d => elementoDominio.getDominio(d)));
+        if (ativo) setElementos(resolvidos);
+      } else if (ativo) {
+        setElementos([]);
+      }
+      if (ativo) {
+        setExpandedKeys([]);
+        setAutoExpandParent(false);
+        setCarregando(false);
+      }
+    };
+    carregar();
     return () => {
-      active = false;
+      ativo = false;
     };
   }, [dominiosProjeto]);
 
-  const onExpand = (newExpandedKeys: React.Key[]) => {
-    setExpandedKeys(newExpandedKeys);
+  const onExpand = (novasChaves: React.Key[]) => {
+    setExpandedKeys(novasChaves);
     setAutoExpandParent(false);
+  };
+
+  const carregarNo = async (no: any) => {
+    const alvo = no as NoCarregavel;
+    if (alvo.children || !alvo.carregar) return;
+    const filhos = await alvo.carregar();
+    setElementos(atual => atualizarFilhos(atual, alvo.key, filhos));
   };
 
   const sortedElementos = useMemo(() => {
     return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
-  }, [elementos])
+  }, [elementos]);
+
+  const refresh = () => {
+    setAutoExpandParent(false);
+    setExpandedKeys([]);
+    if (dominiosProjeto) {
+      setCarregando(true);
+      Promise.all(dominiosProjeto.map(d => elementoDominio.getDominio(d))).then(res => setElementos(res)).finally(() => setCarregando(false));
+    } else {
+      setElementos([]);
+    }
+  };
 
   return <StyledArvoreDominio>
     <StyledTitleDominio>
       dominio
       <StyledTitleDominioIcon>
+        <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" />
         <NovoDominio />
       </StyledTitleDominioIcon>
     </StyledTitleDominio>
@@ -69,8 +89,8 @@ const ArvoreDominios = () => {
       treeData={sortedElementos}
       showIcon={true}
       showLine={true}
+      loadData={carregarNo}
       switcherIcon={<SendOutlined style={{ transform: "rotate(90deg)" }} />}
-
     />
   </StyledArvoreDominio>
 }

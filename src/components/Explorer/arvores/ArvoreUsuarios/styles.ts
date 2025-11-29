@@ -2,11 +2,12 @@ import styled from "styled-components";
 
 export const StyledTitleUsuario = styled.div`
     width: 100%;
-    position: relative;
     padding-top: 12px;
     padding-bottom: 12px;
     font-weight: bold;
     display: flex;
+    align-items: center;
+    gap: 8px;
 `;
 
 export const StyledArvoreUsuario = styled.div`

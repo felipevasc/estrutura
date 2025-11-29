@@ -1,35 +1,74 @@
 "use client";
-import { Tree, TreeDataNode } from "antd";
+import { Button, Tree } from "antd";
 import { useContext, useEffect, useState } from "react";
+import { ReloadOutlined } from "@ant-design/icons";
 import { StyledArvoreUsuario, StyledTitleUsuario } from "./styles";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import useElementoUsuario from "../../target/ElementoUsuario";
+import { NoCarregavel } from "../../target/tipos";
+import { atualizarFilhos } from "../../target/atualizarArvore";
 
 const ArvoreUsuarios = () => {
   const api = useApi();
-  const { projeto, selecaoTarget } = useContext(StoreContext);
+  const { projeto } = useContext(StoreContext);
   const { data: usuariosProjeto } = api.usuarios.getUsuariosProjeto(projeto?.get()?.id);
-  const [elementos, setElementos] = useState<TreeDataNode[]>([]);
+  const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const elementoUsuario = useElementoUsuario();
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
+    let ativo = true;
     const carregar = async () => {
-        const elems: TreeDataNode[] = [];
-        if (usuariosProjeto) {
-            for (const u of usuariosProjeto) {
-                elems.push(await elementoUsuario.getUsuario(u));
-            }
+      setCarregando(true);
+      const elems: NoCarregavel[] = [];
+      if (usuariosProjeto) {
+        for (const u of usuariosProjeto) {
+          elems.push(await elementoUsuario.getUsuario(u));
         }
+      }
+      if (ativo) {
         setElementos(elems);
+        setExpandedKeys([]);
+        setCarregando(false);
+      }
     };
     carregar();
+    return () => {
+      ativo = false;
+    };
   }, [usuariosProjeto]);
+
+  const carregarNo = async (no: any) => {
+    const alvo = no as NoCarregavel;
+    if (alvo.children || !alvo.carregar) return;
+    const filhos = await alvo.carregar();
+    setElementos(atual => atualizarFilhos(atual, alvo.key, filhos));
+  };
+
+  const onExpand = (novasChaves: React.Key[]) => {
+    setExpandedKeys(novasChaves);
+  };
+
+  const refresh = () => {
+    setCarregando(true);
+    setExpandedKeys([]);
+    if (usuariosProjeto) {
+      Promise.all(usuariosProjeto.map(u => elementoUsuario.getUsuario(u))).then(res => setElementos(res)).finally(() => setCarregando(false));
+    } else {
+      setElementos([]);
+      setCarregando(false);
+    }
+  };
 
   return (
     <StyledArvoreUsuario>
-      <StyledTitleUsuario>usuário</StyledTitleUsuario>
-      <Tree treeData={elementos} showIcon={true} showLine={true} />
+      <StyledTitleUsuario>
+        usuário
+        <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" style={{ marginLeft: "auto" }} />
+      </StyledTitleUsuario>
+      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} />
     </StyledArvoreUsuario>
   );
 };

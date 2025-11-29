@@ -2,17 +2,19 @@ import styled from "styled-components";
 
 export const StyledTitleDominio = styled.div`
     width: 100%;
-    position: relative;
     padding-top: 12px;
     padding-bottom: 12px;
     font-weight: bold;
     display: flex;
+    align-items: center;
+    gap: 8px;
 `
 
 export const StyledTitleDominioIcon = styled.div`
-    position: absolute;
-    right: 0px;
-    top: 4px;
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+    align-items: center;
     & button {
         color: var(--accent-color);
     }
