@@ -3,12 +3,14 @@ import StoreContext from "@/store";
 import { useContext } from "react";
 import FerramentasDominio from "./target/FerramentasDominio";
 import FerramentasIp from "./target/FerramentasIp";
+import FerramentasDiretorio from "./target/FerramentasDiretorio";
 
 const Ferramentas = () => {
     const { selecaoTarget } = useContext(StoreContext);
     return <>
         {selecaoTarget?.get()?.tipo === "domain" && <FerramentasDominio />}
         {selecaoTarget?.get()?.tipo === "ip" && <FerramentasIp />}
+        {selecaoTarget?.get()?.tipo === "diretorio" && <FerramentasDiretorio />}
     </>
 }
 

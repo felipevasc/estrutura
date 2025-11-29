@@ -117,6 +117,19 @@ const FerramentasIp = () => {
 
             <Card
                 className="interactive"
+                onClick={() => showConfirmationModal('ffuf', { idIp: getId().toString(), tipoFuzz: 'arquivo' })}
+            >
+                <div className="tool-icon">
+                    <FileSearchOutlined />
+                </div>
+                <Card.Meta
+                    title="Ffuf Arquivos"
+                    description="Fuzzing de arquivos."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
                 onClick={() => showConfirmationModal('gobuster', { idIp: getId().toString() })}
             >
                 <div className="tool-icon">
@@ -125,6 +138,19 @@ const FerramentasIp = () => {
                 <Card.Meta
                     title="Gobuster"
                     description="Descoberta de diretórios."
+                />
+            </Card>
+
+            <Card
+                className="interactive"
+                onClick={() => showConfirmationModal('gobuster', { idIp: getId().toString(), tipoFuzz: 'arquivo' })}
+            >
+                <div className="tool-icon">
+                    <FolderOpenOutlined />
+                </div>
+                <Card.Meta
+                    title="Gobuster Arquivos"
+                    description="Descoberta de arquivos."
                 />
             </Card>
 
