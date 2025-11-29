@@ -54,7 +54,8 @@ export const resolverAlvo = async (args: Record<string, unknown>): Promise<AlvoR
   if (!base) throw new Error('Alvo inválido');
 
   const caminhoBase = normalizarCaminhoBase(diretorio, args.caminhoBase);
-  const endereco = base.startsWith('http') ? base : `http://${base}`;
+  const enderecoBruto = base.startsWith('http') ? base : `https://${base}`;
+  const endereco = enderecoBruto.startsWith('http://') ? enderecoBruto.replace('http://', 'https://') : enderecoBruto;
   const alvo = caminhoBase ? `${endereco}${caminhoBase}` : endereco;
 
   return { dominio, ip, alvo, caminhoBase };

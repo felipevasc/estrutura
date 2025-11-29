@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import { NanoEvents } from '../../events';
 import { extrairResultadosGobuster, ResultadoGobuster } from './parserGobuster';
 import { AlvoResolvido, resolverAlvo } from './resolvedorAlvo';
+import { coletarReferenciasErro, filtrarResultadosErro, ReferenciaErro } from './referenciasErro';
 
 type TipoFuzz = 'arquivo' | 'diretorio';
 
@@ -20,6 +21,7 @@ type MetadadosGobuster = AlvoResolvido & {
   arquivoResultado: string;
   arquivoLog: string;
   tipoFuzz: TipoFuzz;
+  referenciaErro: ReferenciaErro | null;
 };
 
 type ResultadoDiretorio = {
@@ -66,6 +68,7 @@ export class GobusterService extends NanoService {
       const tipoFuzz = this.definirTipoFuzz(args);
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
       const alvoNormalizado = this.normalizarAlvo(alvo);
+      const referenciaErro = await coletarReferenciasErro(alvoNormalizado);
       const arquivoResultado = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}.txt`);
       const arquivoLog = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}_log.txt`);
       const argumentos = this.montarArgumentos(alvoNormalizado, tipoFuzz, extensoes, arquivoResultado);
@@ -77,7 +80,8 @@ export class GobusterService extends NanoService {
         arquivoLog,
         alvo: alvoNormalizado,
         caminhoBase,
-        tipoFuzz
+        tipoFuzz,
+        referenciaErro
       };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
@@ -97,13 +101,14 @@ export class GobusterService extends NanoService {
 
   private async processarResultado(payload: RetornoTerminal) {
     const { id, meta, command, args } = payload;
-    const { dominio, ip, arquivoResultado, arquivoLog, alvo, caminhoBase, tipoFuzz } = meta;
+    const { dominio, ip, arquivoResultado, arquivoLog, alvo, caminhoBase, tipoFuzz, referenciaErro } = meta;
 
     try {
       const conteudo = this.lerSaida(arquivoResultado);
       const brutos = extrairResultadosGobuster(conteudo, alvo);
       const normalizados = this.normalizarResultados(brutos, caminhoBase || '');
-      const registros = this.deduplicarResultados(normalizados);
+      const filtrados = filtrarResultadosErro(normalizados, referenciaErro);
+      const registros = this.deduplicarResultados(filtrados);
 
       for (const resultado of registros) {
         await prisma.diretorio.create({

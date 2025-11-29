@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { NanoEvents } from '../../events';
 import { AlvoResolvido, resolverAlvo } from './resolvedorAlvo';
+import { coletarReferenciasErro, filtrarResultadosErro, ReferenciaErro } from './referenciasErro';
 
 type TipoFuzz = 'arquivo' | 'diretorio';
 
@@ -19,6 +20,7 @@ type MetadadosFfuf = AlvoResolvido & {
   tipoFuzz: TipoFuzz;
   saidaJson: string;
   saidaLog: string;
+  referenciaErro: ReferenciaErro | null;
 };
 
 type ResultadoDiretorio = {
@@ -70,10 +72,21 @@ export class FfufService extends NanoService {
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
       const tipoFuzz = this.definirTipoFuzz(args);
       const alvoNormalizado = this.normalizarAlvo(alvo);
+      const referenciaErro = await coletarReferenciasErro(alvoNormalizado);
       const saidaJson = this.criarCaminhoArquivo(`ffuf_results_${id}_${Date.now()}.json`);
       const saidaLog = this.criarCaminhoArquivo(`ffuf_log_${id}_${Date.now()}.txt`);
       const argumentos = this.montarArgumentos(alvoNormalizado, tipoFuzz, extensoes, saidaJson);
-      const meta: MetadadosFfuf = { projectId, dominio, ip, caminhoBase, alvo: alvoNormalizado, tipoFuzz, saidaJson, saidaLog };
+      const meta: MetadadosFfuf = {
+        projectId,
+        dominio,
+        ip,
+        caminhoBase,
+        alvo: alvoNormalizado,
+        tipoFuzz,
+        saidaJson,
+        saidaLog,
+        referenciaErro
+      };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
         id,
@@ -92,14 +105,15 @@ export class FfufService extends NanoService {
 
   private async processarResultado(payload: RetornoTerminal) {
     const { id, stdout, meta, command, args } = payload;
-    const { dominio, ip, caminhoBase, saidaJson, saidaLog, tipoFuzz } = meta;
+    const { dominio, ip, caminhoBase, saidaJson, saidaLog, tipoFuzz, referenciaErro } = meta;
 
     this.log(`Processando resultado ${id}`);
 
     try {
       const conteudo = this.lerSaida(saidaJson);
       const dados = this.extrairResultados(conteudo, caminhoBase || '');
-      const registros = this.deduplicarResultados(dados);
+      const filtrados = filtrarResultadosErro(dados, referenciaErro);
+      const registros = this.deduplicarResultados(filtrados);
 
       for (const resultado of registros) {
         await prisma.diretorio.create({
@@ -152,7 +166,17 @@ export class FfufService extends NanoService {
   }
 
   private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, saidaJson: string) {
-    const argumentosBase = ['-u', `${alvo}/FUZZ`, '-w', '/usr/share/wordlists/dirb/common.txt', '-o', saidaJson, '-of', 'json'];
+    const argumentosBase = [
+      '-u',
+      `${alvo}/FUZZ`,
+      '-w',
+      '/usr/share/wordlists/dirb/common.txt',
+      '-o',
+      saidaJson,
+      '-of',
+      'json',
+      '-k'
+    ];
     return tipoFuzz === 'arquivo' ? [...argumentosBase, '-e', extensoes] : argumentosBase;
   }
 

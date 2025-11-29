@@ -1,0 +1,66 @@
+import { Agent } from 'undici';
+
+type Medicao = { status: number; tamanho: number };
+
+export type ReferenciaErro = {
+  tamanhosVariam: boolean;
+  status: number[];
+  pares: Medicao[];
+};
+
+const caminhosErro = ['essapaginaehdeerro', 'essapaginaehdeerro2', 'essapaginaehdeerro03', 'essapaginaehdeerro004', 'essapaginaehdeerro0005'];
+
+const agenteInseguro = new Agent({ connect: { rejectUnauthorized: false } });
+
+const normalizarUrl = (base: string, caminho: string) => {
+  const alvo = base.endsWith('/') ? base.slice(0, -1) : base;
+  const sufixo = caminho.startsWith('/') ? caminho.slice(1) : caminho;
+  return `${alvo}/${sufixo}`;
+};
+
+const medirResposta = async (url: string): Promise<Medicao | null> => {
+  try {
+    const resposta = await fetch(url, { dispatcher: agenteInseguro });
+    const corpo = await resposta.text();
+    const tamanho = Buffer.byteLength(corpo);
+    return { status: resposta.status, tamanho };
+  } catch {
+    return null;
+  }
+};
+
+export const coletarReferenciasErro = async (alvo: string): Promise<ReferenciaErro | null> => {
+  const resultados: Medicao[] = [];
+
+  for (const caminho of caminhosErro) {
+    const url = normalizarUrl(alvo, caminho);
+    const medicao = await medirResposta(url);
+    if (medicao) resultados.push(medicao);
+  }
+
+  if (!resultados.length) return null;
+
+  const tamanhos = new Set(resultados.map((resultado) => resultado.tamanho));
+  const tamanhosVariam = tamanhos.size > 1;
+  const status = Array.from(new Set(resultados.map((resultado) => resultado.status)));
+
+  return { tamanhosVariam, status, pares: resultados };
+};
+
+export const filtrarResultadosErro = <T extends { status: number | null; tamanho: number | null }>(
+  resultados: T[],
+  referencia: ReferenciaErro | null
+) => {
+  if (!referencia) return resultados;
+
+  if (referencia.tamanhosVariam) {
+    const statusIgnorados = new Set(referencia.status);
+    return resultados.filter((resultado) => resultado.status === null || !statusIgnorados.has(resultado.status));
+  }
+
+  const paresIgnorados = new Set(referencia.pares.map((par) => `${par.status}|${par.tamanho}`));
+  return resultados.filter((resultado) => {
+    if (resultado.status === null || resultado.tamanho === null) return true;
+    return !paresIgnorados.has(`${resultado.status}|${resultado.tamanho}`);
+  });
+};
