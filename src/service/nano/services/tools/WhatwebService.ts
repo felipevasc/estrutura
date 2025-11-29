@@ -55,7 +55,15 @@ export class WhatwebService extends NanoService {
     try {
       const { alvo, dominio, ip } = await resolverAlvo(args);
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
-      const argumentos = [`--log-json=${arquivoSaida}`, alvo];
+      const autenticacao = process.env.WHATWEB_AUTENTICACAO?.trim();
+      const timeout = Number(process.env.WHATWEB_TIMEOUT || '60');
+      const argumentos = [`--log-json=${arquivoSaida}`];
+      if (autenticacao) argumentos.push(`--header=Authorization: ${autenticacao}`);
+      if (timeout > 0) {
+        argumentos.push(`--open-timeout=${timeout}`);
+        argumentos.push(`--read-timeout=${timeout}`);
+      }
+      argumentos.push(alvo);
       const meta: MetadadosWhatweb = { projetoId: projectId, alvo, arquivoSaida, dominioId: dominio?.id ?? null, ipId: ip?.id ?? null };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {

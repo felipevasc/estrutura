@@ -46,6 +46,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <DeploymentUnitOutlined />,
         },
         {
+            chave: "whatwebDominio",
+            titulo: "WhatWeb",
+            descricao: "Fingerprint do domínio",
+            comando: "whatweb",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <SearchOutlined />,
+        },
+        {
             chave: "subfinder",
             titulo: "Subfinder",
             descricao: "Subdomínios passivos",
@@ -175,6 +184,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString(), tipoFuzz: "arquivo" }),
             icone: <FolderOpenOutlined />,
         },
+        {
+            chave: "whatwebDiretorio",
+            titulo: "WhatWeb",
+            descricao: "Fingerprint do caminho",
+            comando: "whatweb",
+            tiposAlvo: ["diretorio"],
+            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
+            icone: <SearchOutlined />,
+        },
     ],
     ips: [
         {
@@ -194,6 +212,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             tiposAlvo: ["ip"],
             gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
             icone: <ThunderboltOutlined />,
+        },
+        {
+            chave: "whatwebIp",
+            titulo: "WhatWeb",
+            descricao: "Fingerprint do host",
+            comando: "whatweb",
+            tiposAlvo: ["ip"],
+            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <SearchOutlined />,
         },
     ],
     usuarios: [

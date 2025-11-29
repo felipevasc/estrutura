@@ -93,6 +93,7 @@ INSTRUÇÕES:
    Comandos Suportados:
    - AMASS (Enumeração de Subdomínios): {"COMANDO":"AMASS", "PARAMETRO1":"dominio.com"}
    - NMAP (Scan de Portas): {"COMANDO":"NMAP", "PARAMETRO1":"endereco_ip"}
+   - WHATWEB (Fingerprint de serviços): {"COMANDO":"WHATWEB", "PARAMETRO1":"alvo"}
    - HACKEDBY (Pesquisa Google Hacking): {"COMANDO":"HACKEDBY", "PARAMETRO1":"dominio.com"}
    - PWNEDBY (Pesquisa Google Hacking): {"COMANDO":"PWNEDBY", "PARAMETRO1":"dominio.com"}
 
@@ -102,6 +103,9 @@ INSTRUÇÕES:
 
    Para escanear o IP 192.168.1.1:
    {"COMANDO":"NMAP", "PARAMETRO1":"192.168.1.1"}
+
+   Para fingerprint em example.com:
+   {"COMANDO":"WHATWEB", "PARAMETRO1":"example.com"}
 
    Para verificar defacement em example.com:
    {"COMANDO":"HACKEDBY", "PARAMETRO1":"example.com"}

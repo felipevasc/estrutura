@@ -8,12 +8,14 @@ import useElementoPorta from "../ElementoPorta";
 import useElementoUsuario from "../ElementoUsuario";
 import useElementoDiretorio from "../ElementoDiretorio";
 import { NoCarregavel } from "../tipos";
+import useElementoWhatweb from "../ElementoWhatweb";
 
 const useElementoIp = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoPorta = useElementoPorta();
   const elementoDiretorio = useElementoDiretorio();
   const elementoUsuario = useElementoUsuario();
+  const elementoWhatweb = useElementoWhatweb();
 
   const getIp = async (ip: IpResponse, anteriores: string[] = []): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
@@ -22,7 +24,8 @@ const useElementoIp = () => {
     const possuiUsuarios = !anteriores.includes("usuarios") && (ip.usuarios?.length ?? 0) > 0;
     const possuiDominios = !anteriores.includes("dominio") && (ip.dominios?.length ?? 0) > 0;
     const possuiDiretorios = !anteriores.includes("diretorios") && (ip.diretorios?.length ?? 0) > 0;
-    const possuiFilhos = possuiPortas || possuiUsuarios || possuiDominios || possuiDiretorios;
+    const possuiWhatweb = (ip.whatwebResultados?.length ?? 0) > 0;
+    const possuiFilhos = possuiPortas || possuiUsuarios || possuiDominios || possuiDiretorios || possuiWhatweb;
 
     const carregar = async () => {
       const filhos: NoCarregavel[] = [];
@@ -97,6 +100,11 @@ const useElementoIp = () => {
             isLeaf: filhosDiretorios.length === 0
           });
         }
+      }
+
+      if (possuiWhatweb) {
+        const pasta = elementoWhatweb.getResultados(ip.whatwebResultados ?? [], `${ip.endereco}-${ip.id}`);
+        if (pasta) filhos.push(pasta);
       }
 
       return filhos;
