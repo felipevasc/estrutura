@@ -7,6 +7,7 @@ type DiretorioComRelacionamentos = Prisma.DiretorioGetPayload<{
   select: {
     id: true;
     caminho: true;
+    tipo: true;
     dominio: { select: { id: true; endereco: true } };
     ip: { select: { id: true; endereco: true } };
   };
@@ -30,6 +31,7 @@ export const resolverAlvo = async (args: Record<string, unknown>): Promise<AlvoR
         select: {
           id: true,
           caminho: true,
+          tipo: true,
           dominio: { select: { id: true, endereco: true } },
           ip: { select: { id: true, endereco: true } }
         }
@@ -69,5 +71,7 @@ const extrairNumero = (valor: unknown) => {
 const normalizarCaminhoBase = (diretorio: DiretorioComRelacionamentos | null, caminho: unknown) => {
   const base = diretorio?.caminho ?? (typeof caminho === 'string' ? caminho : '');
   if (!base) return '';
-  return base.startsWith('/') ? base : `/${base}`;
+  const comBarraInicial = base.startsWith('/') ? base : `/${base}`;
+  if (diretorio && diretorio.tipo !== 'arquivo' && !comBarraInicial.endsWith('/')) return `${comBarraInicial}/`;
+  return comBarraInicial;
 };

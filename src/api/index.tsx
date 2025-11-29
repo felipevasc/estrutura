@@ -7,6 +7,7 @@ import useProjetos from "./projetos";
 import useQueue from "./queue";
 import useUsuarios from "./usuarios";
 import useConfiguracoes from "./configuracoes";
+import useDiretorios from "./diretorios";
 
 const useApi = () => {
     const chat = useChat();
@@ -17,6 +18,7 @@ const useApi = () => {
     const queue = useQueue();
     const usuarios = useUsuarios();
     const configuracoes = useConfiguracoes();
+    const diretorios = useDiretorios();
 
     return useMemo(() => ({
         chat,
@@ -27,7 +29,8 @@ const useApi = () => {
         queue,
         usuarios,
         configuracoes,
-    }), [chat, projetos, dominios, ferramentas, ips, queue, usuarios, configuracoes]);
+        diretorios,
+    }), [chat, projetos, dominios, ferramentas, ips, queue, usuarios, configuracoes, diretorios]);
 }
 
 export default useApi;

@@ -71,7 +71,7 @@ export class FfufService extends NanoService {
       const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
       const tipoFuzz = this.definirTipoFuzz(args);
-      const alvoNormalizado = this.normalizarAlvo(alvo);
+      const alvoNormalizado = this.normalizarAlvo(alvo, tipoFuzz);
       const referenciaErro = await coletarReferenciasErro(alvoNormalizado);
       const saidaJson = this.criarCaminhoArquivo(`ffuf_results_${id}_${Date.now()}.json`);
       const saidaLog = this.criarCaminhoArquivo(`ffuf_log_${id}_${Date.now()}.txt`);
@@ -111,7 +111,7 @@ export class FfufService extends NanoService {
 
     try {
       const conteudo = this.lerSaida(saidaJson);
-      const dados = this.extrairResultados(conteudo, caminhoBase || '');
+      const dados = this.extrairResultados(conteudo, caminhoBase || '', tipoFuzz);
       const filtrados = filtrarResultadosErro(dados, referenciaErro);
       const registros = this.deduplicarResultados(filtrados);
 
@@ -157,8 +157,10 @@ export class FfufService extends NanoService {
     return args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
   }
 
-  private normalizarAlvo(alvo: string) {
-    return alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
+  private normalizarAlvo(alvo: string, tipoFuzz: TipoFuzz) {
+    const limpo = alvo.replace(/\\+/g, '/');
+    if (tipoFuzz === 'diretorio') return limpo.endsWith('/') ? limpo : `${limpo}/`;
+    return limpo.endsWith('/') ? limpo.slice(0, -1) : limpo;
   }
 
   private criarCaminhoArquivo(nome: string) {
@@ -166,9 +168,10 @@ export class FfufService extends NanoService {
   }
 
   private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, saidaJson: string) {
+    const urlAlvo = alvo.endsWith('/') ? `${alvo}FUZZ` : `${alvo}/FUZZ`;
     const argumentosBase = [
       '-u',
-      `${alvo}/FUZZ`,
+      urlAlvo,
       '-w',
       '/usr/share/wordlists/dirb/common.txt',
       '-o',
@@ -185,10 +188,10 @@ export class FfufService extends NanoService {
     return fs.readFileSync(caminho, 'utf8');
   }
 
-  private extrairResultados(conteudo: string, prefixo: string) {
+  private extrairResultados(conteudo: string, prefixo: string, tipoFuzz: TipoFuzz) {
     const dados = JSON.parse(conteudo);
     const resultados = Array.isArray(dados.results) ? (dados.results as ResultadoFfufBruto[]) : [];
-    return this.normalizarResultados(resultados, prefixo);
+    return this.normalizarResultados(resultados, prefixo, tipoFuzz);
   }
 
   private deduplicarResultados(resultados: ResultadoDiretorio[]) {
@@ -200,15 +203,15 @@ export class FfufService extends NanoService {
     return Array.from(mapa.values());
   }
 
-  private normalizarResultados(resultados: ResultadoFfufBruto[], prefixo: string) {
+  private normalizarResultados(resultados: ResultadoFfufBruto[], prefixo: string, tipoFuzz: TipoFuzz) {
     return resultados
-      .map((resultado) => this.mapearResultado(resultado, prefixo))
+      .map((resultado) => this.mapearResultado(resultado, prefixo, tipoFuzz))
       .filter((resultado): resultado is ResultadoDiretorio => Boolean(resultado));
   }
 
-  private mapearResultado(resultado: ResultadoFfufBruto, prefixo: string): ResultadoDiretorio | null {
+  private mapearResultado(resultado: ResultadoFfufBruto, prefixo: string, tipoFuzz: TipoFuzz): ResultadoDiretorio | null {
     const parte = resultado?.input?.FUZZ ?? '';
-    const caminho = this.normalizarCaminho(prefixo, parte);
+    const caminho = this.normalizarCaminho(prefixo, parte, tipoFuzz);
     const status = Number.parseInt(String(resultado?.status ?? ''), 10);
     const tamanho = Number.parseInt(String(resultado?.length ?? ''), 10);
 
@@ -221,12 +224,13 @@ export class FfufService extends NanoService {
     };
   }
 
-  private normalizarCaminho(base: string, parte: string) {
+  private normalizarCaminho(base: string, parte: string, tipoFuzz: TipoFuzz) {
     const prefixo = base || '';
     const caminhoBase = prefixo ? (prefixo.startsWith('/') ? prefixo : `/${prefixo}`) : '';
     const complemento = parte.startsWith('/') ? parte : `/${parte}`;
-    const limpo = `${caminhoBase}${complemento}`.replace(/\/+/g, '/');
-    return limpo === '' ? '/' : limpo;
+    const limpo = `${caminhoBase}${complemento}`.replace(/\+/g, '/');
+    const ajustado = tipoFuzz === 'diretorio' && !limpo.endsWith('/') ? `${limpo}/` : limpo;
+    return ajustado === '' ? '/' : ajustado;
   }
 
   private removerArquivos(...arquivos: (string | null | undefined)[]) {

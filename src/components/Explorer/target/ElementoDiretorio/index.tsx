@@ -13,13 +13,15 @@ const useElementoDiretorio = () => {
     const checked = selecionado?.tipo === "diretorio" && selecionado?.id === diretorio.id;
 
     const icone = diretorio.tipo === "arquivo" ? faFile : faFolder;
+    const etiqueta = diretorio.tipo === "arquivo" ? "Arquivo" : "Diretório";
+    const caminho = diretorio.tipo === "diretorio" && !diretorio.caminho.endsWith("/") ? `${diretorio.caminho}/` : diretorio.caminho;
 
     return {
       key: `diretorio-${diretorio.id}`,
       title: (
         <div onClick={() => selecaoTarget?.set({ tipo: "diretorio", id: diretorio.id })}>
           <FontAwesomeIcon icon={icone} />{" "}
-          {diretorio.caminho} <small>({diretorio.status} - {diretorio.tamanho}b)</small>
+          {caminho} <small>({diretorio.status} - {diretorio.tamanho}b)</small> <strong>{etiqueta}</strong>
         </div>
       ),
       className: "diretorio " + (diretorio.tipo === "arquivo" ? "arquivo " : "") + (checked ? "checked " : ""),
