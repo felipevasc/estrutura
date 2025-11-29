@@ -15,7 +15,8 @@ const agenteInseguro = new Agent({ connect: { rejectUnauthorized: false } });
 const normalizarUrl = (base: string, caminho: string) => {
   const alvo = base.endsWith('/') ? base.slice(0, -1) : base;
   const sufixo = caminho.startsWith('/') ? caminho.slice(1) : caminho;
-  return `${alvo}/${sufixo}`;
+  const marcador = `${Date.now()}${Math.random().toString(16).slice(2)}`;
+  return `${alvo}/${sufixo}?ref=${marcador}`;
 };
 
 const medirResposta = async (url: string): Promise<Medicao | null> => {

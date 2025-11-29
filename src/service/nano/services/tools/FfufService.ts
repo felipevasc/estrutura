@@ -201,26 +201,7 @@ export class FfufService extends NanoService {
   }
 
   private normalizarResultados(resultados: ResultadoFfufBruto[], prefixo: string) {
-    if (!resultados.length) return [] as ResultadoDiretorio[];
-
-    const estatisticas = new Map<string, number>();
-    resultados.forEach((res) => {
-      const chave = `${res.status}-${res.length}`;
-      estatisticas.set(chave, (estatisticas.get(chave) || 0) + 1);
-    });
-
-    let chaveDominante = '';
-    let maior = -1;
-    estatisticas.forEach((quantidade, chave) => {
-      if (quantidade > maior) {
-        maior = quantidade;
-        chaveDominante = chave;
-      }
-    });
-
-    const filtrados = maior > 1 ? resultados.filter((res) => `${res.status}-${res.length}` !== chaveDominante) : resultados;
-
-    return filtrados
+    return resultados
       .map((resultado) => this.mapearResultado(resultado, prefixo))
       .filter((resultado): resultado is ResultadoDiretorio => Boolean(resultado));
   }
