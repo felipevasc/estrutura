@@ -13,8 +13,9 @@ const credenciaisTelegram = () => ({
     senha: process.env.TELEGRAM_SENHA,
 });
 
-export async function POST(_request: Request, { params }: { params: { fonteId: string } }) {
-    const fonteId = parseInt(params.fonteId, 10);
+export async function POST(_request: Request, contexto: { params: Promise<{ fonteId: string }> }) {
+    const { fonteId: parametroFonteId } = await contexto.params;
+    const fonteId = parseInt(parametroFonteId, 10);
     if (Number.isNaN(fonteId)) return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
 
     try {
