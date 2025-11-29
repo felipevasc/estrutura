@@ -57,6 +57,39 @@ export const StyledArvoreDominio = styled.div`
         color: #8B949E; /* A secondary color from the theme */
     }
 
+    .ant-tree-list-holder-inner .diretorio .ant-tree-node-content-wrapper {
+        color: var(--foreground);
+    }
+
+    .ant-tree .ant-tree-node-content-wrapper .item-diretorio {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ant-tree .ant-tree-node-content-wrapper .tag-diretorio {
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        border: 1px solid ${({ theme }) => theme.colors.borderColor};
+        background: ${({ theme }) => theme.colors.panelBackground};
+        color: ${({ theme }) => theme.colors.foreground};
+    }
+
+    .ant-tree .ant-tree-node-content-wrapper .tag-diretorio.pasta {
+        background: var(--accent-color);
+        color: #0D1117;
+    }
+
+    .ant-tree .ant-tree-node-content-wrapper .tag-diretorio.arquivo {
+        background: #f7c325;
+        color: #0D1117;
+    }
+
+    .ant-tree-list-holder-inner .diretorio.checked .ant-tree-node-content-wrapper {
+        background-color: var(--hover-background);
+    }
+
     /* Adjust switcher (arrow icon) style */
     .ant-tree .ant-tree-switcher {
         color: var(--foreground);

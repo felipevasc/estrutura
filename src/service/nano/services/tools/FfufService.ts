@@ -72,16 +72,17 @@ export class FfufService extends NanoService {
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
       const tipoFuzz = this.definirTipoFuzz(args);
       const alvoNormalizado = this.normalizarAlvo(alvo);
-      const referenciaErro = await coletarReferenciasErro(alvoNormalizado);
+      const alvoComBarra = this.aplicarBarra(alvoNormalizado);
+      const referenciaErro = await coletarReferenciasErro(alvoComBarra);
       const saidaJson = this.criarCaminhoArquivo(`ffuf_results_${id}_${Date.now()}.json`);
       const saidaLog = this.criarCaminhoArquivo(`ffuf_log_${id}_${Date.now()}.txt`);
-      const argumentos = this.montarArgumentos(alvoNormalizado, tipoFuzz, extensoes, saidaJson);
+      const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, saidaJson);
       const meta: MetadadosFfuf = {
         projectId,
         dominio,
         ip,
         caminhoBase,
-        alvo: alvoNormalizado,
+        alvo: alvoComBarra,
         tipoFuzz,
         saidaJson,
         saidaLog,
@@ -113,7 +114,8 @@ export class FfufService extends NanoService {
       const conteudo = this.lerSaida(saidaJson);
       const dados = this.extrairResultados(conteudo, caminhoBase || '');
       const filtrados = filtrarResultadosErro(dados, referenciaErro);
-      const registros = this.deduplicarResultados(filtrados);
+      const registrosNormalizados = this.deduplicarResultados(filtrados);
+      const registros = this.ajustarTipoResultados(registrosNormalizados, tipoFuzz);
 
       for (const resultado of registros) {
         await prisma.diretorio.create({
@@ -157,6 +159,10 @@ export class FfufService extends NanoService {
     return args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
   }
 
+  private aplicarBarra(alvo: string) {
+    return alvo.endsWith('/') ? alvo : `${alvo}/`;
+  }
+
   private normalizarAlvo(alvo: string) {
     return alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
   }
@@ -166,9 +172,10 @@ export class FfufService extends NanoService {
   }
 
   private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, saidaJson: string) {
+    const destino = `${this.aplicarBarra(alvo)}FUZZ`;
     const argumentosBase = [
       '-u',
-      `${alvo}/FUZZ`,
+      destino,
       '-w',
       '/usr/share/wordlists/dirb/common.txt',
       '-o',
@@ -198,6 +205,14 @@ export class FfufService extends NanoService {
       if (!mapa.has(chave)) mapa.set(chave, resultado);
     });
     return Array.from(mapa.values());
+  }
+
+  private ajustarTipoResultados(resultados: ResultadoDiretorio[], tipo: TipoFuzz) {
+    if (tipo !== 'diretorio') return resultados;
+    return resultados.map((resultado) => ({
+      ...resultado,
+      caminho: resultado.caminho.endsWith('/') ? resultado.caminho : `${resultado.caminho}/`
+    }));
   }
 
   private normalizarResultados(resultados: ResultadoFfufBruto[], prefixo: string) {

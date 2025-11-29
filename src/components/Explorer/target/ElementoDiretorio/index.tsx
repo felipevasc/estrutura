@@ -13,16 +13,22 @@ const useElementoDiretorio = () => {
     const checked = selecionado?.tipo === "diretorio" && selecionado?.id === diretorio.id;
 
     const icone = diretorio.tipo === "arquivo" ? faFile : faFolder;
+    const tipo = diretorio.tipo === "arquivo" ? "Arquivo" : "Diretório";
+    const status = diretorio.status !== null && diretorio.status !== undefined ? diretorio.status : "-";
+    const tamanho = diretorio.tamanho !== null && diretorio.tamanho !== undefined ? `${diretorio.tamanho}b` : "-";
+    const classeTipo = diretorio.tipo === "arquivo" ? "arquivo" : "pasta";
 
     return {
       key: `diretorio-${diretorio.id}`,
       title: (
-        <div onClick={() => selecaoTarget?.set({ tipo: "diretorio", id: diretorio.id })}>
+        <div className="item-diretorio" onClick={() => selecaoTarget?.set({ tipo: "diretorio", id: diretorio.id })}>
           <FontAwesomeIcon icon={icone} />{" "}
-          {diretorio.caminho} <small>({diretorio.status} - {diretorio.tamanho}b)</small>
+          <span className="nome-diretorio">{diretorio.caminho}</span>{" "}
+          <span className={`tag-diretorio ${classeTipo}`}>{tipo}</span>{" "}
+          <small>({status} - {tamanho})</small>
         </div>
       ),
-      className: "diretorio " + (diretorio.tipo === "arquivo" ? "arquivo " : "") + (checked ? "checked " : ""),
+      className: "diretorio " + classeTipo + " " + (checked ? "checked " : ""),
       isLeaf: true
     };
   };

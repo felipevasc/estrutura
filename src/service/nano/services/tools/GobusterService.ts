@@ -68,17 +68,18 @@ export class GobusterService extends NanoService {
       const tipoFuzz = this.definirTipoFuzz(args);
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
       const alvoNormalizado = this.normalizarAlvo(alvo);
-      const referenciaErro = await coletarReferenciasErro(alvoNormalizado);
+      const alvoComBarra = this.aplicarBarra(alvoNormalizado);
+      const referenciaErro = await coletarReferenciasErro(alvoComBarra);
       const arquivoResultado = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}.txt`);
       const arquivoLog = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}_log.txt`);
-      const argumentos = this.montarArgumentos(alvoNormalizado, tipoFuzz, extensoes, arquivoResultado);
+      const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, arquivoResultado);
       const meta: MetadadosGobuster = {
         projectId,
         dominio,
         ip,
         arquivoResultado,
         arquivoLog,
-        alvo: alvoNormalizado,
+        alvo: alvoComBarra,
         caminhoBase,
         tipoFuzz,
         referenciaErro
@@ -108,7 +109,8 @@ export class GobusterService extends NanoService {
       const brutos = extrairResultadosGobuster(conteudo, alvo);
       const normalizados = this.normalizarResultados(brutos, caminhoBase || '');
       const filtrados = filtrarResultadosErro(normalizados, referenciaErro);
-      const registros = this.deduplicarResultados(filtrados);
+      const registrosNormalizados = this.deduplicarResultados(filtrados);
+      const registros = this.ajustarTipoResultados(registrosNormalizados, tipoFuzz);
 
       for (const resultado of registros) {
         await prisma.diretorio.create({
@@ -152,6 +154,10 @@ export class GobusterService extends NanoService {
     return args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
   }
 
+  private aplicarBarra(alvo: string) {
+    return alvo.endsWith('/') ? alvo : `${alvo}/`;
+  }
+
   private normalizarAlvo(alvo: string) {
     return alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
   }
@@ -161,7 +167,8 @@ export class GobusterService extends NanoService {
   }
 
   private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, arquivoResultado: string) {
-    const argumentosBase = ['dir', '-u', alvo, '-w', '/usr/share/wordlists/dirb/common.txt', '-o', arquivoResultado, '-q', '-k'];
+    const destino = this.aplicarBarra(alvo);
+    const argumentosBase = ['dir', '-u', destino, '-w', '/usr/share/wordlists/dirb/common.txt', '-o', arquivoResultado, '-q', '-k'];
     return tipoFuzz === 'arquivo' ? [...argumentosBase, '-x', extensoes] : argumentosBase;
   }
 
@@ -183,6 +190,14 @@ export class GobusterService extends NanoService {
       if (!mapa.has(chave)) mapa.set(chave, resultado);
     });
     return Array.from(mapa.values());
+  }
+
+  private ajustarTipoResultados(resultados: ResultadoDiretorio[], tipo: TipoFuzz) {
+    if (tipo !== 'diretorio') return resultados;
+    return resultados.map((resultado) => ({
+      ...resultado,
+      caminho: resultado.caminho.endsWith('/') ? resultado.caminho : `${resultado.caminho}/`
+    }));
   }
 
   private mapearResultado(resultado: ResultadoGobuster, prefixo: string): ResultadoDiretorio | null {
