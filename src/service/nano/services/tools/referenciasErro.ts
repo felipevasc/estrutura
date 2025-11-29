@@ -4,6 +4,7 @@ type Medicao = { status: number; tamanho: number };
 
 export type ReferenciaErro = {
   tamanhosVariam: boolean;
+  statusVariam: boolean;
   status: number[];
   pares: Medicao[];
 };
@@ -43,9 +44,11 @@ export const coletarReferenciasErro = async (alvo: string): Promise<ReferenciaEr
 
   const tamanhos = new Set(resultados.map((resultado) => resultado.tamanho));
   const tamanhosVariam = tamanhos.size > 1;
-  const status = Array.from(new Set(resultados.map((resultado) => resultado.status)));
+  const statusSet = new Set(resultados.map((resultado) => resultado.status));
+  const status = Array.from(statusSet);
+  const statusVariam = statusSet.size > 1;
 
-  return { tamanhosVariam, status, pares: resultados };
+  return { tamanhosVariam, statusVariam, status, pares: resultados };
 };
 
 export const filtrarResultadosErro = <T extends { status: number | null; tamanho: number | null }>(
@@ -54,7 +57,7 @@ export const filtrarResultadosErro = <T extends { status: number | null; tamanho
 ) => {
   if (!referencia) return resultados;
 
-  if (referencia.tamanhosVariam) {
+  if (referencia.tamanhosVariam && referencia.statusVariam) {
     const statusIgnorados = new Set(referencia.status);
     return resultados.filter((resultado) => resultado.status === null || !statusIgnorados.has(resultado.status));
   }
