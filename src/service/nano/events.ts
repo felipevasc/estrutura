@@ -32,6 +32,9 @@ export const NanoEvents = {
 
   FFUF_RESULT: 'FFUF_RESULT',
   FFUF_ERROR: 'FFUF_ERROR',
+
+  WHATWEB_RESULT: 'WHATWEB_RESULT',
+  WHATWEB_ERROR: 'WHATWEB_ERROR',
 } as const;
 
 export type NanoEventKey = keyof typeof NanoEvents;

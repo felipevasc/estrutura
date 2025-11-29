@@ -16,6 +16,7 @@ import { BuscaAtivaVazamentoService } from './services/cti/vazamentoSenhas/Busca
 import { TratamentoVazamentoService } from './services/cti/vazamentoSenhas/TratamentoVazamentoService';
 import { BaseVazamentosService } from './services/cti/vazamentoSenhas/BaseVazamentosService';
 import { ComunicacaoVazamentosService } from './services/cti/vazamentoSenhas/ComunicacaoVazamentosService';
+import { WhatwebService } from './services/tools/WhatwebService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -26,6 +27,7 @@ export const registeredServices: NanoService[] = [
     new NmapService(),
     new RustscanService(),
     new GobusterService(),
+    new WhatwebService(),
     new Enum4linuxService(),
     new FfufService(),
     new DefaceDorkService(),
