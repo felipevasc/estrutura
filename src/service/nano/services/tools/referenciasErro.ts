@@ -57,14 +57,17 @@ export const filtrarResultadosErro = <T extends { status: number | null; tamanho
 ) => {
   if (!referencia) return resultados;
 
-  if (referencia.tamanhosVariam && referencia.statusVariam) {
-    const statusIgnorados = new Set(referencia.status);
-    return resultados.filter((resultado) => resultado.status === null || !statusIgnorados.has(resultado.status));
+  const tamanhosConstantes = !referencia.tamanhosVariam;
+  const statusConstantes = !referencia.statusVariam;
+
+  if (tamanhosConstantes && statusConstantes) {
+    const paresIgnorados = new Set(referencia.pares.map((par) => `${par.status}|${par.tamanho}`));
+    return resultados.filter((resultado) => {
+      if (resultado.status === null || resultado.tamanho === null) return true;
+      return !paresIgnorados.has(`${resultado.status}|${resultado.tamanho}`);
+    });
   }
 
-  const paresIgnorados = new Set(referencia.pares.map((par) => `${par.status}|${par.tamanho}`));
-  return resultados.filter((resultado) => {
-    if (resultado.status === null || resultado.tamanho === null) return true;
-    return !paresIgnorados.has(`${resultado.status}|${resultado.tamanho}`);
-  });
+  const statusIgnorados = new Set(referencia.status);
+  return resultados.filter((resultado) => resultado.status === null || !statusIgnorados.has(resultado.status));
 };
