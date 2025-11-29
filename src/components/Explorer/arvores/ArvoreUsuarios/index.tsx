@@ -16,6 +16,7 @@ const ArvoreUsuarios = () => {
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const elementoUsuario = useElementoUsuario();
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [chavesCarregadas, setChavesCarregadas] = useState<React.Key[]>([]);
   const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
@@ -31,6 +32,7 @@ const ArvoreUsuarios = () => {
       if (ativo) {
         setElementos(elems);
         setExpandedKeys([]);
+        setChavesCarregadas([]);
         setCarregando(false);
       }
     };
@@ -45,6 +47,7 @@ const ArvoreUsuarios = () => {
     if (alvo.children || !alvo.carregar) return;
     const filhos = await alvo.carregar();
     setElementos(atual => atualizarFilhos(atual, alvo.key, filhos));
+    setChavesCarregadas(atual => [...new Set([...atual, alvo.key])]);
   };
 
   const onExpand = (novasChaves: React.Key[]) => {
@@ -55,6 +58,7 @@ const ArvoreUsuarios = () => {
     const abertas = expandedKeys;
     setCarregando(true);
     setExpandedKeys([]);
+    setChavesCarregadas([]);
     const resposta = await recarregarUsuarios();
     const lista = resposta.data || usuariosProjeto;
     if (lista) {
@@ -73,7 +77,7 @@ const ArvoreUsuarios = () => {
         usuário
         <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" style={{ marginLeft: "auto" }} />
       </StyledTitleUsuario>
-      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} />
+      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} loadedKeys={chavesCarregadas} />
     </StyledArvoreUsuario>
   );
 };

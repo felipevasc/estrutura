@@ -18,6 +18,7 @@ const ArvoreRedes = () => {
   const elementoIp = useElementoIp();
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [chavesCarregadas, setChavesCarregadas] = useState<React.Key[]>([]);
   const [carregando, setCarregando] = useState(false);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ const ArvoreRedes = () => {
       }
       if (ativo) {
         setExpandedKeys([]);
+        setChavesCarregadas([]);
         setCarregando(false);
       }
     };
@@ -50,6 +52,7 @@ const ArvoreRedes = () => {
     if (alvo.children || !alvo.carregar) return;
     const filhos = await alvo.carregar();
     setElementos(atual => atualizarFilhos(atual, alvo.key, filhos));
+    setChavesCarregadas(atual => [...new Set([...atual, alvo.key])]);
   };
 
   const onExpand = (novasChaves: React.Key[]) => {
@@ -60,6 +63,7 @@ const ArvoreRedes = () => {
     const abertas = expandedKeys;
     setCarregando(true);
     setExpandedKeys([]);
+    setChavesCarregadas([]);
     const resposta = await recarregarIps();
     const lista = resposta.data || ipsProjeto;
     if (lista) {
@@ -81,7 +85,7 @@ const ArvoreRedes = () => {
           <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" />
          </StyledTitleDominioIcon>
       </StyledTitleDominio>
-      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} />
+      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} loadedKeys={chavesCarregadas} />
     </StyledArvoreDominio>
   );
 };

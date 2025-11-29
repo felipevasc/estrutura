@@ -12,6 +12,7 @@ import { atualizarFilhos } from '../../target/atualizarArvore';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
+  const [chavesCarregadas, setChavesCarregadas] = useState<React.Key[]>([]);
   const [autoExpandParent, setAutoExpandParent] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const api = useApi();
@@ -23,6 +24,7 @@ const ArvoreDominios = () => {
   useEffect(() => {
     setElementos([]);
     setExpandedKeys([]);
+    setChavesCarregadas([]);
   }, [projeto?.get()?.id]);
 
   useEffect(() => {
@@ -37,6 +39,7 @@ const ArvoreDominios = () => {
       }
       if (ativo) {
         setExpandedKeys([]);
+        setChavesCarregadas([]);
         setAutoExpandParent(false);
         setCarregando(false);
       }
@@ -57,6 +60,7 @@ const ArvoreDominios = () => {
     if (alvo.children || !alvo.carregar) return;
     const filhos = await alvo.carregar();
     setElementos(atual => atualizarFilhos(atual, alvo.key, filhos));
+    setChavesCarregadas(atual => [...new Set([...atual, alvo.key])]);
   };
 
   const sortedElementos = useMemo(() => {
@@ -67,6 +71,7 @@ const ArvoreDominios = () => {
     const abertas = expandedKeys;
     setAutoExpandParent(false);
     setExpandedKeys([]);
+    setChavesCarregadas([]);
     setCarregando(true);
     const resposta = await recarregarDominios();
     const lista = resposta.data || dominiosProjeto;
@@ -96,6 +101,7 @@ const ArvoreDominios = () => {
       showIcon={true}
       showLine={true}
       loadData={carregarNo}
+      loadedKeys={chavesCarregadas}
       switcherIcon={<SendOutlined style={{ transform: "rotate(90deg)" }} />}
     />
   </StyledArvoreDominio>
