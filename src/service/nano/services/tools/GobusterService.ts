@@ -5,6 +5,7 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { NanoEvents } from '../../events';
 import { extrairResultadosGobuster } from './parserGobuster';
+import { resolverAlvo } from './resolvedorAlvo';
 
 export class GobusterService extends NanoService {
   constructor() {
@@ -20,44 +21,13 @@ export class GobusterService extends NanoService {
     this.listen(NanoEvents.GOBUSTER_ERROR, (payload) => this.processarErro(payload));
   }
 
-  private async obterAlvo(args: any) {
-    let diretorio = null;
-    let dominio = null;
-    let ip = null;
-
-    if (args.idDiretorio) {
-      diretorio = await prisma.diretorio.findUnique({
-        where: { id: parseInt(args.idDiretorio) },
-        include: { dominio: true, ip: true }
-      });
-    }
-
-    if (args.idDominio && !diretorio?.dominio) dominio = await prisma.dominio.findUnique({ where: { id: parseInt(args.idDominio) } });
-    if (args.idIp && !diretorio?.ip) ip = await prisma.ip.findUnique({ where: { id: parseInt(args.idIp) } });
-
-    const alvoDominio = diretorio?.dominio ?? dominio;
-    const alvoIp = diretorio?.ip ?? ip;
-
-    if (!alvoDominio && !alvoIp) throw new Error('Alvo não encontrado');
-
-    const base = alvoDominio ? alvoDominio.endereco : alvoIp?.endereco ?? '';
-    if (!base) throw new Error('Alvo inválido');
-
-    const caminhoBase = diretorio?.caminho ?? args.caminhoBase ?? '';
-    const caminhoNormalizado = caminhoBase ? (caminhoBase.startsWith('/') ? caminhoBase : `/${caminhoBase}`) : '';
-    const endereco = base.startsWith('http') ? base : `http://${base}`;
-    const alvo = caminhoNormalizado ? `${endereco}${caminhoNormalizado}` : endereco;
-
-    return { dominio: alvoDominio, ip: alvoIp, alvo, caminhoBase: caminhoNormalizado };
-  }
-
   private async processarComando(payload: any) {
     const { id, args, projectId } = payload;
 
     this.log(`Iniciando Gobuster para projeto ${projectId}`);
 
     try {
-      const { dominio, ip, alvo, caminhoBase } = await this.obterAlvo(args);
+      const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
       const tipoFuzz = args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
       const alvoNormalizado = alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
@@ -108,8 +78,7 @@ export class GobusterService extends NanoService {
         });
       }
 
-      fs.unlinkSync(arquivoResultado);
-      if (arquivoLog && fs.existsSync(arquivoLog)) fs.unlinkSync(arquivoLog);
+      this.removerArquivos(arquivoResultado, arquivoLog);
 
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
         id,
@@ -118,8 +87,7 @@ export class GobusterService extends NanoService {
         executedCommand: `${command} ${args.join(' ')}`
       });
     } catch (e: any) {
-      if (arquivoResultado && fs.existsSync(arquivoResultado)) fs.unlinkSync(arquivoResultado);
-      if (arquivoLog && fs.existsSync(arquivoLog)) fs.unlinkSync(arquivoLog);
+      this.removerArquivos(arquivoResultado, arquivoLog);
 
       this.bus.emit(NanoEvents.JOB_FAILED, { id, error: e.message });
     }
@@ -129,8 +97,7 @@ export class GobusterService extends NanoService {
     const { id, error, meta } = payload;
     const { arquivoResultado, arquivoLog } = meta || {};
 
-    if (arquivoResultado && fs.existsSync(arquivoResultado)) fs.unlinkSync(arquivoResultado);
-    if (arquivoLog && fs.existsSync(arquivoLog)) fs.unlinkSync(arquivoLog);
+    this.removerArquivos(arquivoResultado, arquivoLog);
 
     this.bus.emit(NanoEvents.JOB_FAILED, { id, error });
   }
@@ -141,5 +108,11 @@ export class GobusterService extends NanoService {
     const alvo = caminho.startsWith('/') ? caminho : `/${caminho}`;
     const combinado = `${caminhoBase}${alvo}`.replace(/\/+/g, '/');
     return combinado === '' ? '/' : combinado;
+  }
+
+  private removerArquivos(...arquivos: (string | null | undefined)[]) {
+    arquivos.forEach((arquivo) => {
+      if (arquivo && fs.existsSync(arquivo)) fs.unlinkSync(arquivo);
+    });
   }
 }
