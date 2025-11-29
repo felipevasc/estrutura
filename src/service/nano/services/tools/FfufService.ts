@@ -114,7 +114,7 @@ export class FfufService extends NanoService {
       const conteudo = this.lerSaida(saidaJson);
       const dados = this.extrairResultados(conteudo, caminhoBase || '');
       const filtrados = filtrarResultadosErro(dados, referenciaErro);
-      const registrosNormalizados = this.deduplicarResultados(filtrados);
+      const registrosNormalizados = this.deduplicarResultados(filtrados, tipoFuzz);
       const registros = this.ajustarTipoResultados(registrosNormalizados, tipoFuzz);
 
       for (const resultado of registros) {
@@ -198,11 +198,15 @@ export class FfufService extends NanoService {
     return this.normalizarResultados(resultados, prefixo);
   }
 
-  private deduplicarResultados(resultados: ResultadoDiretorio[]) {
+  private deduplicarResultados(resultados: ResultadoDiretorio[], tipo: TipoFuzz) {
     const mapa = new Map<string, ResultadoDiretorio>();
     resultados.forEach((resultado) => {
-      const chave = `${resultado.caminho}|${resultado.status}|${resultado.tamanho}`;
-      if (!mapa.has(chave)) mapa.set(chave, resultado);
+      const caminhoNormalizado = tipo === 'diretorio' ? this.aplicarBarraResultado(resultado.caminho) : resultado.caminho;
+      const chave = tipo === 'diretorio' ? this.removerBarraResultado(caminhoNormalizado) : caminhoNormalizado;
+      const existente = mapa.get(chave);
+      if (!existente || (tipo === 'diretorio' && !existente.caminho.endsWith('/') && caminhoNormalizado.endsWith('/'))) {
+        mapa.set(chave, { ...resultado, caminho: caminhoNormalizado });
+      }
     });
     return Array.from(mapa.values());
   }
@@ -211,7 +215,7 @@ export class FfufService extends NanoService {
     if (tipo !== 'diretorio') return resultados;
     return resultados.map((resultado) => ({
       ...resultado,
-      caminho: resultado.caminho.endsWith('/') ? resultado.caminho : `${resultado.caminho}/`
+      caminho: this.aplicarBarraResultado(resultado.caminho)
     }));
   }
 
@@ -242,6 +246,14 @@ export class FfufService extends NanoService {
     const complemento = parte.startsWith('/') ? parte : `/${parte}`;
     const limpo = `${caminhoBase}${complemento}`.replace(/\/+/g, '/');
     return limpo === '' ? '/' : limpo;
+  }
+
+  private aplicarBarraResultado(caminho: string) {
+    return caminho.endsWith('/') ? caminho : `${caminho}/`;
+  }
+
+  private removerBarraResultado(caminho: string) {
+    return caminho.endsWith('/') ? caminho.slice(0, -1) : caminho;
   }
 
   private removerArquivos(...arquivos: (string | null | undefined)[]) {

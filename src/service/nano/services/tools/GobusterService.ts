@@ -109,7 +109,7 @@ export class GobusterService extends NanoService {
       const brutos = extrairResultadosGobuster(conteudo, alvo);
       const normalizados = this.normalizarResultados(brutos, caminhoBase || '');
       const filtrados = filtrarResultadosErro(normalizados, referenciaErro);
-      const registrosNormalizados = this.deduplicarResultados(filtrados);
+      const registrosNormalizados = this.deduplicarResultados(filtrados, tipoFuzz);
       const registros = this.ajustarTipoResultados(registrosNormalizados, tipoFuzz);
 
       for (const resultado of registros) {
@@ -183,11 +183,15 @@ export class GobusterService extends NanoService {
       .filter((resultado): resultado is ResultadoDiretorio => Boolean(resultado));
   }
 
-  private deduplicarResultados(resultados: ResultadoDiretorio[]) {
+  private deduplicarResultados(resultados: ResultadoDiretorio[], tipo: TipoFuzz) {
     const mapa = new Map<string, ResultadoDiretorio>();
     resultados.forEach((resultado) => {
-      const chave = `${resultado.caminho}|${resultado.status}|${resultado.tamanho}`;
-      if (!mapa.has(chave)) mapa.set(chave, resultado);
+      const caminhoNormalizado = tipo === 'diretorio' ? this.aplicarBarraResultado(resultado.caminho) : resultado.caminho;
+      const chave = tipo === 'diretorio' ? this.removerBarraResultado(caminhoNormalizado) : caminhoNormalizado;
+      const existente = mapa.get(chave);
+      if (!existente || (tipo === 'diretorio' && !existente.caminho.endsWith('/') && caminhoNormalizado.endsWith('/'))) {
+        mapa.set(chave, { ...resultado, caminho: caminhoNormalizado });
+      }
     });
     return Array.from(mapa.values());
   }
@@ -196,7 +200,7 @@ export class GobusterService extends NanoService {
     if (tipo !== 'diretorio') return resultados;
     return resultados.map((resultado) => ({
       ...resultado,
-      caminho: resultado.caminho.endsWith('/') ? resultado.caminho : `${resultado.caminho}/`
+      caminho: this.aplicarBarraResultado(resultado.caminho)
     }));
   }
 
@@ -216,6 +220,14 @@ export class GobusterService extends NanoService {
     const alvo = caminho.startsWith('/') ? caminho : `/${caminho}`;
     const limpo = `${caminhoBase}${alvo}`.replace(/\/+/g, '/');
     return limpo === '' ? '/' : limpo;
+  }
+
+  private aplicarBarraResultado(caminho: string) {
+    return caminho.endsWith('/') ? caminho : `${caminho}/`;
+  }
+
+  private removerBarraResultado(caminho: string) {
+    return caminho.endsWith('/') ? caminho.slice(0, -1) : caminho;
   }
 
   private removerArquivos(...arquivos: (string | null | undefined)[]) {

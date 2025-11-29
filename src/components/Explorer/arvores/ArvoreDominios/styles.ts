@@ -67,25 +67,6 @@ export const StyledArvoreDominio = styled.div`
         gap: 6px;
     }
 
-    .ant-tree .ant-tree-node-content-wrapper .tag-diretorio {
-        padding: 2px 8px;
-        border-radius: 999px;
-        font-size: 11px;
-        border: 1px solid ${({ theme }) => theme.colors.borderColor};
-        background: ${({ theme }) => theme.colors.panelBackground};
-        color: ${({ theme }) => theme.colors.foreground};
-    }
-
-    .ant-tree .ant-tree-node-content-wrapper .tag-diretorio.pasta {
-        background: var(--accent-color);
-        color: #0D1117;
-    }
-
-    .ant-tree .ant-tree-node-content-wrapper .tag-diretorio.arquivo {
-        background: #f7c325;
-        color: #0D1117;
-    }
-
     .ant-tree-list-holder-inner .diretorio.checked .ant-tree-node-content-wrapper {
         background-color: var(--hover-background);
     }
