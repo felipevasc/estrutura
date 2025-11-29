@@ -13,8 +13,8 @@ const credenciaisTelegram = () => ({
     senha: process.env.TELEGRAM_SENHA,
 });
 
-export async function POST(_request: Request, contexto: { params: Promise<{ fonteId: string }> }) {
-    const { fonteId: parametroFonteId } = await contexto.params;
+export async function POST(_request: Request, contexto: { params: { fonteId: string } }) {
+    const { fonteId: parametroFonteId } = contexto.params;
     const fonteId = parseInt(parametroFonteId, 10);
     if (Number.isNaN(fonteId)) return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
 
@@ -37,6 +37,8 @@ export async function POST(_request: Request, contexto: { params: Promise<{ font
             (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
         )
             return NextResponse.json({ error: 'Configure API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
+        if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
+            return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 
         const command = await prisma.command.create({
             data: {

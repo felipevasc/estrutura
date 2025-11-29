@@ -12,10 +12,13 @@ const validarExtensoes = (valor: unknown) => {
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
-    const projetoId = searchParams.get('projetoId');
+    const projetoIdBruto = searchParams.get('projetoId');
+    const projetoId = projetoIdBruto ? parseInt(`${projetoIdBruto}`, 10) : undefined;
+    if (projetoIdBruto && Number.isNaN(projetoId))
+        return NextResponse.json({ error: 'Projeto inválido' }, { status: 400 });
 
     const where = projetoId
-        ? { fonte: { projetoId: parseInt(`${projetoId}`, 10), tipo: FonteVazamentoTipo.TELEGRAM } }
+        ? { fonte: { projetoId, tipo: FonteVazamentoTipo.TELEGRAM } }
         : { fonte: { tipo: FonteVazamentoTipo.TELEGRAM } };
 
     try {
