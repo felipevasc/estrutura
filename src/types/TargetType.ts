@@ -1,7 +1,8 @@
 export type TargetType = 
     | "domain" 
     | "network"
-    | "user" 
+    | "user"
     | "database"
     | "ip"
-    | "porta";
+    | "porta"
+    | "diretorio";

@@ -67,7 +67,7 @@ export class GobusterService extends NanoService {
       const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
       const tipoFuzz = this.definirTipoFuzz(args);
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
-      const alvoNormalizado = this.normalizarAlvo(alvo);
+      const alvoNormalizado = this.normalizarAlvo(alvo, tipoFuzz);
       const referenciaErro = await coletarReferenciasErro(alvoNormalizado);
       const arquivoResultado = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}.txt`);
       const arquivoLog = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}_log.txt`);
@@ -106,7 +106,7 @@ export class GobusterService extends NanoService {
     try {
       const conteudo = this.lerSaida(arquivoResultado);
       const brutos = extrairResultadosGobuster(conteudo, alvo);
-      const normalizados = this.normalizarResultados(brutos, caminhoBase || '');
+      const normalizados = this.normalizarResultados(brutos, caminhoBase || '', tipoFuzz);
       const filtrados = filtrarResultadosErro(normalizados, referenciaErro);
       const registros = this.deduplicarResultados(filtrados);
 
@@ -152,8 +152,10 @@ export class GobusterService extends NanoService {
     return args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
   }
 
-  private normalizarAlvo(alvo: string) {
-    return alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
+  private normalizarAlvo(alvo: string, tipoFuzz: TipoFuzz) {
+    const limpo = alvo.replace(/\\+/g, '/');
+    if (tipoFuzz === 'diretorio') return limpo.endsWith('/') ? limpo : `${limpo}/`;
+    return limpo.endsWith('/') ? limpo.slice(0, -1) : limpo;
   }
 
   private criarCaminhoArquivo(nome: string) {
@@ -170,9 +172,9 @@ export class GobusterService extends NanoService {
     return fs.readFileSync(caminho, 'utf-8');
   }
 
-  private normalizarResultados(resultados: ResultadoGobuster[], prefixo: string) {
+  private normalizarResultados(resultados: ResultadoGobuster[], prefixo: string, tipoFuzz: TipoFuzz) {
     return resultados
-      .map((resultado) => this.mapearResultado(resultado, prefixo))
+      .map((resultado) => this.mapearResultado(resultado, prefixo, tipoFuzz))
       .filter((resultado): resultado is ResultadoDiretorio => Boolean(resultado));
   }
 
@@ -185,8 +187,8 @@ export class GobusterService extends NanoService {
     return Array.from(mapa.values());
   }
 
-  private mapearResultado(resultado: ResultadoGobuster, prefixo: string): ResultadoDiretorio | null {
-    const caminho = this.normalizarCaminho(prefixo, resultado.caminho);
+  private mapearResultado(resultado: ResultadoGobuster, prefixo: string, tipoFuzz: TipoFuzz): ResultadoDiretorio | null {
+    const caminho = this.normalizarCaminho(prefixo, resultado.caminho, tipoFuzz);
     if (!caminho) return null;
 
     const status = Number.isNaN(Number(resultado.status)) ? null : resultado.status;
@@ -195,13 +197,15 @@ export class GobusterService extends NanoService {
     return { caminho, status, tamanho };
   }
 
-  private normalizarCaminho(base: string, caminho: string) {
+  private normalizarCaminho(base: string, caminho: string, tipoFuzz: TipoFuzz) {
     const prefixo = base || '';
     const caminhoBase = prefixo ? (prefixo.startsWith('/') ? prefixo : `/${prefixo}`) : '';
     const alvo = caminho.startsWith('/') ? caminho : `/${caminho}`;
-    const limpo = `${caminhoBase}${alvo}`.replace(/\/+/g, '/');
-    return limpo === '' ? '/' : limpo;
+    const limpo = `${caminhoBase}${alvo}`.replace(/\+/g, '/');
+    const ajustado = tipoFuzz === 'diretorio' && !limpo.endsWith('/') ? `${limpo}/` : limpo;
+    return ajustado === '' ? '/' : ajustado;
   }
+
 
   private removerArquivos(...arquivos: (string | null | undefined)[]) {
     arquivos.forEach((arquivo) => {
