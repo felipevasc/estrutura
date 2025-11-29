@@ -4,7 +4,48 @@ import fs from 'fs';
 import path from 'node:path';
 import os from 'node:os';
 import { NanoEvents } from '../../events';
-import { resolverAlvo } from './resolvedorAlvo';
+import { AlvoResolvido, resolverAlvo } from './resolvedorAlvo';
+
+type TipoFuzz = 'arquivo' | 'diretorio';
+
+type PayloadComando = {
+  id: number;
+  args: Record<string, unknown>;
+  projectId: number;
+};
+
+type MetadadosFfuf = AlvoResolvido & {
+  projectId: number;
+  tipoFuzz: TipoFuzz;
+  saidaJson: string;
+  saidaLog: string;
+};
+
+type ResultadoDiretorio = {
+  caminho: string;
+  status: number | null;
+  tamanho: number | null;
+};
+
+type ResultadoFfufBruto = {
+  status?: unknown;
+  length?: unknown;
+  input?: { FUZZ?: string };
+};
+
+type RetornoTerminal = {
+  id: number;
+  stdout?: string;
+  meta: MetadadosFfuf;
+  command: string;
+  args: string[];
+};
+
+type ErroTerminal = {
+  id: number;
+  error: string;
+  meta?: Partial<MetadadosFfuf>;
+};
 
 export class FfufService extends NanoService {
   constructor() {
@@ -19,7 +60,7 @@ export class FfufService extends NanoService {
     this.listen(NanoEvents.FFUF_ERROR, (payload) => this.processarErro(payload));
   }
 
-  private async processarComando(payload: any) {
+  private async processarComando(payload: PayloadComando) {
     const { id, args, projectId } = payload;
 
     this.log(`Processando Ffuf para o projeto ${projectId}`);
@@ -27,12 +68,12 @@ export class FfufService extends NanoService {
     try {
       const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
       const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
-      const tipoFuzz = args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
-      const alvoNormalizado = alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
-      const saidaJson = path.join(os.tmpdir(), `ffuf_results_${id}_${Date.now()}.json`);
-      const saidaLog = path.join(os.tmpdir(), `ffuf_log_${id}_${Date.now()}.txt`);
-      const argumentosBase = ['-u', `${alvoNormalizado}/FUZZ`, '-w', '/usr/share/wordlists/dirb/common.txt', '-o', saidaJson, '-of', 'json'];
-      const argumentos = tipoFuzz === 'arquivo' ? [...argumentosBase, '-e', extensoes] : argumentosBase;
+      const tipoFuzz = this.definirTipoFuzz(args);
+      const alvoNormalizado = this.normalizarAlvo(alvo);
+      const saidaJson = this.criarCaminhoArquivo(`ffuf_results_${id}_${Date.now()}.json`);
+      const saidaLog = this.criarCaminhoArquivo(`ffuf_log_${id}_${Date.now()}.txt`);
+      const argumentos = this.montarArgumentos(alvoNormalizado, tipoFuzz, extensoes, saidaJson);
+      const meta: MetadadosFfuf = { projectId, dominio, ip, caminhoBase, alvo: alvoNormalizado, tipoFuzz, saidaJson, saidaLog };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
         id,
@@ -41,28 +82,26 @@ export class FfufService extends NanoService {
         outputFile: saidaLog,
         replyTo: NanoEvents.FFUF_RESULT,
         errorTo: NanoEvents.FFUF_ERROR,
-        meta: { projectId, dominio, ip, caminhoBase, alvo: alvoNormalizado, tipoFuzz, saidaJson, saidaLog }
+        meta
       });
-    } catch (e: any) {
-      this.bus.emit(NanoEvents.JOB_FAILED, { id, error: e.message });
+    } catch (e: unknown) {
+      const erro = e instanceof Error ? e.message : 'Erro desconhecido';
+      this.bus.emit(NanoEvents.JOB_FAILED, { id, error: erro });
     }
   }
 
-  private async processarResultado(payload: any) {
+  private async processarResultado(payload: RetornoTerminal) {
     const { id, stdout, meta, command, args } = payload;
     const { dominio, ip, caminhoBase, saidaJson, saidaLog, tipoFuzz } = meta;
 
     this.log(`Processando resultado ${id}`);
 
     try {
-      if (!saidaJson || !fs.existsSync(saidaJson)) throw new Error('Saída não encontrada');
+      const conteudo = this.lerSaida(saidaJson);
+      const dados = this.extrairResultados(conteudo, caminhoBase || '');
+      const registros = this.deduplicarResultados(dados);
 
-      const conteudo = fs.readFileSync(saidaJson, 'utf8');
-      const dados = JSON.parse(conteudo);
-      const resultados = Array.isArray(dados.results) ? dados.results : [];
-      const caminhos = this.normalizarResultados(resultados, caminhoBase || '');
-
-      for (const resultado of caminhos) {
+      for (const resultado of registros) {
         await prisma.diretorio.create({
           data: {
             caminho: resultado.caminho,
@@ -79,18 +118,19 @@ export class FfufService extends NanoService {
 
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
         id,
-        result: caminhos,
+        result: registros,
         rawOutput: stdout,
         executedCommand: `${command} ${args.join(' ')}`
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       this.removerArquivos(saidaJson, saidaLog);
 
-      this.bus.emit(NanoEvents.JOB_FAILED, { id, error: e.message });
+      const erro = e instanceof Error ? e.message : 'Erro desconhecido';
+      this.bus.emit(NanoEvents.JOB_FAILED, { id, error: erro });
     }
   }
 
-  private processarErro(payload: any) {
+  private processarErro(payload: ErroTerminal) {
     const { id, error, meta } = payload;
     const { saidaJson, saidaLog } = meta || {};
 
@@ -99,11 +139,48 @@ export class FfufService extends NanoService {
     this.bus.emit(NanoEvents.JOB_FAILED, { id, error });
   }
 
-  private normalizarResultados(resultados: any[], prefixo: string) {
-    if (!resultados.length) return [] as any[];
+  private definirTipoFuzz(args: Record<string, unknown>): TipoFuzz {
+    return args.tipoFuzz === 'arquivo' ? 'arquivo' : 'diretorio';
+  }
+
+  private normalizarAlvo(alvo: string) {
+    return alvo.endsWith('/') ? alvo.slice(0, -1) : alvo;
+  }
+
+  private criarCaminhoArquivo(nome: string) {
+    return path.join(os.tmpdir(), nome);
+  }
+
+  private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, saidaJson: string) {
+    const argumentosBase = ['-u', `${alvo}/FUZZ`, '-w', '/usr/share/wordlists/dirb/common.txt', '-o', saidaJson, '-of', 'json'];
+    return tipoFuzz === 'arquivo' ? [...argumentosBase, '-e', extensoes] : argumentosBase;
+  }
+
+  private lerSaida(caminho: string) {
+    if (!caminho || !fs.existsSync(caminho)) throw new Error('Saída não encontrada');
+    return fs.readFileSync(caminho, 'utf8');
+  }
+
+  private extrairResultados(conteudo: string, prefixo: string) {
+    const dados = JSON.parse(conteudo);
+    const resultados = Array.isArray(dados.results) ? (dados.results as ResultadoFfufBruto[]) : [];
+    return this.normalizarResultados(resultados, prefixo);
+  }
+
+  private deduplicarResultados(resultados: ResultadoDiretorio[]) {
+    const mapa = new Map<string, ResultadoDiretorio>();
+    resultados.forEach((resultado) => {
+      const chave = `${resultado.caminho}|${resultado.status}|${resultado.tamanho}`;
+      if (!mapa.has(chave)) mapa.set(chave, resultado);
+    });
+    return Array.from(mapa.values());
+  }
+
+  private normalizarResultados(resultados: ResultadoFfufBruto[], prefixo: string) {
+    if (!resultados.length) return [] as ResultadoDiretorio[];
 
     const estatisticas = new Map<string, number>();
-    resultados.forEach((res: any) => {
+    resultados.forEach((res) => {
       const chave = `${res.status}-${res.length}`;
       estatisticas.set(chave, (estatisticas.get(chave) || 0) + 1);
     });
@@ -117,21 +194,34 @@ export class FfufService extends NanoService {
       }
     });
 
-    const filtrados = maior > 1 ? resultados.filter((res: any) => `${res.status}-${res.length}` !== chaveDominante) : resultados;
+    const filtrados = maior > 1 ? resultados.filter((res) => `${res.status}-${res.length}` !== chaveDominante) : resultados;
 
-    return filtrados.map((resultado: any) => ({
-      caminho: this.normalizarCaminho(prefixo, resultado.input?.FUZZ ?? ''),
-      status: resultado.status,
-      tamanho: resultado.length
-    }));
+    return filtrados
+      .map((resultado) => this.mapearResultado(resultado, prefixo))
+      .filter((resultado): resultado is ResultadoDiretorio => Boolean(resultado));
+  }
+
+  private mapearResultado(resultado: ResultadoFfufBruto, prefixo: string): ResultadoDiretorio | null {
+    const parte = resultado?.input?.FUZZ ?? '';
+    const caminho = this.normalizarCaminho(prefixo, parte);
+    const status = Number.parseInt(String(resultado?.status ?? ''), 10);
+    const tamanho = Number.parseInt(String(resultado?.length ?? ''), 10);
+
+    if (!caminho) return null;
+
+    return {
+      caminho,
+      status: Number.isNaN(status) ? null : status,
+      tamanho: Number.isNaN(tamanho) ? null : tamanho
+    };
   }
 
   private normalizarCaminho(base: string, parte: string) {
     const prefixo = base || '';
     const caminhoBase = prefixo ? (prefixo.startsWith('/') ? prefixo : `/${prefixo}`) : '';
     const complemento = parte.startsWith('/') ? parte : `/${parte}`;
-    const combinado = `${caminhoBase}${complemento}`.replace(/\/+/g, '/');
-    return combinado === '' ? '/' : combinado;
+    const limpo = `${caminhoBase}${complemento}`.replace(/\/+/g, '/');
+    return limpo === '' ? '/' : limpo;
   }
 
   private removerArquivos(...arquivos: (string | null | undefined)[]) {
