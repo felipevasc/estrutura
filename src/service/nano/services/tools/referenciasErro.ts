@@ -70,7 +70,7 @@ export const filtrarResultadosErro = <T extends { status: number | null; tamanho
     return resultados.filter((resultado) => resultado.status === null || !statusIgnorados.has(resultado.status));
   }
 
-  if (referencia.tamanhosVariam && referencia.statusVariam) {
+  if (referencia.statusVariam) {
     const statusIgnorados = new Set(referencia.status);
     return resultados.filter((resultado) => resultado.status === null || !statusIgnorados.has(resultado.status));
   }
