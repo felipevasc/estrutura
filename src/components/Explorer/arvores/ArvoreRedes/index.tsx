@@ -57,6 +57,7 @@ const ArvoreRedes = () => {
   };
 
   const refresh = async () => {
+    const abertas = expandedKeys;
     setCarregando(true);
     setExpandedKeys([]);
     const resposta = await recarregarIps();
@@ -65,6 +66,7 @@ const ArvoreRedes = () => {
       const sorted = [...lista].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
       const resolvidos = await Promise.all(sorted.map(ip => elementoIp.getIp(ip)));
       setElementos(resolvidos);
+      setExpandedKeys(abertas);
     } else {
       setElementos([]);
     }

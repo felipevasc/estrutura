@@ -52,6 +52,7 @@ const ArvoreUsuarios = () => {
   };
 
   const refresh = async () => {
+    const abertas = expandedKeys;
     setCarregando(true);
     setExpandedKeys([]);
     const resposta = await recarregarUsuarios();
@@ -59,6 +60,7 @@ const ArvoreUsuarios = () => {
     if (lista) {
       const resolvidos = await Promise.all(lista.map(u => elementoUsuario.getUsuario(u)));
       setElementos(resolvidos);
+      setExpandedKeys(abertas);
     } else {
       setElementos([]);
     }

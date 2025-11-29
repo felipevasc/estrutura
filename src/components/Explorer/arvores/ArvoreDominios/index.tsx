@@ -64,6 +64,7 @@ const ArvoreDominios = () => {
   }, [elementos]);
 
   const refresh = async () => {
+    const abertas = expandedKeys;
     setAutoExpandParent(false);
     setExpandedKeys([]);
     setCarregando(true);
@@ -72,6 +73,7 @@ const ArvoreDominios = () => {
     if (lista) {
       const resolvidos = await Promise.all(lista.map(d => elementoDominio.getDominio(d)));
       setElementos(resolvidos);
+      setExpandedKeys(abertas);
     } else {
       setElementos([]);
     }
