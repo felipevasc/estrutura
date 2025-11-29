@@ -9,7 +9,7 @@ const includeIp = {
         dominios: true,
         redes: true,
         usuarios: true,
-        diretorios: true,
+        diretorios: { include: { whatwebResultados: true } },
         whatwebResultados: true,
     }
 };
@@ -24,27 +24,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         include: {
             whatwebResultados: true,
             ips: includeIp,
-            diretorios: true,
+            diretorios: { include: { whatwebResultados: true } },
             subDominios: {
                 include: {
                     whatwebResultados: true,
                     ips: includeIp,
-                    diretorios: true,
+                    diretorios: { include: { whatwebResultados: true } },
                     subDominios: {
                         include: {
                             whatwebResultados: true,
                             ips: includeIp,
-                            diretorios: true,
+                            diretorios: { include: { whatwebResultados: true } },
                             subDominios: {
                                 include: {
                                     whatwebResultados: true,
                                     ips: includeIp,
-                                    diretorios: true,
+                                    diretorios: { include: { whatwebResultados: true } },
                                     subDominios: {
                                         include: {
                                             whatwebResultados: true,
                                             ips: includeIp,
-                                            diretorios: true,
+                                            diretorios: { include: { whatwebResultados: true } },
                                             subDominios: true,
                                         }
                                     }

@@ -6,6 +6,7 @@ import { NanoEvents } from '../../events';
 import { resolverAlvo } from './resolvedorAlvo';
 import Database from '@/database/Database';
 import { ResultadoWhatweb } from '@/database/functions/whatweb';
+import prisma from '@/database';
 
 type PayloadComando = {
   id: number;
@@ -19,6 +20,7 @@ type MetadadosWhatweb = {
   arquivoSaida: string;
   dominioId: number | null;
   ipId: number | null;
+  diretorioId: number | null;
 };
 
 type ResultadoTerminal = {
@@ -54,6 +56,15 @@ export class WhatwebService extends NanoService {
 
     try {
       const { alvo, dominio, ip } = await resolverAlvo(args);
+      let diretorioId: number | null = null;
+      if (args.idDiretorio) {
+        const idDir = Number(args.idDiretorio);
+        if (Number.isFinite(idDir)) {
+           const dir = await prisma.diretorio.findUnique({ where: { id: idDir } });
+           if (dir) diretorioId = dir.id;
+        }
+      }
+
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
       const autenticacao = process.env.WHATWEB_AUTENTICACAO?.trim();
       const timeout = Number(process.env.WHATWEB_TIMEOUT || '60');
@@ -64,7 +75,14 @@ export class WhatwebService extends NanoService {
         argumentos.push(`--read-timeout=${timeout}`);
       }
       argumentos.push(alvo);
-      const meta: MetadadosWhatweb = { projetoId: projectId, alvo, arquivoSaida, dominioId: dominio?.id ?? null, ipId: ip?.id ?? null };
+      const meta: MetadadosWhatweb = {
+        projetoId: projectId,
+        alvo,
+        arquivoSaida,
+        dominioId: dominio?.id ?? null,
+        ipId: ip?.id ?? null,
+        diretorioId
+      };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
         id,
@@ -82,11 +100,11 @@ export class WhatwebService extends NanoService {
 
   private async processarResultado(payload: ResultadoTerminal) {
     const { id, stdout, meta, command, args } = payload;
-    const { arquivoSaida, dominioId, ipId } = meta;
+    const { arquivoSaida, dominioId, ipId, diretorioId } = meta;
 
     try {
       const registros = this.lerRegistros(arquivoSaida);
-      const resultados = this.extrairResultados(registros, dominioId, ipId);
+      const resultados = this.extrairResultados(registros, dominioId, ipId, diretorioId);
       const persistidos = await Database.criarResultadosWhatweb(resultados);
       this.removerArquivo(arquivoSaida);
 
@@ -127,7 +145,7 @@ export class WhatwebService extends NanoService {
     if (caminho && fs.existsSync(caminho)) fs.unlinkSync(caminho);
   }
 
-  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null): ResultadoWhatweb[] {
+  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null, diretorioId: number | null): ResultadoWhatweb[] {
     if (!Array.isArray(registros)) return [];
 
     return registros.flatMap((registro) => {
@@ -142,7 +160,8 @@ export class WhatwebService extends NanoService {
           valor: typeof valor === 'string' ? valor : JSON.stringify(valor),
           dados: valor,
           dominioId,
-          ipId
+          ipId,
+          diretorioId
         }));
       });
     });

@@ -9,6 +9,8 @@ export type IpDiretorioResponse = {
     endereco?: string;
 };
 
+import { WhatwebResultadoResponse } from "./WhatwebResultadoResponse";
+
 export type DiretorioResponse = {
     id: number;
     caminho: string;
@@ -20,4 +22,5 @@ export type DiretorioResponse = {
     criadoEm?: string;
     dominio?: DominioDiretorioResponse | null;
     ip?: IpDiretorioResponse | null;
+    whatwebResultados?: WhatwebResultadoResponse[];
 }

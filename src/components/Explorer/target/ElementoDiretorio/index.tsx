@@ -4,9 +4,11 @@ import { faFile, faFolder } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
 import { NoCarregavel } from "../tipos";
+import useElementoWhatweb from "../ElementoWhatweb";
 
 const useElementoDiretorio = () => {
   const { selecaoTarget } = useContext(StoreContext);
+  const elementoWhatweb = useElementoWhatweb();
 
   const getDiretorio = async (diretorio: DiretorioResponse): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
@@ -16,6 +18,10 @@ const useElementoDiretorio = () => {
     const status = diretorio.status !== null && diretorio.status !== undefined ? diretorio.status : "-";
     const tamanho = diretorio.tamanho !== null && diretorio.tamanho !== undefined ? `${diretorio.tamanho}b` : "-";
     const classeTipo = diretorio.tipo === "arquivo" ? "arquivo" : "pasta";
+
+    const pasta = elementoWhatweb.getResultados(diretorio.whatwebResultados ?? [], `diretorio-${diretorio.id}`);
+    const children: NoCarregavel[] = [];
+    if (pasta) children.push(pasta);
 
     return {
       key: `diretorio-${diretorio.id}`,
@@ -27,7 +33,8 @@ const useElementoDiretorio = () => {
         </div>
       ),
       className: "diretorio " + classeTipo + " " + (checked ? "checked " : ""),
-      isLeaf: true
+      children: children,
+      isLeaf: children.length === 0
     };
   };
 

@@ -16,7 +16,7 @@ export async function POST(req: Request) {
         const newCommand = await prisma.command.create({
             data: {
                 command: job.command,
-                args: job.args,
+                args: typeof job.args === 'string' ? job.args : JSON.stringify(job.args),
                 projectId: job.projectId,
                 status: 'PENDING'
             }

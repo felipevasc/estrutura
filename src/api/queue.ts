@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 const useQueue = () => {
-    const addCommand = useCallback(async (command: string, args: any[], projectId: number) => {
+    const addCommand = useCallback(async (command: string, args: any[] | Record<string, unknown>, projectId: number) => {
         const res = await fetch('/api/v1/queue/add', {
             method: 'POST',
             headers: {

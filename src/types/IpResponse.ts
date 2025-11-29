@@ -9,10 +9,10 @@ export type IpResponse = {
     id: number;
     endereco: string;
     projetoId: number;
-    portas: PortaResponse[];
-    dominios: DominioResponse[];
-    redes: RedeResponse[];
-    usuarios: UsuarioResponse[];
-    diretorios: DiretorioResponse[];
-    whatwebResultados: WhatwebResultadoResponse[];
+    portas?: PortaResponse[];
+    dominios?: DominioResponse[];
+    redes?: RedeResponse[];
+    usuarios?: UsuarioResponse[];
+    diretorios?: DiretorioResponse[];
+    whatwebResultados?: WhatwebResultadoResponse[];
 }

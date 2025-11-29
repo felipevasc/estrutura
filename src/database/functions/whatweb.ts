@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import prisma from "..";
 
 export type ResultadoWhatweb = {
@@ -6,14 +7,16 @@ export type ResultadoWhatweb = {
   dados?: unknown;
   dominioId?: number | null;
   ipId?: number | null;
+  diretorioId?: number | null;
 };
 
-const gerarAssinatura = (resultado: ResultadoWhatweb) => `${resultado.plugin}|${resultado.valor}|${resultado.dominioId ?? ''}|${resultado.ipId ?? ''}`;
+const gerarAssinatura = (resultado: ResultadoWhatweb) => `${resultado.plugin}|${resultado.valor}|${resultado.dominioId ?? ''}|${resultado.ipId ?? ''}|${resultado.diretorioId ?? ''}`;
 
 const normalizarResultado = (resultado: ResultadoWhatweb) => ({
   ...resultado,
   dominioId: resultado.dominioId ?? null,
-  ipId: resultado.ipId ?? null
+  ipId: resultado.ipId ?? null,
+  diretorioId: resultado.diretorioId ?? null
 });
 
 export const criarResultadosWhatweb = async (resultados: ResultadoWhatweb[]) => {
@@ -42,9 +45,10 @@ export const criarResultadosWhatweb = async (resultados: ResultadoWhatweb[]) => 
         assinatura: gerarAssinatura(resultado),
         plugin: resultado.plugin,
         valor: resultado.valor,
-        dados: resultado.dados,
+        dados: resultado.dados as Prisma.InputJsonValue,
         dominioId: resultado.dominioId,
-        ipId: resultado.ipId
+        ipId: resultado.ipId,
+        diretorioId: resultado.diretorioId
       }))
     });
   }

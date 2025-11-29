@@ -147,6 +147,26 @@ export class CommandInterpreter {
       const alvo = payload.PARAMETRO1;
       if (!alvo) throw new Error("Missing target parameter");
 
+      // Tentar encontrar diretório se for caminho (começa com /)
+      if (alvo.startsWith('/')) {
+        const dir = await prisma.diretorio.findFirst({
+          where: {
+            caminho: alvo,
+            OR: [
+              { dominio: { projetoId: projectId } },
+              { ip: { projetoId: projectId } }
+            ]
+          }
+        });
+        if (dir) {
+          return {
+            command: 'whatweb',
+            args: { idDiretorio: dir.id },
+            projectId
+          }
+        }
+      }
+
       const normalizado = this.normalizarAlvo(alvo);
       let dominio = await prisma.dominio.findFirst({
           where: { endereco: normalizado, projetoId: projectId }
@@ -178,7 +198,7 @@ export class CommandInterpreter {
 
       return {
           command: 'whatweb',
-          args: JSON.stringify(args),
+          args: args,
           projectId
       };
   }
