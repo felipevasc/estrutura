@@ -39,6 +39,8 @@ export async function GET() {
         telegramNumero: env.TELEGRAM_NUMERO || '',
         telegramCodigoPais: env.TELEGRAM_CODIGO_PAIS || '',
         telegramSenha: env.TELEGRAM_SENHA ? '••••••••••••••••' : '',
+        whatwebAutenticacao: env.WHATWEB_AUTENTICACAO ? '••••••••••••••••' : '',
+        whatwebTimeout: env.WHATWEB_TIMEOUT || '60',
         // Limites de Contexto da IA
         contextLimitDominio: env.CONTEXT_LIMIT_DOMINIO || '20',
         contextLimitIp: env.CONTEXT_LIMIT_IP || '20',
@@ -46,6 +48,7 @@ export async function GET() {
         contextLimitUsuario: env.CONTEXT_LIMIT_USUARIO || '20',
         contextLimitDeface: env.CONTEXT_LIMIT_DEFACE || '20',
         contextLimitPorta: env.CONTEXT_LIMIT_PORTA || '20',
+        contextLimitWhatweb: env.CONTEXT_LIMIT_WHATWEB || '20',
         takedownDiasPrevisao: env.TAKEDOWN_DIAS_PREVISAO || '5',
     };
     return NextResponse.json(clientConfig);
@@ -104,12 +107,15 @@ export async function POST(request: Request) {
             telegramNumero: 'TELEGRAM_NUMERO',
             telegramCodigoPais: 'TELEGRAM_CODIGO_PAIS',
             telegramSenha: 'TELEGRAM_SENHA',
+            whatwebAutenticacao: 'WHATWEB_AUTENTICACAO',
+            whatwebTimeout: 'WHATWEB_TIMEOUT',
             contextLimitDominio: 'CONTEXT_LIMIT_DOMINIO',
             contextLimitIp: 'CONTEXT_LIMIT_IP',
             contextLimitDiretorio: 'CONTEXT_LIMIT_DIRETORIO',
             contextLimitUsuario: 'CONTEXT_LIMIT_USUARIO',
             contextLimitDeface: 'CONTEXT_LIMIT_DEFACE',
             contextLimitPorta: 'CONTEXT_LIMIT_PORTA',
+            contextLimitWhatweb: 'CONTEXT_LIMIT_WHATWEB',
             takedownDiasPrevisao: 'TAKEDOWN_DIAS_PREVISAO',
         };
 

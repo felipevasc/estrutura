@@ -233,6 +233,20 @@ export default function Configuracoes() {
                         </Col>
                     </Row>
 
+                    <Divider orientation="left">WhatWeb</Divider>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="whatwebAutenticacao" label="Autenticação WhatWeb">
+                                <Input.Password prefix={<KeyOutlined />} placeholder="Deixe em branco para não alterar" />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="whatwebTimeout" label="Timeout do WhatWeb (segundos)">
+                                <InputNumber style={{ width: '100%' }} addonAfter="s" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+
                     <Divider orientation="left">Limites de Contexto da IA</Divider>
                     <Row gutter={16}>
                         <Col span={8}>
@@ -264,6 +278,13 @@ export default function Configuracoes() {
                         </Col>
                         <Col span={8}>
                             <Form.Item name="contextLimitDeface" label="Deface">
+                                <InputNumber prefix={<DatabaseOutlined />} style={{ width: '100%' }} />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={8}>
+                            <Form.Item name="contextLimitWhatweb" label="WhatWeb">
                                 <InputNumber prefix={<DatabaseOutlined />} style={{ width: '100%' }} />
                             </Form.Item>
                         </Col>

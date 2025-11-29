@@ -17,6 +17,7 @@ export class AiService {
     const contextLimitDiretorio = parseInt(process.env.CONTEXT_LIMIT_DIRETORIO || '20', 10);
     const contextLimitUsuario = parseInt(process.env.CONTEXT_LIMIT_USUARIO || '20', 10);
     const contextLimitDeface = parseInt(process.env.CONTEXT_LIMIT_DEFACE || '20', 10);
+    const contextLimitWhatweb = parseInt(process.env.CONTEXT_LIMIT_WHATWEB || '20', 10);
 
     const projeto = await prisma.projeto.findUnique({ where: { id: projectId } });
     if (!projeto) return null;
@@ -55,6 +56,12 @@ export class AiService {
         include: { dominio: true }
     });
 
+    const resultadosWhatweb = await prisma.whatwebResultado.findMany({
+        where: { OR: [{ dominio: { projetoId: projectId } }, { ip: { projetoId: projectId } }] },
+        take: contextLimitWhatweb,
+        include: { dominio: true, ip: true }
+    });
+
     return {
         projeto: projeto.nome,
         dominios: dominios.map(d => d.endereco),
@@ -62,7 +69,8 @@ export class AiService {
         portas: portas.map(p => `${p.ip?.endereco}:${p.numero}/${p.protocolo || 'tcp'} (${p.servico || 'unknown'})`),
         diretorios: diretorios.map(d => d.caminho),
         usuarios: usuarios.map(u => `${u.nome}@${u.ip.endereco}`),
-        deface: defaces.map(d => `URL: ${d.url}, Fonte: ${d.fonte}`)
+        deface: defaces.map(d => `URL: ${d.url}, Fonte: ${d.fonte}`),
+        whatweb: resultadosWhatweb.map(r => `${r.plugin}: ${r.valor} (${r.dominio?.endereco || r.ip?.endereco || 'alvo desconhecido'})`)
     };
   }
 
