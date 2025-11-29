@@ -22,8 +22,9 @@ const validarParametros = (tipo: FonteVazamentoTipo, parametros: Record<string, 
     return faltando;
 };
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-    const id = parseInt(params.id, 10);
+export async function PUT(request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
+    const { id: parametroId } = await contexto.params;
+    const id = parseInt(parametroId, 10);
     if (Number.isNaN(id)) {
         return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
     }
@@ -60,8 +61,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
-    const id = parseInt(params.id, 10);
+export async function DELETE(_request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
+    const { id: parametroId } = await contexto.params;
+    const id = parseInt(parametroId, 10);
     if (Number.isNaN(id)) {
         return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
     }
