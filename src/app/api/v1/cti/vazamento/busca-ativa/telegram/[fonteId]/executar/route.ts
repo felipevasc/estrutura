@@ -37,6 +37,8 @@ export async function POST(_request: Request, contexto: { params: Promise<{ font
             (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
         )
             return NextResponse.json({ error: 'Configure API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
+        if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
+            return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 
         const command = await prisma.command.create({
             data: {
