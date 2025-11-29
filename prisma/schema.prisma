@@ -39,6 +39,7 @@ model Dominio {
   ips Ip[]
   diretorios Diretorio[]
   deface Deface[]
+  whatwebResultados WhatwebResultado[]
 
   @@map("dominios")
 }
@@ -73,6 +74,7 @@ model Ip {
   portas   Porta[]
   usuarios Usuario[]
   diretorios Diretorio[]
+  whatwebResultados WhatwebResultado[]
 
   @@map("ips")
 }
@@ -225,4 +227,19 @@ model BuscaAtivaTelegram {
   atualizadoEm         DateTime        @updatedAt
 
   @@map("busca_ativa_telegram")
+}
+
+model WhatwebResultado {
+  id         Int      @id @default(autoincrement())
+  assinatura String   @unique
+  plugin     String
+  valor      String
+  dados      Json?
+  dominioId  Int?
+  dominio    Dominio? @relation(fields: [dominioId], references: [id])
+  ipId       Int?
+  ip         Ip?      @relation(fields: [ipId], references: [id])
+  criadoEm   DateTime @default(now())
+
+  @@map("whatweb_resultados")
 }
