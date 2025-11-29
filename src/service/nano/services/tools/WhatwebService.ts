@@ -72,7 +72,7 @@ export class WhatwebService extends NanoService {
     }
   }
 
-  private processarResultado(payload: ResultadoTerminal) {
+  private async processarResultado(payload: ResultadoTerminal) {
     const { id, stdout, meta, command, args } = payload;
     const { arquivoSaida, dominioId, ipId } = meta;
 
