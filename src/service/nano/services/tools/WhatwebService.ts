@@ -4,6 +4,8 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { NanoEvents } from '../../events';
 import { resolverAlvo } from './resolvedorAlvo';
+import Database from '@/database/Database';
+import { ResultadoWhatweb } from '@/database/functions/whatweb';
 
 type PayloadComando = {
   id: number;
@@ -15,6 +17,8 @@ type MetadadosWhatweb = {
   projetoId: number;
   alvo: string;
   arquivoSaida: string;
+  dominioId: number | null;
+  ipId: number | null;
 };
 
 type ResultadoTerminal = {
@@ -49,10 +53,10 @@ export class WhatwebService extends NanoService {
     const { id, args, projectId } = payload;
 
     try {
-      const { alvo } = await resolverAlvo(args);
+      const { alvo, dominio, ip } = await resolverAlvo(args);
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
       const argumentos = [`--log-json=${arquivoSaida}`, alvo];
-      const meta: MetadadosWhatweb = { projetoId: projectId, alvo, arquivoSaida };
+      const meta: MetadadosWhatweb = { projetoId: projectId, alvo, arquivoSaida, dominioId: dominio?.id ?? null, ipId: ip?.id ?? null };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
         id,
@@ -70,15 +74,17 @@ export class WhatwebService extends NanoService {
 
   private processarResultado(payload: ResultadoTerminal) {
     const { id, stdout, meta, command, args } = payload;
-    const { arquivoSaida } = meta;
+    const { arquivoSaida, dominioId, ipId } = meta;
 
     try {
       const registros = this.lerRegistros(arquivoSaida);
+      const resultados = this.extrairResultados(registros, dominioId, ipId);
+      const persistidos = await Database.criarResultadosWhatweb(resultados);
       this.removerArquivo(arquivoSaida);
 
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
         id,
-        result: registros,
+        result: persistidos,
         rawOutput: stdout,
         executedCommand: `${command} ${args.join(' ')}`,
       });
@@ -111,5 +117,26 @@ export class WhatwebService extends NanoService {
 
   private removerArquivo(caminho?: string) {
     if (caminho && fs.existsSync(caminho)) fs.unlinkSync(caminho);
+  }
+
+  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null): ResultadoWhatweb[] {
+    if (!Array.isArray(registros)) return [];
+
+    return registros.flatMap((registro) => {
+      if (!registro || typeof registro !== 'object') return [] as ResultadoWhatweb[];
+      const plugins = (registro as { plugins?: Record<string, unknown> }).plugins;
+      if (!plugins || typeof plugins !== 'object') return [] as ResultadoWhatweb[];
+
+      return Object.entries(plugins).flatMap(([plugin, valores]) => {
+        const listaValores = Array.isArray(valores) ? valores : [valores];
+        return listaValores.map((valor) => ({
+          plugin,
+          valor: typeof valor === 'string' ? valor : JSON.stringify(valor),
+          dados: valor,
+          dominioId,
+          ipId
+        }));
+      });
+    });
   }
 }
