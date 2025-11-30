@@ -7,11 +7,28 @@ const useElementoWhatweb = () => {
   const getResultados = (resultados: WhatwebResultadoResponse[], chave: string): NoCarregavel | null => {
     if (!resultados?.length) return null;
 
-    const filhos: NoCarregavel[] = resultados.map((resultado, indice) => ({
-      key: `${chave}-whatweb-${resultado.id ?? indice}-${resultado.plugin}-${resultado.valor}`,
-      title: <div>{resultado.plugin}: {resultado.valor}</div>,
-      isLeaf: true
-    }));
+    const grupos = resultados.reduce((acc, resultado) => {
+      const plugin = resultado.plugin || "Outros";
+      if (!acc[plugin]) acc[plugin] = [];
+      acc[plugin].push(resultado);
+      return acc;
+    }, {} as Record<string, WhatwebResultadoResponse[]>);
+
+    const filhos: NoCarregavel[] = Object.entries(grupos).map(([plugin, items], idx) => {
+      const subFilhos: NoCarregavel[] = items.map((item, i) => ({
+        key: `${chave}-whatweb-${plugin}-${i}-${item.valor}`,
+        title: <div>{item.valor}</div>,
+        isLeaf: true
+      }));
+
+      return {
+        key: `${chave}-whatweb-${plugin}-${idx}`,
+        title: <div>{plugin}</div>,
+        children: subFilhos,
+        className: "folder",
+        isLeaf: subFilhos.length === 0
+      };
+    });
 
     return {
       key: `${chave}-whatweb`,
