@@ -134,11 +134,25 @@ export class WhatwebService extends NanoService {
     return path.join(os.tmpdir(), `whatweb_${projetoId}_${id}_${Date.now()}.json`);
   }
 
-  private lerRegistros(caminho: string) {
+  private lerRegistros(caminho: string): any[] {
     if (!caminho || !fs.existsSync(caminho)) return [];
     const conteudo = fs.readFileSync(caminho, 'utf-8');
-    const linhas = conteudo.split('\n').map((linha) => linha.trim()).filter(Boolean);
-    return linhas.map((linha) => JSON.parse(linha));
+
+    // Tenta fazer parse do arquivo inteiro primeiro (formato JSON Array)
+    try {
+        const json = JSON.parse(conteudo);
+        return Array.isArray(json) ? json : [json];
+    } catch (e) {
+        // Se falhar, tenta ler linha a linha (formato NDJSON)
+        const linhas = conteudo.split('\n').map((linha) => linha.trim()).filter(Boolean);
+        return linhas.map((linha) => {
+            try {
+                return JSON.parse(linha);
+            } catch {
+                return null;
+            }
+        }).filter((item) => item !== null);
+    }
   }
 
   private removerArquivo(caminho?: string) {
@@ -154,15 +168,41 @@ export class WhatwebService extends NanoService {
       if (!plugins || typeof plugins !== 'object') return [] as ResultadoWhatweb[];
 
       return Object.entries(plugins).flatMap(([plugin, valores]) => {
+        // "valores" no whatweb JSON output pode ser:
+        // 1. Array de objetos: [{string: "foo", account: "bar"}, {version: "1.2"}]
+        // 2. Objeto (se for um resultado simples, mas whatweb geralmente usa array de matches)
+        // O valor do plugin é um array de "matches".
+
+        // Vamos normalizar para array
         const listaValores = Array.isArray(valores) ? valores : [valores];
-        return listaValores.map((valor) => ({
-          plugin,
-          valor: typeof valor === 'string' ? valor : JSON.stringify(valor),
-          dados: valor,
-          dominioId,
-          ipId,
-          diretorioId
-        }));
+
+        return listaValores.map((match: any) => {
+          // Cada match é um objeto com propriedades como "string", "version", "account", etc.
+          // Vamos converter para string legível para "valor"
+          // E salvar o objeto completo em "dados"
+
+          let valorString = '';
+          if (match && typeof match === 'object') {
+              if (match.string) valorString += Array.isArray(match.string) ? match.string.join(', ') : match.string;
+              if (match.version) valorString += (valorString ? ' ' : '') + `v${Array.isArray(match.version) ? match.version.join(', ') : match.version}`;
+              if (match.account) valorString += (valorString ? ' ' : '') + `Account: ${Array.isArray(match.account) ? match.account.join(', ') : match.account}`;
+              if (match.module) valorString += (valorString ? ' ' : '') + `Module: ${Array.isArray(match.module) ? match.module.join(', ') : match.module}`;
+
+              // Fallback se não tiver campos conhecidos
+              if (!valorString) valorString = JSON.stringify(match);
+          } else {
+              valorString = String(match);
+          }
+
+          return {
+            plugin,
+            valor: valorString,
+            dados: match,
+            dominioId,
+            ipId,
+            diretorioId
+          };
+        });
       });
     });
   }
