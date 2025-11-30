@@ -153,16 +153,55 @@ export class WhatwebService extends NanoService {
       const plugins = (registro as { plugins?: Record<string, unknown> }).plugins;
       if (!plugins || typeof plugins !== 'object') return [] as ResultadoWhatweb[];
 
-      return Object.entries(plugins).flatMap(([plugin, valores]) => {
-        const listaValores = Array.isArray(valores) ? valores : [valores];
-        return listaValores.map((valor) => ({
-          plugin,
-          valor: typeof valor === 'string' ? valor : JSON.stringify(valor),
-          dados: valor,
-          dominioId,
-          ipId,
-          diretorioId
-        }));
+      return Object.entries(plugins).flatMap(([plugin, rawData]) => {
+        const dataList = Array.isArray(rawData) ? rawData : [rawData];
+
+        return dataList.flatMap((dadosPlugin: unknown) => {
+          if (typeof dadosPlugin !== 'object' || dadosPlugin === null) return [];
+          const dados = dadosPlugin as Record<string, unknown>;
+
+          const results: ResultadoWhatweb[] = [];
+
+          const add = (val: string) => {
+            results.push({
+              plugin,
+              valor: val,
+              dados: dados,
+              dominioId,
+              ipId,
+              diretorioId
+            });
+          };
+
+          const priorityKeys = ['string', 'version', 'os', 'account', 'model', 'firmware', 'module', 'country'];
+          const processedKeys = new Set<string>();
+
+          priorityKeys.forEach(key => {
+            if (key in dados) {
+              processedKeys.add(key);
+              const values = dados[key];
+              const list = Array.isArray(values) ? values : [values];
+              list.forEach((v: unknown) => {
+                if (key === 'string') add(String(v));
+                else add(`${key}: ${v}`);
+              });
+            }
+          });
+
+          Object.entries(dados).forEach(([key, values]) => {
+            if (processedKeys.has(key) || key === 'name') return;
+            const list = Array.isArray(values) ? values : [values];
+            list.forEach((v: unknown) => {
+              add(`${key}: ${v}`);
+            });
+          });
+
+          if (results.length === 0) {
+            add(JSON.stringify(dados));
+          }
+
+          return results;
+        });
       });
     });
   }
