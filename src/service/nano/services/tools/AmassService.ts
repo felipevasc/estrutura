@@ -25,12 +25,18 @@ export class AmassService extends NanoService {
 
   private async processarComando(payload: any) {
     const { id, args, projectId } = payload;
-    const idDominio = args.idDominio;
-    const timeout = Number(args.timeoutMinutos || 5);
-
-    this.log(`Processando Amass para o domínio ${idDominio}`);
 
     try {
+      const dados = typeof args === 'string' ? JSON.parse(args) : args ?? {};
+      const idDominio = Number(dados.idDominio);
+      const timeout = Number(dados.timeoutMinutos ?? 5);
+
+      this.log(`Processando Amass para o domínio ${idDominio}`);
+
+      if (!Number.isInteger(idDominio) || idDominio <= 0) {
+        throw new Error('Domínio não informado ou inválido.');
+      }
+
       const op = await prisma.dominio.findFirst({
         where: { id: Number(idDominio) }
       });

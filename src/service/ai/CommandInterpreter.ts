@@ -41,7 +41,7 @@ export class CommandInterpreter {
 
       return {
           command: 'amass',
-          args: JSON.stringify({ idDominio: dbDomain.id }),
+          args: { idDominio: dbDomain.id },
           projectId
       };
   }
