@@ -68,13 +68,16 @@ export class WhatwebService extends NanoService {
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
       const autenticacao = process.env.WHATWEB_AUTENTICACAO?.trim();
       const timeout = Number(process.env.WHATWEB_TIMEOUT || '60');
+
       const argumentos = [`--log-json=${arquivoSaida}`];
+
       if (autenticacao) argumentos.push(`--header=Authorization: ${autenticacao}`);
       if (timeout > 0) {
         argumentos.push(`--open-timeout=${timeout}`);
         argumentos.push(`--read-timeout=${timeout}`);
       }
       argumentos.push(alvo);
+
       const meta: MetadadosWhatweb = {
         projetoId: projectId,
         alvo,
@@ -136,13 +139,37 @@ export class WhatwebService extends NanoService {
 
   private lerRegistros(caminho: string) {
     if (!caminho || !fs.existsSync(caminho)) return [];
-    const conteudo = fs.readFileSync(caminho, 'utf-8');
-    const linhas = conteudo.split('\n').map((linha) => linha.trim()).filter(Boolean);
-    return linhas.map((linha) => JSON.parse(linha));
+    try {
+        const conteudo = fs.readFileSync(caminho, 'utf-8');
+        // Tenta parsear como array JSON único
+        try {
+            const json = JSON.parse(conteudo);
+            if (Array.isArray(json)) return json;
+        } catch {
+            // Ignora e tenta linha por linha
+        }
+
+        const linhas = conteudo.split('\n').map((linha) => linha.trim()).filter(Boolean);
+        return linhas.map((linha) => {
+            try {
+                return JSON.parse(linha);
+            } catch {
+                return null;
+            }
+        }).filter(Boolean);
+    } catch {
+        return [];
+    }
   }
 
   private removerArquivo(caminho?: string) {
-    if (caminho && fs.existsSync(caminho)) fs.unlinkSync(caminho);
+    if (caminho && fs.existsSync(caminho)) {
+        try {
+            fs.unlinkSync(caminho);
+        } catch {
+            // Ignora erro de remoção
+        }
+    }
   }
 
   private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null, diretorioId: number | null): ResultadoWhatweb[] {
@@ -157,7 +184,7 @@ export class WhatwebService extends NanoService {
         const listaValores = Array.isArray(valores) ? valores : [valores];
         return listaValores.map((valor) => ({
           plugin,
-          valor: typeof valor === 'string' ? valor : JSON.stringify(valor),
+          valor: this.extrairValorLegivel(valor),
           dados: valor,
           dominioId,
           ipId,
@@ -165,5 +192,30 @@ export class WhatwebService extends NanoService {
         }));
       });
     });
+  }
+
+  private extrairValorLegivel(valor: unknown): string {
+    if (typeof valor === 'string') return valor;
+    if (typeof valor !== 'object' || valor === null) return String(valor);
+
+    const v = valor as Record<string, unknown>;
+    const chavesPrioritarias = ['string', 'version', 'os', 'account', 'model', 'firmware', 'module', 'filepath'];
+
+    const partes: string[] = [];
+    for (const chave of chavesPrioritarias) {
+      if (chave in v && v[chave]) {
+        const val = v[chave];
+        if (typeof val === 'string' || typeof val === 'number') {
+             partes.push(String(val));
+        }
+      }
+    }
+
+    if (partes.length > 0) return partes.join(' ');
+
+    const valoresString = Object.values(v).filter(val => typeof val === 'string' && val.trim().length > 0);
+    if (valoresString.length > 0) return valoresString.join(' ');
+
+    return JSON.stringify(valor);
   }
 }
