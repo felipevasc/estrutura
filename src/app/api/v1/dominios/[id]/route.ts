@@ -15,7 +15,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const ret = await prisma.dominio.findFirst({
         where: { id: Number(id) },
         include: {
-            whatwebResultados: true,
             ips: includeIp,
             subDominios: {
                 include: {
@@ -40,6 +39,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
             }
         }
     });
+    console.log("AAAA", ret, "-------")
     return NextResponse.json(ret);
 }
 
