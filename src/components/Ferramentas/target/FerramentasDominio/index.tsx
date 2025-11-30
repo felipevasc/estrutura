@@ -16,6 +16,7 @@ import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfigur
 type EstadoModal = {
     comando: string;
     titulo: string;
+    descricao?: string;
     argsBase: Record<string, unknown>;
     campos: CampoConfiguracao[];
     valores: Record<string, unknown>;
@@ -26,7 +27,7 @@ const FerramentasDominio = () => {
     const { selecaoTarget, projeto } = useContext(StoreContext);
     const [modal, definirModal] = useState<EstadoModal | null>(null);
 
-    const abrirModal = (configuracao: EstadoModal) => definirModal(configuracao);
+    const abrirModal = (configuracao: EstadoModal) => definirModal({ ...configuracao, valores: { ...configuracao.valores } });
 
     const alterarValor = (chave: string, valor: unknown) => {
         definirModal((atual) => atual ? { ...atual, valores: { ...atual.valores, [chave]: valor } } : null);
@@ -78,6 +79,7 @@ const FerramentasDominio = () => {
     const modalAmass = () => abrirModal({
         comando: "amass",
         titulo: "Configurar Amass",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero" }],
         valores: { timeoutMinutos: 5 }
@@ -86,6 +88,7 @@ const FerramentasDominio = () => {
     const modalSubfinder = () => abrirModal({
         comando: "subfinder",
         titulo: "Configurar Subfinder",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [
             { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano" },
@@ -97,6 +100,7 @@ const FerramentasDominio = () => {
     const modalWhatweb = () => abrirModal({
         comando: "whatweb",
         titulo: "Configurar WhatWeb",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [
             { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
@@ -110,6 +114,7 @@ const FerramentasDominio = () => {
     const modalFindomain = () => abrirModal({
         comando: "findomain",
         titulo: "Configurar Findomain",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [
             { chave: "threads", rotulo: "Threads", tipo: "numero" },
@@ -122,6 +127,7 @@ const FerramentasDominio = () => {
     const modalNslookup = () => abrirModal({
         comando: "nslookup",
         titulo: "Configurar NsLookup",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto" }],
         valores: { servidorDns: "8.8.8.8" }
@@ -130,6 +136,7 @@ const FerramentasDominio = () => {
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDominio: idDominio(), tipoFuzz } : { idDominio: idDominio() },
         campos: [
             { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
@@ -141,6 +148,7 @@ const FerramentasDominio = () => {
     const modalGobuster = (tipoFuzz?: string) => abrirModal({
         comando: "gobuster",
         titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDominio: idDominio(), tipoFuzz } : { idDominio: idDominio() },
         campos: [
             { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
@@ -244,6 +252,7 @@ const FerramentasDominio = () => {
             <ModalConfiguracaoFerramenta
                 aberto={!!modal}
                 titulo={modal?.titulo ?? ""}
+                descricao={modal?.descricao}
                 campos={modal?.campos ?? []}
                 valores={modal?.valores ?? {}}
                 aoAlterar={alterarValor}

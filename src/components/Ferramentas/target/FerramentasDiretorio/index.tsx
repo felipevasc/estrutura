@@ -9,6 +9,7 @@ import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfigur
 type EstadoModal = {
     comando: string;
     titulo: string;
+    descricao?: string;
     argsBase: Record<string, unknown>;
     campos: CampoConfiguracao[];
     valores: Record<string, unknown>;
@@ -19,7 +20,7 @@ const FerramentasDiretorio = () => {
     const { selecaoTarget, projeto } = useContext(StoreContext);
     const [modal, definirModal] = useState<EstadoModal | null>(null);
 
-    const abrirModal = (configuracao: EstadoModal) => definirModal(configuracao);
+    const abrirModal = (configuracao: EstadoModal) => definirModal({ ...configuracao, valores: { ...configuracao.valores } });
 
     const alterarValor = (chave: string, valor: unknown) => {
         definirModal((atual) => atual ? { ...atual, valores: { ...atual.valores, [chave]: valor } } : null);
@@ -70,6 +71,7 @@ const FerramentasDiretorio = () => {
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDiretorio: idDiretorio(), tipoFuzz } : { idDiretorio: idDiretorio() },
         campos: [
             { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
@@ -81,6 +83,7 @@ const FerramentasDiretorio = () => {
     const modalGobuster = (tipoFuzz?: string) => abrirModal({
         comando: "gobuster",
         titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDiretorio: idDiretorio(), tipoFuzz } : { idDiretorio: idDiretorio() },
         campos: [
             { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
@@ -92,6 +95,7 @@ const FerramentasDiretorio = () => {
     const modalWhatweb = () => abrirModal({
         comando: "whatweb",
         titulo: "Configurar WhatWeb",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDiretorio: idDiretorio() },
         campos: [
             { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
@@ -157,6 +161,7 @@ const FerramentasDiretorio = () => {
             <ModalConfiguracaoFerramenta
                 aberto={!!modal}
                 titulo={modal?.titulo ?? ""}
+                descricao={modal?.descricao}
                 campos={modal?.campos ?? []}
                 valores={modal?.valores ?? {}}
                 aoAlterar={alterarValor}

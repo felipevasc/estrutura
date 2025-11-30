@@ -16,6 +16,7 @@ import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfigur
 type EstadoModal = {
     comando: string;
     titulo: string;
+    descricao?: string;
     argsBase: Record<string, unknown>;
     campos: CampoConfiguracao[];
     valores: Record<string, unknown>;
@@ -26,7 +27,7 @@ const FerramentasIp = () => {
     const { selecaoTarget, projeto } = useContext(StoreContext);
     const [modal, definirModal] = useState<EstadoModal | null>(null);
 
-    const abrirModal = (configuracao: EstadoModal) => definirModal(configuracao);
+    const abrirModal = (configuracao: EstadoModal) => definirModal({ ...configuracao, valores: { ...configuracao.valores } });
 
     const alterarValor = (chave: string, valor: unknown) => {
         definirModal((atual) => atual ? { ...atual, valores: { ...atual.valores, [chave]: valor } } : null);
@@ -77,6 +78,7 @@ const FerramentasIp = () => {
     const modalNmap = () => abrirModal({
         comando: "nmap",
         titulo: "Configurar Nmap",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
         campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto" }],
         valores: { faixaPortas: "1-9999" }
@@ -85,6 +87,7 @@ const FerramentasIp = () => {
     const modalRustscan = () => abrirModal({
         comando: "rustscan",
         titulo: "Configurar Rustscan",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
         campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto" }],
         valores: { faixaPortas: "1-65535" }
@@ -93,6 +96,7 @@ const FerramentasIp = () => {
     const modalWhatweb = () => abrirModal({
         comando: "whatweb",
         titulo: "Configurar WhatWeb",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
         campos: [
             { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
@@ -106,6 +110,7 @@ const FerramentasIp = () => {
     const modalEnum4linux = () => abrirModal({
         comando: "enum4linux",
         titulo: "Configurar Enum4linux",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
         campos: [{ chave: "opcoes", rotulo: "Opções", tipo: "texto" }],
         valores: { opcoes: "-U -r" }
@@ -114,6 +119,7 @@ const FerramentasIp = () => {
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idIp: idIp(), tipoFuzz } : { idIp: idIp() },
         campos: [
             { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
@@ -125,6 +131,7 @@ const FerramentasIp = () => {
     const modalGobuster = (tipoFuzz?: string) => abrirModal({
         comando: "gobuster",
         titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idIp: idIp(), tipoFuzz } : { idIp: idIp() },
         campos: [
             { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
@@ -218,6 +225,7 @@ const FerramentasIp = () => {
             <ModalConfiguracaoFerramenta
                 aberto={!!modal}
                 titulo={modal?.titulo ?? ""}
+                descricao={modal?.descricao}
                 campos={modal?.campos ?? []}
                 valores={modal?.valores ?? {}}
                 aoAlterar={alterarValor}

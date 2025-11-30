@@ -12,6 +12,7 @@ type CampoConfiguracao = {
 type Props = {
     aberto: boolean;
     titulo: string;
+    descricao?: string;
     campos: CampoConfiguracao[];
     valores: Record<string, unknown>;
     aoAlterar: (chave: string, valor: unknown) => void;
@@ -19,7 +20,7 @@ type Props = {
     aoCancelar: () => void;
 };
 
-const ModalConfiguracaoFerramenta = ({ aberto, titulo, campos, valores, aoAlterar, aoConfirmar, aoCancelar }: Props) => {
+const ModalConfiguracaoFerramenta = ({ aberto, titulo, descricao, campos, valores, aoAlterar, aoConfirmar, aoCancelar }: Props) => {
     const renderizarCampo = (campo: CampoConfiguracao) => {
         if (campo.tipo === "numero") {
             return <InputNumber style={{ width: "100%" }} value={valores[campo.chave] as number | undefined} onChange={(valor) => aoAlterar(campo.chave, valor ?? 0)} min={0} />;
@@ -32,6 +33,7 @@ const ModalConfiguracaoFerramenta = ({ aberto, titulo, campos, valores, aoAltera
 
     return (
         <Modal title={titulo} open={aberto} onOk={aoConfirmar} onCancel={aoCancelar} okText="Executar" cancelText="Cancelar">
+            {descricao && <p style={{ marginBottom: 16 }}>{descricao}</p>}
             {campos.map((campo) => (
                 <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
                     <span>{campo.rotulo}</span>
