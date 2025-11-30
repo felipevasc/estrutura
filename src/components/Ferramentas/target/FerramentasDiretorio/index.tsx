@@ -67,16 +67,53 @@ const FerramentasDiretorio = () => {
         userAgent: "",
         autenticacao: "",
     };
+    const camposWhatweb: CampoConfiguracao[] = [
+        {
+            chave: "timeout",
+            rotulo: "Timeout (segundos)",
+            tipo: "numero",
+            detalhe: "Tempo máximo, em segundos, para aguardar a resposta de cada requisição do WhatWeb.",
+        },
+        {
+            chave: "agressividade",
+            rotulo: "Agressividade",
+            tipo: "texto",
+            detalhe: "Nível de intensidade (1-5) que define quantas técnicas de fingerprint serão usadas.",
+        },
+        {
+            chave: "userAgent",
+            rotulo: "User Agent",
+            tipo: "texto",
+            detalhe: "Identificador de cliente enviado nas requisições; personalize para simular navegadores ou bots.",
+        },
+        {
+            chave: "autenticacao",
+            rotulo: "Autenticação",
+            tipo: "texto",
+            detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
+        }
+    ];
+    const camposWordlist: CampoConfiguracao[] = [
+        {
+            chave: "wordlist",
+            rotulo: "Wordlist",
+            tipo: "texto",
+            detalhe: "Caminho absoluto ou relativo da lista de palavras usada durante o fuzzing.",
+        },
+        {
+            chave: "extensoes",
+            rotulo: "Extensões",
+            tipo: "texto",
+            detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
+        }
+    ];
 
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDiretorio: idDiretorio(), tipoFuzz } : { idDiretorio: idDiretorio() },
-        campos: [
-            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
-        ],
+        campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
     });
 
@@ -85,10 +122,7 @@ const FerramentasDiretorio = () => {
         titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDiretorio: idDiretorio(), tipoFuzz } : { idDiretorio: idDiretorio() },
-        campos: [
-            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
-        ],
+        campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
     });
 
@@ -97,12 +131,7 @@ const FerramentasDiretorio = () => {
         titulo: "Configurar WhatWeb",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDiretorio: idDiretorio() },
-        campos: [
-            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
-            { chave: "agressividade", rotulo: "Agressividade", tipo: "texto" },
-            { chave: "userAgent", rotulo: "User Agent", tipo: "texto" },
-            { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto" }
-        ],
+        campos: camposWhatweb,
         valores: valoresWhatweb
     });
 

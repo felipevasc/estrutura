@@ -1,9 +1,10 @@
 import { ReactNode, useContext, useMemo, useState } from "react";
-import { Empty, Modal, notification } from "antd";
+import { Empty, notification } from "antd";
 import { BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import { DescricaoGrupo, InspectorBody, ItemAcao, TituloGrupo } from "./styles";
+import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "@/components/Ferramentas/target/ModalConfiguracaoFerramenta";
 
 type AlvoSelecionado = {
     id: string | number;
@@ -19,6 +20,21 @@ type AcaoDisponivel = {
     gerarParametros: (alvo: AlvoSelecionado) => Record<string, unknown>;
     icone: ReactNode;
 };
+
+type EstadoModal = {
+    comando: string;
+    titulo: string;
+    descricao?: string;
+    argsBase: Record<string, unknown>;
+    campos: CampoConfiguracao[];
+    valores: Record<string, unknown>;
+};
+
+const tituloModal = (titulo: string) => `Configurar ${titulo}`;
+
+const valoresWhatweb = { timeout: 60, agressividade: "1", userAgent: "", autenticacao: "" };
+const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
+const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
 
 export type GrupoAcao = {
     chave: string;
@@ -236,6 +252,268 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
     ],
 };
 
+const descricaoModal = "Confirme a execução e ajuste os parâmetros conforme necessário.";
+
+const camposWhatweb: CampoConfiguracao[] = [
+    {
+        chave: "timeout",
+        rotulo: "Timeout (segundos)",
+        tipo: "numero",
+        detalhe: "Tempo máximo, em segundos, para aguardar a resposta de cada requisição do WhatWeb.",
+    },
+    {
+        chave: "agressividade",
+        rotulo: "Agressividade",
+        tipo: "texto",
+        detalhe: "Nível de intensidade (1-5) que define quantas técnicas de fingerprint serão usadas.",
+    },
+    {
+        chave: "userAgent",
+        rotulo: "User Agent",
+        tipo: "texto",
+        detalhe: "Identificador de cliente enviado nas requisições; personalize para simular navegadores ou bots.",
+    },
+    {
+        chave: "autenticacao",
+        rotulo: "Autenticação",
+        tipo: "texto",
+        detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
+    },
+];
+
+const camposWordlist: CampoConfiguracao[] = [
+    {
+        chave: "wordlist",
+        rotulo: "Wordlist",
+        tipo: "texto",
+        detalhe: "Caminho absoluto ou relativo da lista de palavras usada durante o fuzzing.",
+    },
+    {
+        chave: "extensoes",
+        rotulo: "Extensões",
+        tipo: "texto",
+        detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
+    },
+];
+
+const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModal | null => {
+    const id = alvo.id.toString();
+    if (acao.chave === "amass") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero", detalhe: "Tempo máximo, em minutos, antes de interromper a execução do Amass." }],
+            valores: { timeoutMinutos: 5 },
+        };
+    }
+    if (acao.chave === "subfinder") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [
+                { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano", detalhe: "Ativa todas as fontes disponíveis no Subfinder para ampliar a enumeração." },
+                { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano", detalhe: "Reduz a verbosidade do Subfinder para manter apenas saídas essenciais." },
+            ],
+            valores: { todasFontes: true, modoSilencioso: true },
+        };
+    }
+    if (acao.chave === "whatwebDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: camposWhatweb,
+            valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "nslookup") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto", detalhe: "Servidor que responderá às consultas; use um IP ou hostname como 8.8.8.8." }],
+            valores: { servidorDns: "8.8.8.8" },
+        };
+    }
+    if (acao.chave === "ffufDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "ffufArquivosDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterArquivosDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "ffufIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "ffufArquivosIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterArquivosIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "ffufDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "ffufArquivosDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterArquivosDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "whatwebDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: camposWhatweb,
+            valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "nmap") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto", detalhe: "Intervalo ou lista de portas a serem varridas, como 1-9999 ou 80,443." }],
+            valores: { faixaPortas: "1-9999" },
+        };
+    }
+    if (acao.chave === "rustscan") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto", detalhe: "Intervalo ou lista de portas a serem testadas, como 1-65535 ou 22,443,8080." }],
+            valores: { faixaPortas: "1-65535" },
+        };
+    }
+    if (acao.chave === "whatwebIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: camposWhatweb,
+            valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "enum4linux") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: [{ chave: "opcoes", rotulo: "Opções", tipo: "texto", detalhe: "Flags adicionais passadas direto ao enum4linux; combine-as conforme a enumeração desejada, ex: -U -r." }],
+            valores: { opcoes: "-U -r" },
+        };
+    }
+    return null;
+};
+
 export const gruposPorAlvo = (tipoAlvo?: string | null) => gruposAcoes.filter((grupo) =>
     (acoesPorGrupo[grupo.chave] || []).some((acao) => !tipoAlvo || acao.tiposAlvo.includes(tipoAlvo)),
 );
@@ -248,7 +526,7 @@ type PropsAcoes = {
 const InspectorAcoes = ({ alvo, grupoAtivo }: PropsAcoes) => {
     const { projeto } = useContext(StoreContext);
     const api = useApi();
-    const [modalVisivel, definirModalVisivel] = useState(false);
+    const [modal, definirModal] = useState<EstadoModal | null>(null);
     const [acaoSelecionada, definirAcaoSelecionada] = useState<AcaoDisponivel | null>(null);
 
     const acoesDisponiveis = useMemo(() => {
@@ -274,17 +552,29 @@ const InspectorAcoes = ({ alvo, grupoAtivo }: PropsAcoes) => {
         );
     }
 
-    const abrirConfirmacao = (acao: AcaoDisponivel) => {
-        definirAcaoSelecionada(acao);
-        definirModalVisivel(true);
+    const abrirConfiguracao = (acao: AcaoDisponivel) => {
+        if (!alvo) return;
+        const configuracao = criarModalAcao(acao, alvo);
+        if (configuracao) {
+            definirAcaoSelecionada(acao);
+            definirModal(configuracao);
+        }
+    };
+
+    const alterarValor = (chave: string, valor: unknown) => {
+        definirModal((atual) => atual ? { ...atual, valores: { ...atual.valores, [chave]: valor } } : null);
+    };
+
+    const fecharModal = () => {
+        definirModal(null);
+        definirAcaoSelecionada(null);
     };
 
     const executarAcao = async () => {
         const projetoAtual = projeto?.get();
-        if (acaoSelecionada && projetoAtual && alvo) {
-            const parametros = acaoSelecionada.gerarParametros(alvo);
+        if (acaoSelecionada && projetoAtual && modal) {
             try {
-                await api.queue.addCommand(acaoSelecionada.comando, parametros, projetoAtual.id);
+                await api.queue.addCommand(acaoSelecionada.comando, { ...modal.argsBase, ...modal.valores }, projetoAtual.id);
                 notification.success({
                     message: "Comando iniciado",
                     description: `${acaoSelecionada.comando} adicionado à fila.`,
@@ -298,8 +588,7 @@ const InspectorAcoes = ({ alvo, grupoAtivo }: PropsAcoes) => {
                 });
             }
         }
-        definirModalVisivel(false);
-        definirAcaoSelecionada(null);
+        fecharModal();
     };
 
     return (
@@ -315,7 +604,7 @@ const InspectorAcoes = ({ alvo, grupoAtivo }: PropsAcoes) => {
             )}
 
             {acoesDisponiveis.map((acao) => (
-                <ItemAcao key={acao.chave} onClick={() => abrirConfirmacao(acao)}>
+                <ItemAcao key={acao.chave} onClick={() => abrirConfiguracao(acao)}>
                     <div className="info">
                         <strong>{acao.titulo}</strong>
                         <span>{acao.descricao}</span>
@@ -324,16 +613,16 @@ const InspectorAcoes = ({ alvo, grupoAtivo }: PropsAcoes) => {
                 </ItemAcao>
             ))}
 
-            <Modal
-                title="Confirmar Execução"
-                open={modalVisivel}
-                onOk={executarAcao}
-                onCancel={() => definirModalVisivel(false)}
-                okText="Executar"
-                cancelText="Cancelar"
-            >
-                <p>Executar <strong>{acaoSelecionada?.titulo}</strong> neste alvo?</p>
-            </Modal>
+            <ModalConfiguracaoFerramenta
+                aberto={!!modal}
+                titulo={modal?.titulo ?? ""}
+                descricao={modal?.descricao}
+                campos={modal?.campos ?? []}
+                valores={modal?.valores ?? {}}
+                aoAlterar={alterarValor}
+                aoCancelar={fecharModal}
+                aoConfirmar={executarAcao}
+            />
         </InspectorBody>
     );
 };

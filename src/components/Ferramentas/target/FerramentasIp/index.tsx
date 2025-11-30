@@ -74,13 +74,77 @@ const FerramentasIp = () => {
 
     const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
     const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
+    const camposWhatweb: CampoConfiguracao[] = [
+        {
+            chave: "timeout",
+            rotulo: "Timeout (segundos)",
+            tipo: "numero",
+            detalhe: "Tempo máximo, em segundos, para aguardar a resposta de cada requisição do WhatWeb.",
+        },
+        {
+            chave: "agressividade",
+            rotulo: "Agressividade",
+            tipo: "texto",
+            detalhe: "Nível de intensidade (1-5) que define quantas técnicas de fingerprint serão usadas.",
+        },
+        {
+            chave: "userAgent",
+            rotulo: "User Agent",
+            tipo: "texto",
+            detalhe: "Identificador de cliente enviado nas requisições; personalize para simular navegadores ou bots.",
+        },
+        {
+            chave: "autenticacao",
+            rotulo: "Autenticação",
+            tipo: "texto",
+            detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
+        }
+    ];
+    const camposWordlist: CampoConfiguracao[] = [
+        {
+            chave: "wordlist",
+            rotulo: "Wordlist",
+            tipo: "texto",
+            detalhe: "Caminho absoluto ou relativo da lista de palavras usada durante o fuzzing.",
+        },
+        {
+            chave: "extensoes",
+            rotulo: "Extensões",
+            tipo: "texto",
+            detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
+        }
+    ];
+    const camposFaixaNmap: CampoConfiguracao[] = [
+        {
+            chave: "faixaPortas",
+            rotulo: "Faixa de portas",
+            tipo: "texto",
+            detalhe: "Intervalo ou lista de portas a serem varridas, como 1-9999 ou 80,443.",
+        }
+    ];
+    const camposFaixaRustscan: CampoConfiguracao[] = [
+        {
+            chave: "faixaPortas",
+            rotulo: "Faixa de portas",
+            tipo: "texto",
+            detalhe: "Intervalo ou lista de portas a serem testadas, como 1-65535 ou 22,443,8080.",
+        }
+    ];
+    const camposEnum4linux: CampoConfiguracao[] = [
+        {
+            chave: "opcoes",
+            rotulo: "Opções",
+            tipo: "texto",
+            detalhe: "Flags adicionais passadas direto ao enum4linux; combine-as conforme a enumeração desejada, ex: -U -r.",
+        }
+    ];
 
     const modalNmap = () => abrirModal({
         comando: "nmap",
         titulo: "Configurar Nmap",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
-        campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto" }],
+        campos: camposFaixaNmap,
         valores: { faixaPortas: "1-9999" }
     });
 
@@ -89,7 +153,7 @@ const FerramentasIp = () => {
         titulo: "Configurar Rustscan",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
-        campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto" }],
+        campos: camposFaixaRustscan,
         valores: { faixaPortas: "1-65535" }
     });
 
@@ -98,12 +162,7 @@ const FerramentasIp = () => {
         titulo: "Configurar WhatWeb",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
-        campos: [
-            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
-            { chave: "agressividade", rotulo: "Agressividade", tipo: "texto" },
-            { chave: "userAgent", rotulo: "User Agent", tipo: "texto" },
-            { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto" }
-        ],
+        campos: camposWhatweb,
         valores: valoresWhatweb
     });
 
@@ -112,7 +171,7 @@ const FerramentasIp = () => {
         titulo: "Configurar Enum4linux",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idIp: idIp() },
-        campos: [{ chave: "opcoes", rotulo: "Opções", tipo: "texto" }],
+        campos: camposEnum4linux,
         valores: { opcoes: "-U -r" }
     });
 
@@ -121,10 +180,7 @@ const FerramentasIp = () => {
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idIp: idIp(), tipoFuzz } : { idIp: idIp() },
-        campos: [
-            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
-        ],
+        campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
     });
 
@@ -133,10 +189,7 @@ const FerramentasIp = () => {
         titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idIp: idIp(), tipoFuzz } : { idIp: idIp() },
-        campos: [
-            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
-        ],
+        campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
     });
 
