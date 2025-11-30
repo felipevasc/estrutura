@@ -4,4 +4,5 @@ export type WhatwebResultadoResponse = {
     valor: string;
     dados?: unknown;
     diretorioId?: number | null;
+    portaId?: number | null;
 };

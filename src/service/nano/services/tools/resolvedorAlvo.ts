@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 
 type Dominio = Prisma.DominioGetPayload<{ select: { id: true; endereco: true } }>;
 type Ip = Prisma.IpGetPayload<{ select: { id: true; endereco: true } }>;
+type Porta = Prisma.PortaGetPayload<{ select: { id: true; numero: true; servico: true } }>;
 type DiretorioComRelacionamentos = Prisma.DiretorioGetPayload<{
   select: {
     id: true;
@@ -15,6 +16,7 @@ type DiretorioComRelacionamentos = Prisma.DiretorioGetPayload<{
 export type AlvoResolvido = {
   dominio: Dominio | null;
   ip: Ip | null;
+  porta: Porta | null;
   alvo: string;
   caminhoBase: string;
 };
@@ -23,6 +25,19 @@ export const resolverAlvo = async (args: Record<string, unknown>): Promise<AlvoR
   const idDiretorio = extrairNumero(args.idDiretorio);
   const idDominio = extrairNumero(args.idDominio);
   const idIp = extrairNumero(args.idIp);
+  const idPorta = extrairNumero(args.idPorta);
+
+  const porta = idPorta
+    ? await prisma.porta.findUnique({
+        where: { id: idPorta },
+        select: {
+          id: true,
+          numero: true,
+          servico: true,
+          ip: { select: { id: true, endereco: true } }
+        }
+      })
+    : null;
 
   const diretorio = idDiretorio
     ? await prisma.diretorio.findUnique({
@@ -30,8 +45,8 @@ export const resolverAlvo = async (args: Record<string, unknown>): Promise<AlvoR
         select: {
           id: true,
           caminho: true,
-          dominio: { select: { id: true, endereco: true } },
-          ip: { select: { id: true, endereco: true } }
+          dominio: { select: { id: true; endereco: true } },
+          ip: { select: { id: true; endereco: true } }
         }
       })
     : null;
@@ -42,13 +57,29 @@ export const resolverAlvo = async (args: Record<string, unknown>): Promise<AlvoR
       ? await prisma.dominio.findUnique({ select: { id: true, endereco: true }, where: { id: idDominio } })
       : null;
 
-  const ip = diretorio?.ip
-    ? diretorio.ip
-    : idIp
-      ? await prisma.ip.findUnique({ select: { id: true, endereco: true }, where: { id: idIp } })
-      : null;
+  const ip = porta?.ip
+    ? porta.ip
+    : diretorio?.ip
+      ? diretorio.ip
+      : idIp
+        ? await prisma.ip.findUnique({ select: { id: true, endereco: true }, where: { id: idIp } })
+        : null;
 
   if (!dominio && !ip) throw new Error('Alvo não encontrado');
+
+  // Se for porta, construímos o alvo explicitamente
+  if (porta && ip) {
+     const svc = porta.servico?.toLowerCase() || '';
+     const isHttps = svc.includes('https') || svc.includes('ssl') || porta.numero === 443;
+     const proto = isHttps ? 'https' : 'http';
+     return {
+         dominio: null,
+         ip,
+         porta: { id: porta.id, numero: porta.numero, servico: porta.servico },
+         alvo: `${proto}://${ip.endereco}:${porta.numero}`,
+         caminhoBase: ''
+     };
+  }
 
   const base = dominio ? dominio.endereco : ip?.endereco ?? '';
   if (!base) throw new Error('Alvo inválido');
@@ -58,7 +89,7 @@ export const resolverAlvo = async (args: Record<string, unknown>): Promise<AlvoR
   const endereco = enderecoBruto.startsWith('http://') ? enderecoBruto.replace('http://', 'https://') : enderecoBruto;
   const alvo = caminhoBase ? `${endereco}${caminhoBase}` : endereco;
 
-  return { dominio, ip, alvo, caminhoBase };
+  return { dominio, ip, porta: null, alvo, caminhoBase };
 };
 
 const extrairNumero = (valor: unknown) => {

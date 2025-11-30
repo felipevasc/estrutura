@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Modal, Form, Input, Button, Alert, Spin, InputNumber, Divider, Row, Col } from 'antd';
+import { Modal, Form, Input, Button, Alert, Spin, InputNumber, Divider, Row, Col, Select } from 'antd';
 import { KeyOutlined, IdcardOutlined, RobotOutlined, DatabaseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import StoreContext from '@/store';
 import useApi from '@/api';
@@ -243,6 +243,24 @@ export default function Configuracoes() {
                         <Col span={12}>
                             <Form.Item name="whatwebTimeout" label="Timeout do WhatWeb (segundos)">
                                 <InputNumber style={{ width: '100%' }} addonAfter="s" />
+                            </Form.Item>
+                        </Col>
+                    </Row>
+                    <Row gutter={16}>
+                        <Col span={12}>
+                            <Form.Item name="whatwebAggression" label="Nível de Agressividade">
+                                <Select
+                                    options={[
+                                        { value: '1', label: '1 - Discreto (Stealthy)' },
+                                        { value: '3', label: '3 - Agressivo' },
+                                        { value: '4', label: '4 - Pesado (Heavy)' },
+                                    ]}
+                                />
+                            </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                            <Form.Item name="whatwebUserAgent" label="User Agent Personalizado">
+                                <Input prefix={<RobotOutlined />} placeholder="Padrão do WhatWeb se vazio" />
                             </Form.Item>
                         </Col>
                     </Row>

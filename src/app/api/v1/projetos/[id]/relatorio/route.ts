@@ -14,7 +14,7 @@ export async function GET(
     }
 
     try {
-        const [dominios, ips, diretorios] = await Promise.all([
+        const [dominios, ips, diretorios, whatwebResultados] = await Promise.all([
             prisma.dominio.findMany({
                 where: { projetoId: projectId },
                 include: { ips: true }
@@ -31,6 +31,23 @@ export async function GET(
                     ]
                 },
                 include: { dominio: true, ip: true }
+            }),
+            prisma.whatwebResultado.findMany({
+                where: {
+                    OR: [
+                        { dominio: { projetoId: projectId } },
+                        { ip: { projetoId: projectId } },
+                        { diretorio: { dominio: { projetoId: projectId } } },
+                        { diretorio: { ip: { projetoId: projectId } } },
+                        { porta: { ip: { projetoId: projectId } } }
+                    ]
+                },
+                include: {
+                    dominio: true,
+                    ip: true,
+                    porta: { include: { ip: true } },
+                    diretorio: { include: { dominio: true, ip: true } }
+                }
             })
         ]);
 
@@ -82,6 +99,21 @@ export async function GET(
                 dominio: d.dominio?.endereco || null,
                 ip: d.ip?.endereco || null,
                 criadoEm: d.createdAt.toISOString()
+            });
+        });
+
+        // Processar WhatWeb
+        whatwebResultados.forEach(w => {
+            items.push({
+                id: `ww-${w.id}`,
+                tipo: 'WhatWeb',
+                valor: `${w.plugin}: ${w.valor}`,
+                plugin: w.plugin,
+                pluginValor: w.valor,
+                dominio: w.dominio?.endereco || w.diretorio?.dominio?.endereco || null,
+                ip: w.ip?.endereco || w.porta?.ip?.endereco || w.diretorio?.ip?.endereco || null,
+                porta: w.porta?.numero || null,
+                criadoEm: w.criadoEm.toISOString()
             });
         });
 
