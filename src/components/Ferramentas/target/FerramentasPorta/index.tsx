@@ -58,17 +58,39 @@ const FerramentasPorta = () => {
 
     const idPorta = () => selecaoTarget?.get()?.id?.toString() ?? "0";
 
+    const camposWhatweb: CampoConfiguracao[] = [
+        {
+            chave: "timeout",
+            rotulo: "Timeout (segundos)",
+            tipo: "numero",
+            detalhe: "Tempo máximo, em segundos, para aguardar a resposta de cada requisição do WhatWeb.",
+        },
+        {
+            chave: "agressividade",
+            rotulo: "Agressividade",
+            tipo: "texto",
+            detalhe: "Nível de intensidade (1-5) que define quantas técnicas de fingerprint serão usadas.",
+        },
+        {
+            chave: "userAgent",
+            rotulo: "User Agent",
+            tipo: "texto",
+            detalhe: "Identificador de cliente enviado nas requisições; personalize para simular navegadores ou bots.",
+        },
+        {
+            chave: "autenticacao",
+            rotulo: "Autenticação",
+            tipo: "texto",
+            detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
+        }
+    ];
+
     const modalWhatweb = () => abrirModal({
         comando: "whatweb",
         titulo: "Configurar WhatWeb",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idPorta: idPorta() },
-        campos: [
-            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
-            { chave: "agressividade", rotulo: "Agressividade", tipo: "texto" },
-            { chave: "userAgent", rotulo: "User Agent", tipo: "texto" },
-            { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto" }
-        ],
+        campos: camposWhatweb,
         valores: { timeout: 60, agressividade: "1", userAgent: "", autenticacao: "" }
     });
 

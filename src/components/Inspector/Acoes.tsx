@@ -255,15 +255,45 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
 const descricaoModal = "Confirme a execução e ajuste os parâmetros conforme necessário.";
 
 const camposWhatweb: CampoConfiguracao[] = [
-    { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
-    { chave: "agressividade", rotulo: "Agressividade", tipo: "texto" },
-    { chave: "userAgent", rotulo: "User Agent", tipo: "texto" },
-    { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto" },
+    {
+        chave: "timeout",
+        rotulo: "Timeout (segundos)",
+        tipo: "numero",
+        detalhe: "Tempo máximo, em segundos, para aguardar a resposta de cada requisição do WhatWeb.",
+    },
+    {
+        chave: "agressividade",
+        rotulo: "Agressividade",
+        tipo: "texto",
+        detalhe: "Nível de intensidade (1-5) que define quantas técnicas de fingerprint serão usadas.",
+    },
+    {
+        chave: "userAgent",
+        rotulo: "User Agent",
+        tipo: "texto",
+        detalhe: "Identificador de cliente enviado nas requisições; personalize para simular navegadores ou bots.",
+    },
+    {
+        chave: "autenticacao",
+        rotulo: "Autenticação",
+        tipo: "texto",
+        detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
+    },
 ];
 
 const camposWordlist: CampoConfiguracao[] = [
-    { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-    { chave: "extensoes", rotulo: "Extensões", tipo: "texto" },
+    {
+        chave: "wordlist",
+        rotulo: "Wordlist",
+        tipo: "texto",
+        detalhe: "Caminho absoluto ou relativo da lista de palavras usada durante o fuzzing.",
+    },
+    {
+        chave: "extensoes",
+        rotulo: "Extensões",
+        tipo: "texto",
+        detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
+    },
 ];
 
 const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModal | null => {
@@ -274,7 +304,7 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             titulo: tituloModal(acao.titulo),
             descricao: descricaoModal,
             argsBase: { idDominio: id },
-            campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero" }],
+            campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero", detalhe: "Tempo máximo, em minutos, antes de interromper a execução do Amass." }],
             valores: { timeoutMinutos: 5 },
         };
     }
@@ -285,8 +315,8 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             descricao: descricaoModal,
             argsBase: { idDominio: id },
             campos: [
-                { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano" },
-                { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano" },
+                { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano", detalhe: "Ativa todas as fontes disponíveis no Subfinder para ampliar a enumeração." },
+                { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano", detalhe: "Reduz a verbosidade do Subfinder para manter apenas saídas essenciais." },
             ],
             valores: { todasFontes: true, modoSilencioso: true },
         };
@@ -307,7 +337,7 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             titulo: tituloModal(acao.titulo),
             descricao: descricaoModal,
             argsBase: { idDominio: id },
-            campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto" }],
+            campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto", detalhe: "Servidor que responderá às consultas; use um IP ou hostname como 8.8.8.8." }],
             valores: { servidorDns: "8.8.8.8" },
         };
     }
@@ -447,7 +477,7 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             titulo: tituloModal(acao.titulo),
             descricao: descricaoModal,
             argsBase: { idIp: id },
-            campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto" }],
+            campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto", detalhe: "Intervalo ou lista de portas a serem varridas, como 1-9999 ou 80,443." }],
             valores: { faixaPortas: "1-9999" },
         };
     }
@@ -457,7 +487,7 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             titulo: tituloModal(acao.titulo),
             descricao: descricaoModal,
             argsBase: { idIp: id },
-            campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto" }],
+            campos: [{ chave: "faixaPortas", rotulo: "Faixa de portas", tipo: "texto", detalhe: "Intervalo ou lista de portas a serem testadas, como 1-65535 ou 22,443,8080." }],
             valores: { faixaPortas: "1-65535" },
         };
     }
@@ -477,7 +507,7 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             titulo: tituloModal(acao.titulo),
             descricao: descricaoModal,
             argsBase: { idIp: id },
-            campos: [{ chave: "opcoes", rotulo: "Opções", tipo: "texto" }],
+            campos: [{ chave: "opcoes", rotulo: "Opções", tipo: "texto", detalhe: "Flags adicionais passadas direto ao enum4linux; combine-as conforme a enumeração desejada, ex: -U -r." }],
             valores: { opcoes: "-U -r" },
         };
     }

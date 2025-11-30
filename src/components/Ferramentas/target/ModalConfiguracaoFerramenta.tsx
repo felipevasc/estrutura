@@ -1,4 +1,6 @@
-import { Modal, Input, InputNumber, Switch, Divider } from "antd";
+import { useEffect, useState } from "react";
+import { InfoCircleOutlined } from "@ant-design/icons";
+import { Button, Divider, Input, InputNumber, Modal, Switch } from "antd";
 
 type TipoCampo = "texto" | "numero" | "booleano";
 
@@ -6,6 +8,7 @@ type CampoConfiguracao = {
     chave: string;
     rotulo: string;
     tipo: TipoCampo;
+    detalhe: string;
     descricao?: string;
 };
 
@@ -21,6 +24,11 @@ type Props = {
 };
 
 const ModalConfiguracaoFerramenta = ({ aberto, titulo, descricao, campos, valores, aoAlterar, aoConfirmar, aoCancelar }: Props) => {
+    const [campoDetalhado, definirCampoDetalhado] = useState<CampoConfiguracao | null>(null);
+
+    useEffect(() => {
+        if (!aberto) definirCampoDetalhado(null);
+    }, [aberto]);
     const renderizarCampo = (campo: CampoConfiguracao) => {
         if (campo.tipo === "numero") {
             return <InputNumber style={{ width: "100%" }} value={valores[campo.chave] as number | undefined} onChange={(valor) => aoAlterar(campo.chave, valor ?? 0)} min={0} />;
@@ -47,11 +55,30 @@ const ModalConfiguracaoFerramenta = ({ aberto, titulo, descricao, campos, valore
             {existeCampo && <Divider style={{ margin: "12px 0" }} />}
             {existeCampo && campos.map((campo) => (
                 <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
-                    <span>{campo.rotulo}</span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span>{campo.rotulo}</span>
+                        <Button
+                            type="text"
+                            size="small"
+                            icon={<InfoCircleOutlined />}
+                            onClick={() => definirCampoDetalhado(campo)}
+                        />
+                    </div>
                     {renderizarCampo(campo)}
                     {campo.descricao && <small style={{ color: "#555" }}>{campo.descricao}</small>}
                 </div>
             ))}
+            <Modal
+                title={campoDetalhado?.rotulo ?? ""}
+                open={!!campoDetalhado}
+                onOk={() => definirCampoDetalhado(null)}
+                onCancel={() => definirCampoDetalhado(null)}
+                okText="Fechar"
+                cancelButtonProps={{ style: { display: "none" } }}
+                destroyOnClose
+            >
+                <p style={{ marginBottom: 0 }}>{campoDetalhado?.detalhe}</p>
+            </Modal>
         </Modal>
     );
 };

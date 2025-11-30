@@ -75,13 +75,54 @@ const FerramentasDominio = () => {
     const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
     const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
     const valoresFindomain = { threads: 10, timeout: 60, modoSilencioso: true };
+    const camposWhatweb: CampoConfiguracao[] = [
+        {
+            chave: "timeout",
+            rotulo: "Timeout (segundos)",
+            tipo: "numero",
+            detalhe: "Tempo máximo, em segundos, para aguardar a resposta de cada requisição do WhatWeb.",
+        },
+        {
+            chave: "agressividade",
+            rotulo: "Agressividade",
+            tipo: "texto",
+            detalhe: "Nível de intensidade (1-5) que define quantas técnicas de fingerprint serão usadas.",
+        },
+        {
+            chave: "userAgent",
+            rotulo: "User Agent",
+            tipo: "texto",
+            detalhe: "Identificador de cliente enviado nas requisições; personalize para simular navegadores ou bots.",
+        },
+        {
+            chave: "autenticacao",
+            rotulo: "Autenticação",
+            tipo: "texto",
+            detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
+            descricao: "Ex: Bearer token",
+        }
+    ];
+    const camposWordlist: CampoConfiguracao[] = [
+        {
+            chave: "wordlist",
+            rotulo: "Wordlist",
+            tipo: "texto",
+            detalhe: "Caminho absoluto ou relativo da lista de palavras usada durante o fuzzing.",
+        },
+        {
+            chave: "extensoes",
+            rotulo: "Extensões",
+            tipo: "texto",
+            detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
+        }
+    ];
 
     const modalAmass = () => abrirModal({
         comando: "amass",
         titulo: "Configurar Amass",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
-        campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero" }],
+        campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero", detalhe: "Tempo máximo, em minutos, antes de interromper a execução do Amass." }],
         valores: { timeoutMinutos: 5 }
     });
 
@@ -91,8 +132,8 @@ const FerramentasDominio = () => {
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [
-            { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano" },
-            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano" }
+            { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano", detalhe: "Ativa todas as fontes disponíveis no Subfinder para ampliar a enumeração." },
+            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano", detalhe: "Reduz a verbosidade do Subfinder para manter apenas saídas essenciais." }
         ],
         valores: { todasFontes: true, modoSilencioso: true }
     });
@@ -102,12 +143,7 @@ const FerramentasDominio = () => {
         titulo: "Configurar WhatWeb",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
-        campos: [
-            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
-            { chave: "agressividade", rotulo: "Agressividade", tipo: "texto" },
-            { chave: "userAgent", rotulo: "User Agent", tipo: "texto" },
-            { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto", descricao: "Ex: Bearer token" }
-        ],
+        campos: camposWhatweb,
         valores: valoresWhatweb
     });
 
@@ -117,9 +153,9 @@ const FerramentasDominio = () => {
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
         campos: [
-            { chave: "threads", rotulo: "Threads", tipo: "numero" },
-            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
-            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano" }
+            { chave: "threads", rotulo: "Threads", tipo: "numero", detalhe: "Quantidade de execuções paralelas usadas pelo Findomain." },
+            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero", detalhe: "Tempo máximo de espera de cada requisição do Findomain antes de parar." },
+            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano", detalhe: "Oculta logs detalhados para uma saída mais limpa." }
         ],
         valores: valoresFindomain
     });
@@ -129,7 +165,7 @@ const FerramentasDominio = () => {
         titulo: "Configurar NsLookup",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: { idDominio: idDominio() },
-        campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto" }],
+        campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto", detalhe: "Servidor que responderá às consultas; use um IP ou hostname como 8.8.8.8." }],
         valores: { servidorDns: "8.8.8.8" }
     });
 
@@ -138,10 +174,7 @@ const FerramentasDominio = () => {
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDominio: idDominio(), tipoFuzz } : { idDominio: idDominio() },
-        campos: [
-            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
-        ],
+        campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
     });
 
@@ -150,10 +183,7 @@ const FerramentasDominio = () => {
         titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
         descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
         argsBase: tipoFuzz ? { idDominio: idDominio(), tipoFuzz } : { idDominio: idDominio() },
-        campos: [
-            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
-            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
-        ],
+        campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
     });
 
