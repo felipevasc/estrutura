@@ -27,6 +27,7 @@ export class NmapService extends NanoService {
   private async processCommand(payload: any) {
     const { id, args, projectId } = payload;
     const idIp = args.idIp;
+    const faixaPortas = args.faixaPortas || "1-9999";
 
     this.log(`Processing Nmap for IP ID: ${idIp}`);
 
@@ -42,7 +43,7 @@ export class NmapService extends NanoService {
         const stdoutFile = `${outputPrefix}.stdout`;
 
         const comando = 'nmap';
-        const argumentos = ['-Pn', enderecoIp, "-p", "1-9999", "-oG", grepOutput];
+        const argumentos = ['-Pn', enderecoIp, "-p", `${faixaPortas}`, "-oG", grepOutput];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,

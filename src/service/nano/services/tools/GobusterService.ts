@@ -66,13 +66,14 @@ export class GobusterService extends NanoService {
     try {
       const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
       const tipoFuzz = this.definirTipoFuzz(args);
-      const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
+      const extensoes = typeof args.extensoes === 'string' && args.extensoes ? args.extensoes : '.php,.html,.txt,.js,.bak,.zip,.conf';
+      const wordlist = typeof args.wordlist === 'string' && args.wordlist ? args.wordlist : '/usr/share/wordlists/dirb/common.txt';
       const alvoNormalizado = this.normalizarAlvo(alvo);
       const alvoComBarra = this.aplicarBarra(alvoNormalizado);
       const referenciaErro = await coletarReferenciasErro(alvoComBarra);
       const arquivoResultado = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}.txt`);
       const arquivoLog = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}_log.txt`);
-      const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, arquivoResultado);
+      const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, wordlist, arquivoResultado);
       const meta: MetadadosGobuster = {
         projectId,
         dominio,
@@ -166,9 +167,9 @@ export class GobusterService extends NanoService {
     return path.join(os.tmpdir(), nome);
   }
 
-  private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, arquivoResultado: string) {
+  private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, wordlist: string, arquivoResultado: string) {
     const destino = this.aplicarBarra(alvo);
-    const argumentosBase = ['dir', '-u', destino, '-w', '/usr/share/wordlists/dirb/common.txt', '-o', arquivoResultado, '-q', '-k'];
+    const argumentosBase = ['dir', '-u', destino, '-w', wordlist, '-o', arquivoResultado, '-q', '-k'];
     return tipoFuzz === 'arquivo' ? [...argumentosBase, '-x', extensoes] : argumentosBase;
   }
 

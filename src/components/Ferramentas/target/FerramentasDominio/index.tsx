@@ -1,4 +1,4 @@
-import { Card, Modal, notification } from "antd";
+import { Card, notification } from "antd";
 import { StyledToolsGrid } from "../styles";
 import useApi from "@/api";
 import { useContext, useState } from "react";
@@ -11,63 +11,155 @@ import {
     FileSearchOutlined,
     FolderOpenOutlined
 } from "@ant-design/icons";
+import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
+
+type EstadoModal = {
+    comando: string;
+    titulo: string;
+    descricao?: string;
+    argsBase: Record<string, unknown>;
+    campos: CampoConfiguracao[];
+    valores: Record<string, unknown>;
+};
 
 const FerramentasDominio = () => {
     const api = useApi();
     const { selecaoTarget, projeto } = useContext(StoreContext);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [commandToRun, setCommandToRun] = useState<{ command: string, args: Record<string, unknown> } | null>(null);
+    const [modal, definirModal] = useState<EstadoModal | null>(null);
 
-    const showConfirmationModal = (command: string, args: Record<string, unknown>) => {
-        setCommandToRun({ command, args });
-        setIsModalVisible(true);
+    const abrirModal = (configuracao: EstadoModal) => definirModal({ ...configuracao, valores: { ...configuracao.valores } });
+
+    const alterarValor = (chave: string, valor: unknown) => {
+        definirModal((atual) => atual ? { ...atual, valores: { ...atual.valores, [chave]: valor } } : null);
     };
 
-    const handleOk = async () => {
-        if (commandToRun && selecaoTarget?.get()?.tipo === "domain") {
+    const executar = async () => {
+        if (modal && selecaoTarget?.get()?.tipo === "domain") {
+            const projetoAtual = projeto?.get();
+            if (!projetoAtual) {
+                notification.error({
+                    message: "Erro ao adicionar comando",
+                    description: "Nenhum projeto selecionado.",
+                    placement: "bottomRight",
+                });
+                definirModal(null);
+                return;
+            }
             try {
-                const currentProject = projeto?.get();
-                if (!currentProject) {
-                    notification.error({
-                        message: 'Erro ao adicionar comando',
-                        description: 'Nenhum projeto selecionado.',
-                        placement: 'bottomRight',
-                    });
-                    setIsModalVisible(false);
-                    setCommandToRun(null);
-                    return;
-                }
-                await api.queue.addCommand(commandToRun.command, commandToRun.args, currentProject.id);
+                await api.queue.addCommand(modal.comando, { ...modal.argsBase, ...modal.valores }, projetoAtual.id);
                 notification.success({
-                    message: 'Comando adicionado à fila',
-                    description: `O comando "${commandToRun.command}" foi adicionado à fila de execução.`,
-                    placement: 'bottomRight',
+                    message: "Comando adicionado à fila",
+                    description: `O comando "${modal.comando}" foi adicionado à fila de execução.`,
+                    placement: "bottomRight",
                 });
             } catch {
                 notification.error({
-                    message: 'Erro ao adicionar comando',
-                    description: 'Ocorreu um erro ao tentar adicionar o comando à fila.',
-                    placement: 'bottomRight',
+                    message: "Erro ao adicionar comando",
+                    description: "Ocorreu um erro ao tentar adicionar o comando à fila.",
+                    placement: "bottomRight",
                 });
             }
         }
-        setIsModalVisible(false);
-        setCommandToRun(null);
+        definirModal(null);
     };
 
-    const handleCancel = () => {
-        setIsModalVisible(false);
-        setCommandToRun(null);
+    const idDominio = () => selecaoTarget?.get()?.id?.toString() ?? "0";
+
+    const valoresWhatweb = {
+        timeout: 60,
+        agressividade: "1",
+        userAgent: "",
+        autenticacao: ""
     };
 
-    const getDomainId = () => selecaoTarget?.get()?.id ?? 0;
+    const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
+    const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
+    const valoresFindomain = { threads: 10, timeout: 60, modoSilencioso: true };
+
+    const modalAmass = () => abrirModal({
+        comando: "amass",
+        titulo: "Configurar Amass",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDominio: idDominio() },
+        campos: [{ chave: "timeoutMinutos", rotulo: "Timeout (minutos)", tipo: "numero" }],
+        valores: { timeoutMinutos: 5 }
+    });
+
+    const modalSubfinder = () => abrirModal({
+        comando: "subfinder",
+        titulo: "Configurar Subfinder",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDominio: idDominio() },
+        campos: [
+            { chave: "todasFontes", rotulo: "Usar todas as fontes", tipo: "booleano" },
+            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano" }
+        ],
+        valores: { todasFontes: true, modoSilencioso: true }
+    });
+
+    const modalWhatweb = () => abrirModal({
+        comando: "whatweb",
+        titulo: "Configurar WhatWeb",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDominio: idDominio() },
+        campos: [
+            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
+            { chave: "agressividade", rotulo: "Agressividade", tipo: "texto" },
+            { chave: "userAgent", rotulo: "User Agent", tipo: "texto" },
+            { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto", descricao: "Ex: Bearer token" }
+        ],
+        valores: valoresWhatweb
+    });
+
+    const modalFindomain = () => abrirModal({
+        comando: "findomain",
+        titulo: "Configurar Findomain",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDominio: idDominio() },
+        campos: [
+            { chave: "threads", rotulo: "Threads", tipo: "numero" },
+            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
+            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano" }
+        ],
+        valores: valoresFindomain
+    });
+
+    const modalNslookup = () => abrirModal({
+        comando: "nslookup",
+        titulo: "Configurar NsLookup",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDominio: idDominio() },
+        campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto" }],
+        valores: { servidorDns: "8.8.8.8" }
+    });
+
+    const modalFfuf = (tipoFuzz?: string) => abrirModal({
+        comando: "ffuf",
+        titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: tipoFuzz ? { idDominio: idDominio(), tipoFuzz } : { idDominio: idDominio() },
+        campos: [
+            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
+            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
+        ],
+        valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
+    });
+
+    const modalGobuster = (tipoFuzz?: string) => abrirModal({
+        comando: "gobuster",
+        titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: tipoFuzz ? { idDominio: idDominio(), tipoFuzz } : { idDominio: idDominio() },
+        campos: [
+            { chave: "wordlist", rotulo: "Wordlist", tipo: "texto" },
+            { chave: "extensoes", rotulo: "Extensões", tipo: "texto" }
+        ],
+        valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
+    });
 
     return (
         <StyledToolsGrid>
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('amass', { idDominio: getDomainId().toString() })}
-            >
+            <Card className="interactive" onClick={modalAmass}>
                 <div className="tool-icon">
                     <DeploymentUnitOutlined />
                 </div>
@@ -77,10 +169,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('subfinder', { idDominio: getDomainId().toString() })}
-            >
+            <Card className="interactive" onClick={modalSubfinder}>
                 <div className="tool-icon">
                     <NodeIndexOutlined />
                 </div>
@@ -90,10 +179,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('whatweb', { idDominio: getDomainId().toString() })}
-            >
+            <Card className="interactive" onClick={modalWhatweb}>
                 <div className="tool-icon">
                     <SearchOutlined />
                 </div>
@@ -103,8 +189,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-            >
+            <Card className="interactive" onClick={modalFindomain}>
                 <div className="tool-icon">
                     <AimOutlined />
                 </div>
@@ -114,10 +199,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('nslookup', { idDominio: getDomainId().toString() })}
-            >
+            <Card className="interactive" onClick={modalNslookup}>
                 <div className="tool-icon">
                     <SearchOutlined />
                 </div>
@@ -127,10 +209,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('ffuf', { idDominio: getDomainId().toString() })}
-            >
+            <Card className="interactive" onClick={() => modalFfuf()}>
                 <div className="tool-icon">
                     <FileSearchOutlined />
                 </div>
@@ -140,10 +219,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('ffuf', { idDominio: getDomainId().toString(), tipoFuzz: 'arquivo' })}
-            >
+            <Card className="interactive" onClick={() => modalFfuf("arquivo")}>
                 <div className="tool-icon">
                     <FileSearchOutlined />
                 </div>
@@ -153,10 +229,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('gobuster', { idDominio: getDomainId().toString() })}
-            >
+            <Card className="interactive" onClick={() => modalGobuster()}>
                 <div className="tool-icon">
                     <FolderOpenOutlined />
                 </div>
@@ -166,10 +239,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card
-                className="interactive"
-                onClick={() => showConfirmationModal('gobuster', { idDominio: getDomainId().toString(), tipoFuzz: 'arquivo' })}
-            >
+            <Card className="interactive" onClick={() => modalGobuster("arquivo")}>
                 <div className="tool-icon">
                     <FolderOpenOutlined />
                 </div>
@@ -179,16 +249,16 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Modal
-                title="Confirmar Execução"
-                open={isModalVisible}
-                onOk={handleOk}
-                onCancel={handleCancel}
-                okText="Executar"
-                cancelText="Cancelar"
-            >
-                <p>Tem certeza que deseja executar o comando &quot;{commandToRun?.command}&quot;?</p>
-            </Modal>
+            <ModalConfiguracaoFerramenta
+                aberto={!!modal}
+                titulo={modal?.titulo ?? ""}
+                descricao={modal?.descricao}
+                campos={modal?.campos ?? []}
+                valores={modal?.valores ?? {}}
+                aoAlterar={alterarValor}
+                aoCancelar={() => definirModal(null)}
+                aoConfirmar={executar}
+            />
         </StyledToolsGrid>
     );
 };

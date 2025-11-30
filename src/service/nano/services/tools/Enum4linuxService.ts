@@ -25,6 +25,7 @@ export class Enum4linuxService extends NanoService {
   private async processCommand(payload: any) {
     const { id, args, projectId } = payload;
     const idIp = args.idIp;
+    const opcoes = (args.opcoes as string) || "-U -r";
 
     this.log(`Processing Enum4linux for IP ID: ${idIp}`);
 
@@ -40,7 +41,8 @@ export class Enum4linuxService extends NanoService {
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
         const comando = 'enum4linux';
-        const argumentos = ['-U', '-r', enderecoIp];
+        const flags = opcoes.split(" ").filter((parte: string) => parte);
+        const argumentos = [...flags, enderecoIp];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,

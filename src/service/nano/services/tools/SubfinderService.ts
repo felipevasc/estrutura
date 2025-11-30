@@ -25,6 +25,8 @@ export class SubfinderService extends NanoService {
   private async processCommand(payload: any) {
     const { id, args, projectId } = payload;
     const idDominio = args.idDominio;
+    const todasFontes = args.todasFontes !== false;
+    const modoSilencioso = args.modoSilencioso !== false;
 
     this.log(`Processing Subfinder for domain ID: ${idDominio}`);
 
@@ -40,7 +42,10 @@ export class SubfinderService extends NanoService {
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
 
         const comando = 'subfinder';
-        const argumentos = ['-d', dominio, "--all", "-silent", "-o", caminhoSaida];
+        const argumentosBase = ['-d', dominio, "-o", caminhoSaida];
+        if (todasFontes) argumentosBase.push("--all");
+        if (modoSilencioso) argumentosBase.push("-silent");
+        const argumentos = argumentosBase;
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,

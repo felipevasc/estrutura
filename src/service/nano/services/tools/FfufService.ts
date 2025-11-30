@@ -69,14 +69,15 @@ export class FfufService extends NanoService {
 
     try {
       const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
-      const extensoes = args.extensoes || '.php,.html,.txt,.js,.bak,.zip,.conf';
+      const extensoes = typeof args.extensoes === 'string' && args.extensoes ? args.extensoes : '.php,.html,.txt,.js,.bak,.zip,.conf';
+      const wordlist = typeof args.wordlist === 'string' && args.wordlist ? args.wordlist : '/usr/share/wordlists/dirb/common.txt';
       const tipoFuzz = this.definirTipoFuzz(args);
       const alvoNormalizado = this.normalizarAlvo(alvo);
       const alvoComBarra = this.aplicarBarra(alvoNormalizado);
       const referenciaErro = await coletarReferenciasErro(alvoComBarra);
       const saidaJson = this.criarCaminhoArquivo(`ffuf_results_${id}_${Date.now()}.json`);
       const saidaLog = this.criarCaminhoArquivo(`ffuf_log_${id}_${Date.now()}.txt`);
-      const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, saidaJson);
+      const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, wordlist, saidaJson);
       const meta: MetadadosFfuf = {
         projectId,
         dominio,
@@ -171,13 +172,13 @@ export class FfufService extends NanoService {
     return path.join(os.tmpdir(), nome);
   }
 
-  private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, saidaJson: string) {
+  private montarArgumentos(alvo: string, tipoFuzz: TipoFuzz, extensoes: string, wordlist: string, saidaJson: string) {
     const destino = `${this.aplicarBarra(alvo)}FUZZ`;
     const argumentosBase = [
       '-u',
       destino,
       '-w',
-      '/usr/share/wordlists/dirb/common.txt',
+      wordlist,
       '-o',
       saidaJson,
       '-of',

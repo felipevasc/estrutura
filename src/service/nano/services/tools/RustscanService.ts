@@ -27,6 +27,7 @@ export class RustscanService extends NanoService {
   private async processarComando(payload: any) {
     const { id, args, projectId } = payload;
     const idIp = args.idIp;
+    const faixaPortas = args.faixaPortas || "1-65535";
 
     this.log(`Iniciando Rustscan para IP ${idIp}`);
 
@@ -40,7 +41,7 @@ export class RustscanService extends NanoService {
         const stdoutFile = `${outputPrefix}.stdout`;
 
         const comando = 'rustscan';
-        const argumentos = ['-a', enderecoIp, '-r', '1-65535', '--', '-Pn', '-sV', '-oG', grepOutput];
+        const argumentos = ['-a', enderecoIp, '-r', `${faixaPortas}`, '--', '-Pn', '-sV', '-oG', grepOutput];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id,
