@@ -73,6 +73,7 @@ const FerramentasDominio = () => {
 
     const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
     const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
+    const valoresFindomain = { threads: 10, timeout: 60, modoSilencioso: true };
 
     const modalAmass = () => abrirModal({
         comando: "amass",
@@ -104,6 +105,18 @@ const FerramentasDominio = () => {
             { chave: "autenticacao", rotulo: "Autenticação", tipo: "texto", descricao: "Ex: Bearer token" }
         ],
         valores: valoresWhatweb
+    });
+
+    const modalFindomain = () => abrirModal({
+        comando: "findomain",
+        titulo: "Configurar Findomain",
+        argsBase: { idDominio: idDominio() },
+        campos: [
+            { chave: "threads", rotulo: "Threads", tipo: "numero" },
+            { chave: "timeout", rotulo: "Timeout (segundos)", tipo: "numero" },
+            { chave: "modoSilencioso", rotulo: "Modo silencioso", tipo: "booleano" }
+        ],
+        valores: valoresFindomain
     });
 
     const modalNslookup = () => abrirModal({
@@ -168,7 +181,7 @@ const FerramentasDominio = () => {
                 />
             </Card>
 
-            <Card>
+            <Card className="interactive" onClick={modalFindomain}>
                 <div className="tool-icon">
                     <AimOutlined />
                 </div>
