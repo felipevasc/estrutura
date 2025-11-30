@@ -25,6 +25,7 @@ export class NslookupService extends NanoService {
   private async processCommand(payload: any) {
     const { id, args, projectId } = payload;
     const idDominio = args.idDominio;
+    const servidorDns = args.servidorDns || "8.8.8.8";
 
     this.log(`Processing Nslookup for domain ID: ${idDominio}`);
 
@@ -42,7 +43,7 @@ export class NslookupService extends NanoService {
         const comando = 'nslookup';
         // Use Google DNS to avoid local DNS caching/restrictions
         // removed -debug to make parsing easier and standard.
-        const argumentos = [dominio, "8.8.8.8"];
+        const argumentos = [dominio, servidorDns];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,

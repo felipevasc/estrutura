@@ -67,10 +67,11 @@ export class WhatwebService extends NanoService {
       }
 
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
-      const autenticacao = process.env.WHATWEB_AUTENTICACAO?.trim();
-      const timeout = Number(process.env.WHATWEB_TIMEOUT || '60');
-      const agressividade = process.env.WHATWEB_AGGRESSION?.trim();
-      const userAgent = process.env.WHATWEB_USER_AGENT?.trim();
+      const autenticacao = (args.autenticacao as string)?.trim() || process.env.WHATWEB_AUTENTICACAO?.trim();
+      const timeoutEntrada = Number(args.timeout ?? process.env.WHATWEB_TIMEOUT ?? '60');
+      const timeout = Number.isFinite(timeoutEntrada) ? timeoutEntrada : 60;
+      const agressividade = (args.agressividade as string)?.trim() || process.env.WHATWEB_AGGRESSION?.trim();
+      const userAgent = (args.userAgent as string)?.trim() || process.env.WHATWEB_USER_AGENT?.trim();
 
       const argumentos = [`--log-json=${arquivoSaida}`];
       if (autenticacao) argumentos.push(`--header=Authorization: ${autenticacao}`);

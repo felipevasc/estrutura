@@ -26,6 +26,7 @@ export class AmassService extends NanoService {
   private async processCommand(payload: any) {
     const { id, args, projectId } = payload;
     const idDominio = args.idDominio;
+    const timeout = Number(args.timeoutMinutos || 5);
 
     this.log(`Processing Amass for domain ID: ${idDominio}`);
 
@@ -48,7 +49,7 @@ export class AmassService extends NanoService {
         // Use -json output for reliable parsing
         // -timeout 15 (minutes) is better than 2 if we want real results, but let's stick to 2 if it was intentional.
         // Actually, let's assume 5 mins.
-        const argumentos = ['enum', '-d', dominio, '-timeout', "5", '-json', jsonOutputFile];
+        const argumentos = ['enum', '-d', dominio, '-timeout', timeout > 0 ? `${timeout}` : "5", '-json', jsonOutputFile];
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
