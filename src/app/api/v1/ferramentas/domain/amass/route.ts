@@ -13,9 +13,7 @@ export async function POST(requisicao: Request) {
         { status: 400 }
       );
     }
-    
-    // Find the domain
-    // If projetoId is provided, use it. Otherwise try to find any.
+
     const where: any = { endereco: dominio };
     if (projetoId) where.projetoId = projetoId;
 
