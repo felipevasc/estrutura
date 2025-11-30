@@ -68,12 +68,18 @@ export class WhatwebService extends NanoService {
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
       const autenticacao = process.env.WHATWEB_AUTENTICACAO?.trim();
       const timeout = Number(process.env.WHATWEB_TIMEOUT || '60');
+      const agressividade = process.env.WHATWEB_AGGRESSION?.trim();
+      const userAgent = process.env.WHATWEB_USER_AGENT?.trim();
+
       const argumentos = [`--log-json=${arquivoSaida}`];
       if (autenticacao) argumentos.push(`--header=Authorization: ${autenticacao}`);
       if (timeout > 0) {
         argumentos.push(`--open-timeout=${timeout}`);
         argumentos.push(`--read-timeout=${timeout}`);
       }
+      if (agressividade) argumentos.push(`--aggression=${agressividade}`);
+      if (userAgent) argumentos.push(`--user-agent=${userAgent}`);
+
       argumentos.push(alvo);
       const meta: MetadadosWhatweb = {
         projetoId: projectId,
@@ -137,8 +143,20 @@ export class WhatwebService extends NanoService {
   private lerRegistros(caminho: string) {
     if (!caminho || !fs.existsSync(caminho)) return [];
     const conteudo = fs.readFileSync(caminho, 'utf-8');
-    const linhas = conteudo.split('\n').map((linha) => linha.trim()).filter(Boolean);
-    return linhas.map((linha) => JSON.parse(linha));
+
+    try {
+        const json = JSON.parse(conteudo);
+        if (Array.isArray(json)) return json;
+        return [json];
+    } catch {
+        return conteudo.split('\n')
+            .map((linha) => linha.trim())
+            .filter(Boolean)
+            .map((linha) => {
+                try { return JSON.parse(linha); } catch { return null; }
+            })
+            .filter(Boolean);
+    }
   }
 
   private removerArquivo(caminho?: string) {
@@ -155,15 +173,45 @@ export class WhatwebService extends NanoService {
 
       return Object.entries(plugins).flatMap(([plugin, valores]) => {
         const listaValores = Array.isArray(valores) ? valores : [valores];
-        return listaValores.map((valor) => ({
+        return listaValores.map((dados) => ({
           plugin,
-          valor: typeof valor === 'string' ? valor : JSON.stringify(valor),
-          dados: valor,
+          valor: this.extrairValor(dados),
+          dados,
           dominioId,
           ipId,
           diretorioId
         }));
       });
     });
+  }
+
+  private extrairValor(dados: unknown): string {
+    if (typeof dados === 'string') return dados;
+    if (typeof dados !== 'object' || dados === null) return JSON.stringify(dados);
+
+    const obj = dados as Record<string, unknown>;
+    const keys = ['string', 'version', 'os', 'account', 'model', 'firmware', 'module', 'filepath'];
+    const parts: string[] = [];
+
+    for (const key of keys) {
+      if (key in obj) {
+        const val = obj[key];
+        if (Array.isArray(val)) {
+            parts.push(...val.map(String));
+        } else if (val !== null && val !== undefined) {
+            parts.push(String(val));
+        }
+      }
+    }
+
+    if (parts.length > 0) return parts.join(', ');
+
+    const entries = Object.entries(obj)
+        .filter(([k, v]) => !['name', 'certainty'].includes(k) && (typeof v === 'string' || typeof v === 'number'))
+        .map(([_, v]) => String(v));
+
+    if (entries.length > 0) return entries.join(', ');
+
+    return JSON.stringify(dados);
   }
 }
