@@ -21,6 +21,7 @@ type MetadadosWhatweb = {
   dominioId: number | null;
   ipId: number | null;
   diretorioId: number | null;
+  portaId: number | null;
 };
 
 type ResultadoTerminal = {
@@ -55,7 +56,7 @@ export class WhatwebService extends NanoService {
     const { id, args, projectId } = payload;
 
     try {
-      const { alvo, dominio, ip } = await resolverAlvo(args);
+      const { alvo, dominio, ip, porta } = await resolverAlvo(args);
       let diretorioId: number | null = null;
       if (args.idDiretorio) {
         const idDir = Number(args.idDiretorio);
@@ -68,20 +69,33 @@ export class WhatwebService extends NanoService {
       const arquivoSaida = this.gerarCaminhoSaida(projectId, id);
       const autenticacao = process.env.WHATWEB_AUTENTICACAO?.trim();
       const timeout = Number(process.env.WHATWEB_TIMEOUT || '60');
+      const aggression = process.env.WHATWEB_AGGRESSION || '1';
+      const userAgent = process.env.WHATWEB_USER_AGENT?.trim();
+
       const argumentos = [`--log-json=${arquivoSaida}`];
+
       if (autenticacao) argumentos.push(`--header=Authorization: ${autenticacao}`);
       if (timeout > 0) {
         argumentos.push(`--open-timeout=${timeout}`);
         argumentos.push(`--read-timeout=${timeout}`);
       }
+      if (aggression && ['1', '3', '4'].includes(aggression)) {
+        argumentos.push(`--aggression=${aggression}`);
+      }
+      if (userAgent) {
+        argumentos.push(`--user-agent=${userAgent}`);
+      }
+
       argumentos.push(alvo);
+
       const meta: MetadadosWhatweb = {
         projetoId: projectId,
         alvo,
         arquivoSaida,
         dominioId: dominio?.id ?? null,
         ipId: ip?.id ?? null,
-        diretorioId
+        diretorioId,
+        portaId: porta?.id ?? null
       };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
@@ -100,11 +114,11 @@ export class WhatwebService extends NanoService {
 
   private async processarResultado(payload: ResultadoTerminal) {
     const { id, stdout, meta, command, args } = payload;
-    const { arquivoSaida, dominioId, ipId, diretorioId } = meta;
+    const { arquivoSaida, dominioId, ipId, diretorioId, portaId } = meta;
 
     try {
       const registros = this.lerRegistros(arquivoSaida);
-      const resultados = this.extrairResultados(registros, dominioId, ipId, diretorioId);
+      const resultados = this.extrairResultados(registros, dominioId, ipId, diretorioId, portaId);
       const persistidos = await Database.criarResultadosWhatweb(resultados);
       this.removerArquivo(arquivoSaida);
 
@@ -145,7 +159,7 @@ export class WhatwebService extends NanoService {
     if (caminho && fs.existsSync(caminho)) fs.unlinkSync(caminho);
   }
 
-  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null, diretorioId: number | null): ResultadoWhatweb[] {
+  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null, diretorioId: number | null, portaId: number | null): ResultadoWhatweb[] {
     if (!Array.isArray(registros)) return [];
 
     return registros.flatMap((registro) => {
@@ -161,7 +175,8 @@ export class WhatwebService extends NanoService {
           dados: valor,
           dominioId,
           ipId,
-          diretorioId
+          diretorioId,
+          portaId
         }));
       });
     });

@@ -1,6 +1,6 @@
 export interface ItemRelatorio {
     id: string;
-    tipo: 'Dominio' | 'IP' | 'Porta' | 'Diretorio';
+    tipo: 'Dominio' | 'IP' | 'Porta' | 'Diretorio' | 'WhatWeb';
     valor: string;
     dominio?: string | null;
     ip?: string | null;
@@ -10,6 +10,8 @@ export interface ItemRelatorio {
     status?: number | null;
     tamanho?: number | null;
     criadoEm?: string;
+    plugin?: string;
+    pluginValor?: string;
 }
 
 export type TipoRelatorioGrafico = 'barra' | 'linha' | 'pizza' | 'area';

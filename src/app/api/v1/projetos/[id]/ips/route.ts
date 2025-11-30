@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         include: {
             dominios: true,
             redes: true,
-            portas: true,
+            portas: { include: { whatwebResultados: true } },
             usuarios: true,
             diretorios: true,
             whatwebResultados: true,

@@ -41,6 +41,8 @@ export async function GET() {
         telegramSenha: env.TELEGRAM_SENHA ? '••••••••••••••••' : '',
         whatwebAutenticacao: env.WHATWEB_AUTENTICACAO ? '••••••••••••••••' : '',
         whatwebTimeout: env.WHATWEB_TIMEOUT || '60',
+        whatwebAggression: env.WHATWEB_AGGRESSION || '1',
+        whatwebUserAgent: env.WHATWEB_USER_AGENT || '',
         // Limites de Contexto da IA
         contextLimitDominio: env.CONTEXT_LIMIT_DOMINIO || '20',
         contextLimitIp: env.CONTEXT_LIMIT_IP || '20',
@@ -109,6 +111,8 @@ export async function POST(request: Request) {
             telegramSenha: 'TELEGRAM_SENHA',
             whatwebAutenticacao: 'WHATWEB_AUTENTICACAO',
             whatwebTimeout: 'WHATWEB_TIMEOUT',
+            whatwebAggression: 'WHATWEB_AGGRESSION',
+            whatwebUserAgent: 'WHATWEB_USER_AGENT',
             contextLimitDominio: 'CONTEXT_LIMIT_DOMINIO',
             contextLimitIp: 'CONTEXT_LIMIT_IP',
             contextLimitDiretorio: 'CONTEXT_LIMIT_DIRETORIO',

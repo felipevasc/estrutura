@@ -88,6 +88,7 @@ export function useRelatorio() {
         { chave: 'takedown_verificacao', titulo: 'Situação da verificação', descricao: 'Alvos online versus offline', tipoGrafico: 'pizza' },
         { chave: 'takedown_prazo', titulo: 'Prazo médio de resolução', descricao: 'Tempo médio aberto até solução', tipoGrafico: 'barra' },
         { chave: 'takedown_tempo_solucao', titulo: 'Tempo de solução por alvo', descricao: 'Itens pendentes há mais tempo', tipoGrafico: 'barra' },
+        { chave: 'whatweb_plugins', titulo: 'Plugins WhatWeb', descricao: 'Tecnologias detectadas', tipoGrafico: 'barra' },
     ]), []);
 
     const relatorioAtual = useMemo(() => {
@@ -227,7 +228,8 @@ export function useRelatorio() {
         takedown_status: () => ({ dadosGrafico: gerarStatusTakedown(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Status', eixoY: 'Ocorrências' }),
         takedown_verificacao: () => ({ dadosGrafico: gerarVerificacao(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'pizza', eixoX: 'Situação', eixoY: 'Quantidade' }),
         takedown_prazo: () => ({ dadosGrafico: gerarPrazoMedioTakedown(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Prazo médio (dias)', eixoY: 'Dias' }),
-        takedown_tempo_solucao: () => ({ dadosGrafico: gerarTempoSolucao(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Alvo', eixoY: 'Dias em aberto' })
+        takedown_tempo_solucao: () => ({ dadosGrafico: gerarTempoSolucao(registrosFiltrados), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Alvo', eixoY: 'Dias em aberto' }),
+        whatweb_plugins: () => ({ dadosGrafico: agrupar(registrosFiltrados.filter(d => d.tipo === 'WhatWeb'), 'plugin'), dadosTabela: tabelaOrdenada, tipoGrafico: 'barra', eixoX: 'Plugin', eixoY: 'Ocorrências' })
     }), [agrupar, gerarCobertura, gerarDefaceAtivos, gerarDefaceCriticos, gerarDensidadePortas, gerarDiversidadeValor, gerarLinhaDoTempo, gerarPrazoMedioTakedown, gerarStatusTakedown, gerarTempoSolucao, gerarVerificacao, gerarTamanhoMedio, registrosFiltrados, tabelaOrdenada]);
 
     const resultado = useMemo<ResultadoRelatorio>(() => {
