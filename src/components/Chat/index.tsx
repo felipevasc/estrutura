@@ -69,7 +69,6 @@ const ChatWidget = () => {
         setLoading(true);
 
         try {
-            // Send history + new message (filter out UI-only props)
             const apiMessages = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
 
             const data = await api.chat.sendMessage(projectId, apiMessages);
@@ -104,31 +103,25 @@ const ChatWidget = () => {
                     icon={<RobotOutlined />}
                     type="primary"
                     onClick={() => setIsOpen(true)}
-                    tooltip="Assistente Red Team"
+                    tooltip="Weaver"
                     style={{ left: 24, bottom: 24 }}
                 />
             </ChatButtonContainer>
 
             <StyledDrawer
-                title="Assistente Red Team"
+                title="Weaver"
                 placement="left"
                 width={500}
                 onClose={() => setIsOpen(false)}
                 open={isOpen}
-                mask={false} // Allow interacting with the app while chat is open? Maybe mask={true} is better for focus. User said "janela meio que vem subindo". Drawer is side.
-                // If user wants bottom-up, placement="bottom". But "subindo de baixo pra cima" might mean bottom.
-                // "pode ser flutuante por toda a tela e deve pegar um espaço bom".
-                // I'll stick to 'left' as it usually conflicts less with content than bottom,
-                // but user said "subindo de baixo pra cima". I'll use placement="bottom" or just left/right based on preference.
-                // Left is good because QueueStatus is probably right (default).
-                // Actually, let's use placement="left" as defined in styles.
+                mask={false} 
             >
                 <ChatContainer>
                     <MessagesArea>
                         {messages.length === 0 && (
                             <div style={{ color: '#666', textAlign: 'center', marginTop: '50px' }}>
                                 <RobotOutlined style={{ fontSize: '40px', marginBottom: '10px' }} />
-                                <p>Olá! Sou sua IA de Red Team. Como posso ajudar com os achados do projeto?</p>
+                                <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
                             </div>
                         )}
                         {messages.map((msg, idx) => (

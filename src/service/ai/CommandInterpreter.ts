@@ -26,15 +26,12 @@ export class CommandInterpreter {
       const domain = payload.PARAMETRO1;
       if (!domain) throw new Error("Missing domain parameter");
 
-      // Ensure domain exists
       let dbDomain = await prisma.dominio.findFirst({
           where: { endereco: domain, projetoId: projectId }
       });
 
       if (!dbDomain) {
-          // Create it
           await Database.adicionarSubdominio([domain], projectId);
-          // Fetch again
           dbDomain = await prisma.dominio.findFirst({
               where: { endereco: domain, projetoId: projectId }
           });
@@ -53,13 +50,11 @@ export class CommandInterpreter {
       const ipAddr = payload.PARAMETRO1;
       if (!ipAddr) throw new Error("Missing IP parameter");
 
-      // Ensure IP exists
       let dbIp = await prisma.ip.findFirst({
           where: { endereco: ipAddr, projetoId: projectId }
       });
 
       if (!dbIp) {
-          // Create it manually
           dbIp = await prisma.ip.create({
               data: {
                   endereco: ipAddr,
@@ -147,7 +142,6 @@ export class CommandInterpreter {
       const alvo = payload.PARAMETRO1;
       if (!alvo) throw new Error("Missing target parameter");
 
-      // Tentar encontrar diretório se for caminho (começa com /)
       if (alvo.startsWith('/')) {
         const dir = await prisma.diretorio.findFirst({
           where: {

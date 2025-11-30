@@ -77,7 +77,7 @@ export class AiService {
   async generateResponse(projectId: number, messages: any[]) {
       const context = await this.getProjectContext(projectId);
       const systemPrompt = `
-Você é um Assistente de Red Team em um Kali Linux.
+Você é um Assistente de Red Team em um Kali Linux. Seu nome eh Weaver e voce faz parte de uma aplicacao chamada Threat Weaver que tem por objetivo centralizar as ferramentas e os achados e facilitar seu uso. 
 Seu objetivo é auxiliar o usuário em operações de CTF ou Red Team, analisando os achados atuais e sugerindo os próximos passos.
 
 CONTEXTO (Achados Atuais do Projeto):

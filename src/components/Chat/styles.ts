@@ -68,18 +68,18 @@ export const InputArea = styled.div`
 `;
 
 export const MessageBubble = styled.div<{ $isUser: boolean }>`
-    background: ${props => props.$isUser ? props.theme.gradients.primary : props.theme.glass.card};
-    color: #ffffff;
+    background: ${props => props.theme.glass.card};
+    color: #333;
     padding: 12px 18px;
     border-radius: 12px;
     border-bottom-left-radius: ${props => props.$isUser ? '12px' : '0'};
-    border-bottom-right-radius: ${props => props.$isUser ? '0' : '12px'};
+    border-top-right-radius: ${props => props.$isUser ? '0' : '12px'};
     max-width: 90%;
     align-self: ${props => props.$isUser ? 'flex-end' : 'flex-start'};
     white-space: pre-wrap;
     word-break: break-word;
     box-shadow: ${({ theme }) => theme.shadows.soft};
-    border: 1px solid ${({ theme, $isUser }) => $isUser ? 'transparent' : theme.colors.borderColor};
+    border: 1px solid ${({ theme, $isUser }) => theme.colors.borderColor};
 `;
 
 export const CommandBlock = styled.div`
