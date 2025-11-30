@@ -1,4 +1,4 @@
-import { Modal, Input, InputNumber, Switch } from "antd";
+import { Modal, Input, InputNumber, Switch, Divider } from "antd";
 
 type TipoCampo = "texto" | "numero" | "booleano";
 
@@ -31,10 +31,21 @@ const ModalConfiguracaoFerramenta = ({ aberto, titulo, descricao, campos, valore
         return <Input value={valores[campo.chave] as string | undefined} onChange={(evento) => aoAlterar(campo.chave, evento.target.value)} />;
     };
 
+    const existeCampo = campos.length > 0;
+
     return (
-        <Modal title={titulo} open={aberto} onOk={aoConfirmar} onCancel={aoCancelar} okText="Executar" cancelText="Cancelar">
+        <Modal
+            title={titulo}
+            open={aberto}
+            onOk={aoConfirmar}
+            onCancel={aoCancelar}
+            okText="Executar"
+            cancelText="Cancelar"
+            destroyOnClose
+        >
             {descricao && <p style={{ marginBottom: 16 }}>{descricao}</p>}
-            {campos.map((campo) => (
+            {existeCampo && <Divider style={{ margin: "12px 0" }} />}
+            {existeCampo && campos.map((campo) => (
                 <div key={campo.chave} style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 12 }}>
                     <span>{campo.rotulo}</span>
                     {renderizarCampo(campo)}
