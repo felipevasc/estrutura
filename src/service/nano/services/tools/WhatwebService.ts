@@ -21,6 +21,7 @@ type MetadadosWhatweb = {
   dominioId: number | null;
   ipId: number | null;
   diretorioId: number | null;
+  portaId: number | null;
 };
 
 type ResultadoTerminal = {
@@ -55,7 +56,7 @@ export class WhatwebService extends NanoService {
     const { id, args, projectId } = payload;
 
     try {
-      const { alvo, dominio, ip } = await resolverAlvo(args);
+      const { alvo, dominio, ip, porta } = await resolverAlvo(args);
       let diretorioId: number | null = null;
       if (args.idDiretorio) {
         const idDir = Number(args.idDiretorio);
@@ -87,7 +88,8 @@ export class WhatwebService extends NanoService {
         arquivoSaida,
         dominioId: dominio?.id ?? null,
         ipId: ip?.id ?? null,
-        diretorioId
+        diretorioId,
+        portaId: porta?.id ?? null
       };
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
@@ -106,11 +108,11 @@ export class WhatwebService extends NanoService {
 
   private async processarResultado(payload: ResultadoTerminal) {
     const { id, stdout, meta, command, args } = payload;
-    const { arquivoSaida, dominioId, ipId, diretorioId } = meta;
+    const { arquivoSaida, dominioId, ipId, diretorioId, portaId } = meta;
 
     try {
       const registros = this.lerRegistros(arquivoSaida);
-      const resultados = this.extrairResultados(registros, dominioId, ipId, diretorioId);
+      const resultados = this.extrairResultados(registros, dominioId, ipId, diretorioId, portaId);
       const persistidos = await Database.criarResultadosWhatweb(resultados);
       this.removerArquivo(arquivoSaida);
 
@@ -163,7 +165,7 @@ export class WhatwebService extends NanoService {
     if (caminho && fs.existsSync(caminho)) fs.unlinkSync(caminho);
   }
 
-  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null, diretorioId: number | null): ResultadoWhatweb[] {
+  private extrairResultados(registros: unknown[], dominioId: number | null, ipId: number | null, diretorioId: number | null, portaId: number | null): ResultadoWhatweb[] {
     if (!Array.isArray(registros)) return [];
 
     return registros.flatMap((registro) => {
@@ -179,7 +181,8 @@ export class WhatwebService extends NanoService {
           dados,
           dominioId,
           ipId,
-          diretorioId
+          diretorioId,
+          portaId
         }));
       });
     });

@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 const includeIp = {
     include: {
-        portas: true,
+        portas: { include: { whatwebResultados: true } },
         dominios: true,
         redes: true,
         usuarios: true,

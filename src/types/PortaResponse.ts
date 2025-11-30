@@ -1,4 +1,5 @@
 import { IpResponse } from "./IpResponse";
+import { WhatwebResultadoResponse } from "./WhatwebResultadoResponse";
 
 export type PortaResponse = {
     id: number;
@@ -8,4 +9,5 @@ export type PortaResponse = {
     versao: string | null;
     ipId: number | null;
     ip?: IpResponse | null; // Allow null from Prisma
+    whatwebResultados?: WhatwebResultadoResponse[];
 }

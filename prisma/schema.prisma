@@ -112,6 +112,8 @@ model Porta {
   ipId  Int?
   ip    Ip?   @relation(fields: [ipId], references: [id])
 
+  whatwebResultados WhatwebResultado[]
+
   @@map("portas")
 }
 
@@ -243,6 +245,8 @@ model WhatwebResultado {
   ip         Ip?      @relation(fields: [ipId], references: [id])
   diretorioId Int?
   diretorio  Diretorio? @relation(fields: [diretorioId], references: [id])
+  portaId    Int?
+  porta      Porta?   @relation(fields: [portaId], references: [id])
   criadoEm   DateTime @default(now())
 
   @@map("whatweb_resultados")

@@ -8,15 +8,17 @@ export type ResultadoWhatweb = {
   dominioId?: number | null;
   ipId?: number | null;
   diretorioId?: number | null;
+  portaId?: number | null;
 };
 
-const gerarAssinatura = (resultado: ResultadoWhatweb) => `${resultado.plugin}|${resultado.valor}|${resultado.dominioId ?? ''}|${resultado.ipId ?? ''}|${resultado.diretorioId ?? ''}`;
+const gerarAssinatura = (resultado: ResultadoWhatweb) => `${resultado.plugin}|${resultado.valor}|${resultado.dominioId ?? ''}|${resultado.ipId ?? ''}|${resultado.diretorioId ?? ''}|${resultado.portaId ?? ''}`;
 
 const normalizarResultado = (resultado: ResultadoWhatweb) => ({
   ...resultado,
   dominioId: resultado.dominioId ?? null,
   ipId: resultado.ipId ?? null,
-  diretorioId: resultado.diretorioId ?? null
+  diretorioId: resultado.diretorioId ?? null,
+  portaId: resultado.portaId ?? null
 });
 
 export const criarResultadosWhatweb = async (resultados: ResultadoWhatweb[]) => {
@@ -48,7 +50,8 @@ export const criarResultadosWhatweb = async (resultados: ResultadoWhatweb[]) => 
         dados: resultado.dados as Prisma.InputJsonValue,
         dominioId: resultado.dominioId,
         ipId: resultado.ipId,
-        diretorioId: resultado.diretorioId
+        diretorioId: resultado.diretorioId,
+        portaId: resultado.portaId
       }))
     });
   }
