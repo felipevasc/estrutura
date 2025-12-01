@@ -6,7 +6,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, InfoCircleO
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { FonteVazamento, TipoFonteVazamento, useFontesVazamento } from '@/api/cti/fontesVazamento';
-import { useBuscaAtivaTelegram } from '@/api/cti/buscaAtivaTelegram';
+import { ResultadoTesteTelegram, useBuscaAtivaTelegram } from '@/api/cti/buscaAtivaTelegram';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -183,12 +183,23 @@ const VazamentoSenhasView = () => {
     const { projeto } = useStore();
     const projetoId = projeto?.get()?.id;
     const { fontes, isLoading, criarFonte, atualizarFonte, removerFonte, recarregarFontes } = useFontesVazamento(projetoId);
-    const { registros: buscasTelegram, isLoading: carregandoBusca, salvarPreferencias, executarColeta, recarregar: recarregarBuscas } = useBuscaAtivaTelegram(projetoId);
+    const {
+        registros: buscasTelegram,
+        isLoading: carregandoBusca,
+        salvarPreferencias,
+        executarColeta,
+        testarFluxo,
+        recarregar: recarregarBuscas,
+    } = useBuscaAtivaTelegram(projetoId);
     const [filtroTipo, setFiltroTipo] = useState<TipoFonteVazamento | 'TODOS'>('TODOS');
     const [modalAberto, setModalAberto] = useState(false);
     const [fonteEdicao, setFonteEdicao] = useState<FonteVazamento | null>(null);
     const [modalColetaAberto, setModalColetaAberto] = useState(false);
     const [fonteColeta, setFonteColeta] = useState<FonteVazamento | null>(null);
+    const [modalTesteAberto, setModalTesteAberto] = useState(false);
+    const [fonteTeste, setFonteTeste] = useState<FonteVazamento | null>(null);
+    const [resultadoTeste, setResultadoTeste] = useState<ResultadoTesteTelegram | null>(null);
+    const [carregandoTeste, setCarregandoTeste] = useState(false);
     const [ajudaModal, setAjudaModal] = useState<AjudaCampo | null>(null);
     const [form] = Form.useForm();
     const [formColeta] = Form.useForm();
@@ -303,6 +314,42 @@ const VazamentoSenhasView = () => {
         await executarColeta(fonte.id);
     };
 
+    const abrirTeste = async (fonte: FonteVazamento) => {
+        setFonteTeste(fonte);
+        setModalTesteAberto(true);
+        setResultadoTeste(null);
+        setCarregandoTeste(true);
+        try {
+            const retorno = await testarFluxo(fonte.id);
+            const detalhado = (retorno as { resultado?: ResultadoTesteTelegram }).resultado || (retorno as ResultadoTesteTelegram);
+            const consolidado =
+                detalhado && typeof detalhado === 'object' && 'passos' in detalhado
+                    ? (detalhado as ResultadoTesteTelegram)
+                    : {
+                          alvo: fonte.nome,
+                          sucesso: false,
+                          passos: [
+                              {
+                                  etapa: 'Validação do teste',
+                                  sucesso: false,
+                                  detalhes: detalhado ? `${detalhado}` : 'Retorno inválido',
+                                  enviado: {},
+                                  recebido: {},
+                              },
+                          ],
+                      };
+            setResultadoTeste(consolidado);
+        } finally {
+            setCarregandoTeste(false);
+        }
+    };
+
+    const fecharTeste = () => {
+        setModalTesteAberto(false);
+        setResultadoTeste(null);
+        setFonteTeste(null);
+    };
+
     const colunas = [
         { title: 'Nome', dataIndex: 'nome', key: 'nome' },
         {
@@ -383,6 +430,7 @@ const VazamentoSenhasView = () => {
                         Configurar
                     </Button>
                     <Button onClick={() => dispararColeta(fonte)}>Baixar agora</Button>
+                    <Button onClick={() => abrirTeste(fonte)}>Testar fluxo</Button>
                 </Space>
             ),
         },
@@ -591,6 +639,56 @@ const VazamentoSenhasView = () => {
                 width={640}
             >
                 {ajudaModal ? ajudas[ajudaModal].conteudo : null}
+            </Modal>
+            <Modal
+                title="Teste detalhado do fluxo Telegram"
+                open={modalTesteAberto}
+                onCancel={fecharTeste}
+                footer={[
+                    <Button key="reexecutar" loading={carregandoTeste} onClick={() => fonteTeste && abrirTeste(fonteTeste)}>
+                        Reexecutar teste
+                    </Button>,
+                    <Button key="fechar" type="primary" onClick={fecharTeste}>
+                        Fechar
+                    </Button>,
+                ]}
+                width={820}
+            >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text strong>{fonteTeste?.nome}</Text>
+                    {carregandoTeste && <Text>Executando validações e leitura de mensagens...</Text>}
+                    {resultadoTeste ? (
+                        <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                            <Tag color={resultadoTeste.sucesso ? 'green' : 'red'}>
+                                {resultadoTeste.sucesso ? 'Fluxo aprovado' : 'Fluxo apresentou falhas'}
+                            </Tag>
+                            {resultadoTeste.passos.map((passo) => (
+                                <Card
+                                    key={`${passo.etapa}-${passo.detalhes || ''}`}
+                                    size="small"
+                                    title={passo.etapa}
+                                    extra={<Tag color={passo.sucesso ? 'green' : 'red'}>{passo.sucesso ? 'OK' : 'Erro'}</Tag>}
+                                >
+                                    <Space direction="vertical" style={{ width: '100%' }} size={6}>
+                                        {passo.detalhes && <Text>{passo.detalhes}</Text>}
+                                        <div>
+                                            <Text type="secondary">Enviado</Text>
+                                            <pre style={{ background: '#f7f8fc', padding: 8, borderRadius: 6, margin: 0 }}>
+                                                {JSON.stringify(passo.enviado || {}, null, 2)}
+                                            </pre>
+                                        </div>
+                                        <div>
+                                            <Text type="secondary">Recebido</Text>
+                                            <pre style={{ background: '#f7f8fc', padding: 8, borderRadius: 6, margin: 0 }}>
+                                                {JSON.stringify(passo.recebido || {}, null, 2)}
+                                            </pre>
+                                        </div>
+                                    </Space>
+                                </Card>
+                            ))}
+                        </Space>
+                    ) : null}
+                </Space>
             </Modal>
         </Container>
     );

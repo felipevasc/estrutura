@@ -11,6 +11,23 @@ export interface BuscaAtivaTelegram {
     fonte: FonteVazamento;
 }
 
+export type PassoFluxoTelegram = {
+    etapa: string;
+    sucesso: boolean;
+    enviado?: Record<string, unknown>;
+    recebido?: Record<string, unknown>;
+    detalhes?: string;
+    duracaoMs?: number;
+};
+
+export type ResultadoTesteTelegram = {
+    alvo: string;
+    sucesso: boolean;
+    passos: PassoFluxoTelegram[];
+    metodoAutenticacao?: 'BOT' | 'SESSAO';
+    tipo?: string;
+};
+
 const API_BASE_URL = '/api/v1/cti/vazamento/busca-ativa/telegram';
 
 export const useBuscaAtivaTelegram = (projetoId?: number) => {
@@ -60,11 +77,21 @@ export const useBuscaAtivaTelegram = (projetoId?: number) => {
         onError: (error: Error) => message.error(error.message),
     });
 
+    const testarFluxo = useMutation({
+        mutationFn: (fonteId: number) =>
+            fetch(`${API_BASE_URL}/${fonteId}/testar`, {
+                method: 'POST',
+            }).then(handleResponse),
+        onSuccess: () => message.success('Teste concluído'),
+        onError: (error: Error) => message.error(error.message),
+    });
+
     return {
         registros,
         isLoading,
         salvarPreferencias: salvarPreferencias.mutateAsync,
         executarColeta: executarColeta.mutateAsync,
+        testarFluxo: testarFluxo.mutateAsync,
         recarregar: refetch,
     };
 };

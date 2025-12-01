@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/database';
 import NanoSystem from '@/service/nano/System';
-import { FonteVazamentoTipo } from '@prisma/client';
+import { CommandStatus, FonteVazamentoTipo } from '@prisma/client';
 
-const comando = 'busca_ativa_vazamento_telegram';
+const comando = 'busca_ativa_vazamento_telegram_teste';
 
 const credenciaisTelegram = () => ({
     apiId: process.env.TELEGRAM_API_ID,
@@ -12,6 +12,25 @@ const credenciaisTelegram = () => ({
     codigoPais: process.env.TELEGRAM_CODIGO_PAIS,
     senha: process.env.TELEGRAM_SENHA,
 });
+
+const esperarResultado = async (commandId: number) => {
+    const limite = 25;
+    for (let tentativa = 0; tentativa < limite; tentativa += 1) {
+        const comandoAtual = await prisma.command.findUnique({ where: { id: commandId } });
+        if (!comandoAtual) return null;
+        if (comandoAtual.status === CommandStatus.COMPLETED || comandoAtual.status === CommandStatus.FAILED) {
+            let resultado: unknown = comandoAtual.output;
+            try {
+                resultado = comandoAtual.output ? JSON.parse(comandoAtual.output) : null;
+            } catch {
+                resultado = comandoAtual.output;
+            }
+            return { status: comandoAtual.status, resultado };
+        }
+        await new Promise((resolver) => setTimeout(resolver, 200));
+    }
+    return null;
+};
 
 export async function POST(_request: Request, contexto: { params: { fonteId: string } }) {
     const { fonteId: parametroFonteId } = contexto.params;
@@ -28,11 +47,11 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
             return NextResponse.json({ error: 'Fonte de Telegram não localizada' }, { status: 404 });
         if (!fonte.projetoId) return NextResponse.json({ error: 'Fonte deve estar vinculada a um projeto' }, { status: 400 });
         if (!fonte.buscaAtiva)
-            return NextResponse.json({ error: 'Configure extensões, destino e última captura antes de executar' }, { status: 400 });
+            return NextResponse.json({ error: 'Configure extensões e última captura antes de testar' }, { status: 400 });
         if (!Array.isArray(fonte.buscaAtiva.extensoes) || fonte.buscaAtiva.extensoes.length === 0)
-            return NextResponse.json({ error: 'Defina extensões permitidas para executar' }, { status: 400 });
+            return NextResponse.json({ error: 'Defina extensões permitidas para o teste' }, { status: 400 });
         if (!fonte.buscaAtiva.destinoCentral)
-            return NextResponse.json({ error: 'Informe o destino centralizado para a coleta' }, { status: 400 });
+            return NextResponse.json({ error: 'Informe o destino centralizado para o teste' }, { status: 400 });
 
         const metodoAutenticacao = fonte.parametros?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
         const credenciais = credenciaisTelegram();
@@ -58,6 +77,7 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
                     credenciais,
                     tokenBot: fonte.parametros?.tokenBot,
                     nomeSessao: fonte.parametros?.nomeSessao,
+                    registroBusca: fonte.buscaAtiva,
                 }),
                 projectId: fonte.projetoId,
             },
@@ -65,8 +85,11 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
 
         NanoSystem.process();
 
-        return NextResponse.json({ commandId: command.id });
+        const retorno = await esperarResultado(command.id);
+        if (retorno) return NextResponse.json(retorno);
+
+        return NextResponse.json({ status: 'PENDENTE', commandId: command.id });
     } catch {
-        return NextResponse.json({ error: 'Erro ao orquestrar coleta no Telegram' }, { status: 500 });
+        return NextResponse.json({ error: 'Erro ao testar coleta no Telegram' }, { status: 500 });
     }
 }
