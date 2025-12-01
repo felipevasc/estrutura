@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useContext } from 'react';
 import { Button, Input, Spin, FloatButton, message as antMessage } from 'antd';
-import { RobotOutlined, SendOutlined, CaretRightOutlined } from '@ant-design/icons';
-import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions } from './styles';
+import { SendOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions, PainelAgente, DadosAgente, TituloAgente, SubtituloAgente, AvatarContainer, AvatarIlustracao } from './styles';
 import StoreContext from '@/store';
 import useApi from '@/api';
 
@@ -10,6 +10,70 @@ interface Message {
     content: string;
     commands?: any[];
 }
+
+const sequencias = [
+    { pasta: 'animacao1', quadros: 7 },
+    { pasta: 'animacao2', quadros: 9 },
+    { pasta: 'animacao3', quadros: 5 },
+    { pasta: 'animacao4', quadros: 10 },
+    { pasta: 'animacao5', quadros: 8 },
+];
+
+const escolherAnimacao = (atual: number) => {
+    let proxima = atual;
+    while (proxima === atual) {
+        proxima = Math.floor(Math.random() * sequencias.length);
+    }
+    return proxima;
+};
+
+const gerarVariacao = () => ({
+    angulo: (Math.random() - 0.5) * 12,
+    escala: 1 + Math.random() * 0.08,
+    deslocamento: (Math.random() - 0.5) * 12,
+    opacidade: 0.82 + Math.random() * 0.18,
+    brilho: 0.25 + Math.random() * 0.4,
+});
+
+const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
+    const [animacao, setAnimacao] = useState(() => Math.floor(Math.random() * sequencias.length));
+    const [quadro, setQuadro] = useState(0);
+    const [variacao, setVariacao] = useState(() => gerarVariacao());
+
+    useEffect(() => {
+        const intervalo = setInterval(() => {
+            setQuadro(anterior => {
+                const sequencia = sequencias[animacao];
+                const proximo = anterior + 1;
+                if (proximo >= sequencia.quadros) {
+                    const novaAnimacao = escolherAnimacao(animacao);
+                    setAnimacao(novaAnimacao);
+                    setVariacao(gerarVariacao());
+                    return 0;
+                }
+                setVariacao(gerarVariacao());
+                return proximo;
+            });
+        }, 170);
+        return () => clearInterval(intervalo);
+    }, [animacao]);
+
+    const caminho = `/weaver/${sequencias[animacao].pasta}/p${quadro + 1}.png`;
+
+    return (
+        <AvatarContainer $tamanho={tamanho}>
+            <AvatarIlustracao
+                src={caminho}
+                alt="Weaver"
+                $angulo={variacao.angulo}
+                $escala={variacao.escala}
+                $deslocamento={variacao.deslocamento}
+                $opacidade={variacao.opacidade}
+                $brilho={variacao.brilho}
+            />
+        </AvatarContainer>
+    );
+};
 
 const ChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -20,7 +84,6 @@ const ChatWidget = () => {
     const { projeto } = useContext(StoreContext);
     const api = useApi();
 
-    // Safety check for project ID
     const projectId = projeto?.get ? projeto.get()?.id : null;
 
     const scrollToBottom = () => {
@@ -100,11 +163,11 @@ const ChatWidget = () => {
         <>
             <ChatButtonContainer>
                 <FloatButton
-                    icon={<RobotOutlined />}
+                    icon={<AgenteWeaver tamanho={52} />}
                     type="primary"
                     onClick={() => setIsOpen(true)}
                     tooltip="Weaver"
-                    style={{ left: 24, bottom: 24 }}
+                    style={{ left: 24, bottom: 24, width: 92, height: 92, borderRadius: 20, boxShadow: '0 14px 40px rgba(78, 192, 255, 0.35)' }}
                 />
             </ChatButtonContainer>
 
@@ -114,13 +177,20 @@ const ChatWidget = () => {
                 width={500}
                 onClose={() => setIsOpen(false)}
                 open={isOpen}
-                mask={false} 
+                mask={false}
             >
                 <ChatContainer>
+                    <PainelAgente>
+                        <AgenteWeaver tamanho={86} />
+                        <DadosAgente>
+                            <TituloAgente>Weaver</TituloAgente>
+                            <SubtituloAgente>Pronta para sugerir ações em tempo real</SubtituloAgente>
+                        </DadosAgente>
+                    </PainelAgente>
                     <MessagesArea>
                         {messages.length === 0 && (
-                            <div style={{ color: '#666', textAlign: 'center', marginTop: '50px' }}>
-                                <RobotOutlined style={{ fontSize: '40px', marginBottom: '10px' }} />
+                            <div style={{ color: '#666', textAlign: 'center', marginTop: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+                                <AgenteWeaver tamanho={110} />
                                 <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
                             </div>
                         )}
