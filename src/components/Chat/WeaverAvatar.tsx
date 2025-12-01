@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+"use client";
+import { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 
-const ANIMATIONS: Record<number, number> = {
+const ANIMACOES: Record<number, number> = {
     1: 7,
     2: 5,
     3: 5,
@@ -9,42 +10,39 @@ const ANIMATIONS: Record<number, number> = {
     5: 8
 };
 
-// Generates a random walk sequence from 1 to max with forward bias
-const generateSequence = (max: number): number[] => {
-    const seq: number[] = [1];
-    let current = 1;
-    let steps = 0;
-    const limit = max * 4;
+const gerarSequencia = (limite: number): number[] => {
+    const sequencia: number[] = [1];
+    let quadroAtual = 1;
+    let passos = 0;
+    const teto = limite * 4;
 
-    while (current < max && steps < limit) {
-        steps++;
-        const rand = Math.random();
+    while (quadroAtual < limite && passos < teto) {
+        passos++;
+        const sorteio = Math.random();
 
-        if (current === 1) {
-            current++;
-        } else if (current >= max) {
+        if (quadroAtual === 1) {
+            quadroAtual++;
+        } else if (quadroAtual >= limite) {
             break;
         } else {
-            // yo-yo effect
-            if (rand > 0.3) {
-                current++;
+            if (sorteio > 0.3) {
+                quadroAtual++;
             } else {
-                current--;
+                quadroAtual--;
             }
         }
-        seq.push(current);
+        sequencia.push(quadroAtual);
     }
 
-    // Ensure we reach the end
-    while (current < max) {
-        current++;
-        seq.push(current);
+    while (quadroAtual < limite) {
+        quadroAtual++;
+        sequencia.push(quadroAtual);
     }
 
-    return seq;
+    return sequencia;
 };
 
-const float = keyframes`
+const flutuar = keyframes`
     0% { transform: translateY(0px); }
     50% { transform: translateY(-3px); }
     100% { transform: translateY(0px); }
@@ -54,14 +52,12 @@ const Container = styled.div<{ $size: number; $isIdle: boolean }>`
     width: ${props => props.$size}px;
     height: ${props => props.$size}px;
     position: relative;
-    /* Only float when idle */
-    ${props => props.$isIdle && css`animation: ${float} 6s ease-in-out infinite;`}
+    ${props => props.$isIdle && css`animation: ${flutuar} 6s ease-in-out infinite;`}
     cursor: pointer;
     user-select: none;
     transition: transform 1s ease;
 `;
 
-// Back layer: Always opaque, z-index 1
 const BackLayer = styled.img`
     position: absolute;
     top: 0;
@@ -75,7 +71,6 @@ const BackLayer = styled.img`
     opacity: 1;
 `;
 
-// Front layer: Fades in/out, z-index 2
 const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
     position: absolute;
     top: 0;
@@ -93,22 +88,22 @@ const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
 interface WeaverAvatarProps {
     size?: number;
     onClick?: () => void;
+    ativo?: boolean;
 }
 
-const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
-    // Layering state
+const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo = true }) => {
     const [currentSrc, setCurrentSrc] = useState('/weaver/animacao1/p1.png');
     const [nextSrc, setNextSrc] = useState('/weaver/animacao1/p1.png');
     const [frontVisible, setFrontVisible] = useState(false);
     const [frontInstant, setFrontInstant] = useState(true);
 
     const [isIdle, setIsIdle] = useState(true);
-    const isMounted = useRef(true);
+    const ativoRef = useRef(ativo);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Preload images
     useEffect(() => {
         const preload = () => {
-            Object.entries(ANIMATIONS).forEach(([animStr, count]) => {
+            Object.entries(ANIMACOES).forEach(([animStr, count]) => {
                 const animId = parseInt(animStr);
                 for (let i = 1; i <= count; i++) {
                     const img = new Image();
@@ -117,70 +112,78 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
             });
         };
         preload();
-        return () => { isMounted.current = false; };
     }, []);
 
-    // Helper to perform the smooth transition
-    // Returns a promise that resolves when the frame hold time is over
-    const transitionToFrame = async (src: string) => {
-        if (!isMounted.current) return;
+    const pararSequencia = useCallback(() => {
+        if (timerRef.current) {
+            clearTimeout(timerRef.current);
+            timerRef.current = null;
+        }
+    }, []);
 
-        // 1. Prepare Front Layer
+    const transicionarParaQuadro = useCallback(async (src: string) => {
+        if (!ativoRef.current) return;
+
         setNextSrc(src);
-        setFrontInstant(false); // Enable transition
-        setFrontVisible(true);  // Start Fade In
+        setFrontInstant(false);
+        setFrontVisible(true);
 
-        // 2. Wait for Fade In (0.8s)
         await new Promise(r => setTimeout(r, 800));
 
-        if (!isMounted.current) return;
+        if (!ativoRef.current) return;
 
-        // 3. Commit to Back Layer (Instant)
         setCurrentSrc(src);
 
-        // 4. Hide Front Layer (Instant)
         setFrontInstant(true);
         setFrontVisible(false);
 
-        // 5. Hold remainder of frame time (total 1000ms -> wait 200ms)
         await new Promise(r => setTimeout(r, 100));
-    };
+    }, []);
+
+    const reproduzirSequencia = useCallback(async () => {
+        if (!ativoRef.current) return;
+
+        setIsIdle(false);
+
+        const animacao = 5;
+        const quadros = ANIMACOES[animacao];
+        const sequencia = gerarSequencia(quadros);
+
+        for (const quadro of sequencia) {
+            if (!ativoRef.current) return;
+            const src = `/weaver/animacao${animacao}/p${quadro}.png`;
+            await transicionarParaQuadro(src);
+        }
+
+        if (!ativoRef.current) return;
+
+        await transicionarParaQuadro('/weaver/animacao1/p1.png');
+        setIsIdle(true);
+
+        const atraso = 3000 + Math.random() * 3000;
+        timerRef.current = setTimeout(reproduzirSequencia, atraso);
+    }, [transicionarParaQuadro]);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
+        ativoRef.current = ativo;
 
-        const playSequence = async () => {
-            if (!isMounted.current) return;
+        if (!ativo) {
+            pararSequencia();
+            setCurrentSrc('/weaver/animacao1/p1.png');
+            setNextSrc('/weaver/animacao1/p1.png');
+            setFrontVisible(false);
+            setFrontInstant(true);
+            setIsIdle(true);
+            return;
+        }
 
-            setIsIdle(false);
+        timerRef.current = setTimeout(reproduzirSequencia, 1000);
 
-            //const animId = Math.floor(Math.random() * 5) + 1;
-            const animId = 5;
-            const count = ANIMATIONS[animId];
-            const sequence = generateSequence(count);
-
-            for (const frame of sequence) {
-                if (!isMounted.current) return;
-                const src = `/weaver/animacao${animId}/p${frame}.png`;
-                await transitionToFrame(src);
-            }
-
-            // Return to Idle
-            if (isMounted.current) {
-                await transitionToFrame('/weaver/animacao1/p1.png');
-                setIsIdle(true);
-            }
-
-            // Schedule next
-            if (isMounted.current) {
-                const nextDelay = 3000 + Math.random() * 3000;
-                timer = setTimeout(playSequence, nextDelay);
-            }
+        return () => {
+            ativoRef.current = false;
+            pararSequencia();
         };
-
-        timer = setTimeout(playSequence, 1000);
-        return () => clearTimeout(timer);
-    }, []);
+    }, [ativo, pararSequencia, reproduzirSequencia]);
 
     return (
         <Container $size={size} $isIdle={isIdle} onClick={onClick}>

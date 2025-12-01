@@ -116,7 +116,7 @@ const ChatWidget = () => {
                         {messages.length === 0 && (
                             <div style={{ color: '#666', textAlign: 'center', marginTop: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ marginBottom: '20px' }}>
-                                    <WeaverAvatar size={120} />
+                                    <WeaverAvatar size={120} ativo={isOpen} />
                                 </div>
                                 <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
                             </div>
