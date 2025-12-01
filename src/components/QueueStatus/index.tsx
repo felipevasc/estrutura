@@ -6,8 +6,10 @@ import { Command, CommandStatus } from '@prisma/client';
 import { StyledQueueStatus } from './styles';
 import StoreContext from '@/store';
 import { VscTerminal } from "react-icons/vsc";
+import AnsiToHtml from 'ansi-to-html';
 
 const QueueStatus = () => {
+    const conversorAnsi = new AnsiToHtml();
     const [aberto, definirAberto] = useState(false);
     const [comandos, definirComandos] = useState<Command[]>([]);
     const [expandidos, definirExpandidos] = useState<Record<number, boolean>>({});
@@ -94,6 +96,8 @@ const QueueStatus = () => {
         return 'Nenhum resultado disponível.';
     };
 
+    const converterSaida = (conteudo: string) => conversorAnsi.toHtml(conteudo || '');
+
     const renderizarTerminais = (dados: Command[], permitirCancelar: boolean) => (
         <div className="lista-terminais">
             {dados.map(item => {
@@ -138,7 +142,7 @@ const QueueStatus = () => {
                                     <span className="terminal-comando">{comandoFormatado}</span>
                                 </div>
                                 <div className="terminal-resultado">
-                                    <pre>{obterSaida(item)}</pre>
+                                    <pre dangerouslySetInnerHTML={{ __html: converterSaida(obterSaida(item)) }} />
                                 </div>
                             </div>
                         )}

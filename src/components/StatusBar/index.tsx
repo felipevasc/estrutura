@@ -10,8 +10,10 @@ import { Command } from "@prisma/client";
 import { Drawer, Tabs, Tag, Popconfirm, Button } from "antd";
 import { DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import { VscTerminal } from "react-icons/vsc";
+import AnsiToHtml from 'ansi-to-html';
 
 const StatusBar = () => {
+    const conversorAnsi = new AnsiToHtml();
     const [comandos, definirComandos] = useState<Command[]>([]);
     const [gavetaAberta, definirGavetaAberta] = useState(false);
     const [expandidos, definirExpandidos] = useState<Record<number, boolean>>({});
@@ -112,6 +114,8 @@ const StatusBar = () => {
         return 'Nenhum resultado disponível.';
     };
 
+    const converterSaida = (conteudo: string) => conversorAnsi.toHtml(conteudo || '');
+
     const renderizarTerminais = (dados: Command[], permitirCancelar: boolean) => {
         if (!dados.length) return <div className="mensagem-vazia">Nenhum comando nessa categoria.</div>;
         return (
@@ -158,7 +162,7 @@ const StatusBar = () => {
                                     <span className="terminal-comando">{comandoFormatado}</span>
                                 </div>
                                 <div className="terminal-resultado">
-                                    <pre>{obterSaida(item)}</pre>
+                                    <pre dangerouslySetInnerHTML={{ __html: converterSaida(obterSaida(item)) }} />
                                 </div>
                             </div>
                         )}
