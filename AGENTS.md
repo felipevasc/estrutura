@@ -16,6 +16,7 @@ Este repositório foi arquitetado para ser mantido e expandido por IAs. Siga est
     *   Não modifique a lógica do `System.ts` ou do `Explorer/index.tsx`.
     *   Para adicionar um serviço ou visualização, crie o arquivo e adicione-o ao arquivo de registro correspondente (`registry.ts` ou `viewRegistry.tsx`).
 3.  **Imutabilidade do Core:** Se você precisa alterar `QueueService`, `TerminalService` ou `System.ts`, pare e pense. É provável que você deva criar um *novo* serviço que interaja com eles via eventos.
+4.  **Componentes Animados:** Componentes com animações contínuas ou loops de efeitos (ex: `WeaverAvatar`) devem aceitar uma prop `active` para pausar a execução quando o componente estiver montado, mas oculto (ex: em Drawers ou Tabs), evitando desperdício de recursos e dessincronização.
 
 ## Estrutura do Backend (Nano-Serviços)
 

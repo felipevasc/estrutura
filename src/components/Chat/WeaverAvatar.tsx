@@ -93,9 +93,10 @@ const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
 interface WeaverAvatarProps {
     size?: number;
     onClick?: () => void;
+    active?: boolean;
 }
 
-const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
+const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, active = true }) => {
     // Layering state
     const [currentSrc, setCurrentSrc] = useState('/weaver/animacao1/p1.png');
     const [nextSrc, setNextSrc] = useState('/weaver/animacao1/p1.png');
@@ -104,6 +105,12 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
 
     const [isIdle, setIsIdle] = useState(true);
     const isMounted = useRef(true);
+    // Track active state in a ref to access it within the async loop closures
+    const isActiveRef = useRef(active);
+
+    useEffect(() => {
+        isActiveRef.current = active;
+    }, [active]);
 
     // Preload images
     useEffect(() => {
@@ -123,7 +130,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
     // Helper to perform the smooth transition
     // Returns a promise that resolves when the frame hold time is over
     const transitionToFrame = async (src: string) => {
-        if (!isMounted.current) return;
+        if (!isMounted.current || !isActiveRef.current) return;
 
         // 1. Prepare Front Layer
         setNextSrc(src);
@@ -133,7 +140,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
         // 2. Wait for Fade In (0.8s)
         await new Promise(r => setTimeout(r, 800));
 
-        if (!isMounted.current) return;
+        if (!isMounted.current || !isActiveRef.current) return;
 
         // 3. Commit to Back Layer (Instant)
         setCurrentSrc(src);
@@ -147,10 +154,12 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
     };
 
     useEffect(() => {
+        if (!active) return; // Don't start loop if not active
+
         let timer: NodeJS.Timeout;
 
         const playSequence = async () => {
-            if (!isMounted.current) return;
+            if (!isMounted.current || !isActiveRef.current) return;
 
             setIsIdle(false);
 
@@ -160,27 +169,28 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
             const sequence = generateSequence(count);
 
             for (const frame of sequence) {
-                if (!isMounted.current) return;
+                if (!isMounted.current || !isActiveRef.current) return;
                 const src = `/weaver/animacao${animId}/p${frame}.png`;
                 await transitionToFrame(src);
             }
 
             // Return to Idle
-            if (isMounted.current) {
+            if (isMounted.current && isActiveRef.current) {
                 await transitionToFrame('/weaver/animacao1/p1.png');
                 setIsIdle(true);
             }
 
             // Schedule next
-            if (isMounted.current) {
+            if (isMounted.current && isActiveRef.current) {
                 const nextDelay = 3000 + Math.random() * 3000;
                 timer = setTimeout(playSequence, nextDelay);
             }
         };
 
+        // Start initial delay
         timer = setTimeout(playSequence, 1000);
         return () => clearTimeout(timer);
-    }, []);
+    }, [active]); // Restart loop when active becomes true
 
     return (
         <Container $size={size} $isIdle={isIdle} onClick={onClick}>
