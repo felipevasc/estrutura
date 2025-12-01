@@ -8,11 +8,9 @@ export const ChatButtonContainer = styled.div`
     z-index: 1000;
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 
     &:hover {
         transform: scale(1.1);
-        filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
     }
 
     &:active {

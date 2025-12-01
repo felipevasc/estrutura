@@ -100,7 +100,7 @@ const ChatWidget = () => {
     return (
         <>
             <ChatButtonContainer onClick={() => setIsOpen(true)} title="Weaver">
-                <WeaverAvatar size={80} />
+                <WeaverAvatar size={50} />
             </ChatButtonContainer>
 
             <StyledDrawer
@@ -116,7 +116,7 @@ const ChatWidget = () => {
                         {messages.length === 0 && (
                             <div style={{ color: '#666', textAlign: 'center', marginTop: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ marginBottom: '20px' }}>
-                                    <WeaverAvatar size={120} floating={true} />
+                                    <WeaverAvatar size={120} />
                                 </div>
                                 <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
                             </div>

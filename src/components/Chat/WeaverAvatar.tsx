@@ -71,7 +71,6 @@ const BackLayer = styled.img`
     object-fit: contain;
     z-index: 1;
     opacity: 1;
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
 `;
 
 // Front layer: Fades in/out, z-index 2
@@ -85,13 +84,11 @@ const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
     z-index: 2;
     transition: opacity ${props => props.$instant ? '0s' : '0.8s'} ease-in-out;
     opacity: ${props => props.$visible ? 1 : 0};
-    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
     pointer-events: none; /* Let clicks pass to container */
 `;
 
 interface WeaverAvatarProps {
     size?: number;
-    floating?: boolean;
     onClick?: () => void;
 }
 
@@ -177,7 +174,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
             }
         };
 
-        timer = setTimeout(playSequence, 3000);
+        timer = setTimeout(playSequence, 100);
         return () => clearTimeout(timer);
     }, []);
 
