@@ -115,6 +115,8 @@ export const StyledQueueStatus = styled.div`
     .terminal-comando {
         color: #e5e5e5;
         word-break: break-word;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
     }
 
     .terminal-resultado {
@@ -134,5 +136,8 @@ export const StyledQueueStatus = styled.div`
         margin: 0;
         font-size: 13px;
         color: #cbd5e1;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: break-word;
     }
 `;
