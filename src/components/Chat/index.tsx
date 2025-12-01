@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useContext } from 'react';
-import { Button, Input, Spin, FloatButton, message as antMessage } from 'antd';
-import { RobotOutlined, SendOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { Button, Input, Spin, message as antMessage } from 'antd';
+import { SendOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions } from './styles';
+import WeaverAvatar from './WeaverAvatar';
 import StoreContext from '@/store';
 import useApi from '@/api';
 
@@ -98,14 +99,8 @@ const ChatWidget = () => {
 
     return (
         <>
-            <ChatButtonContainer>
-                <FloatButton
-                    icon={<RobotOutlined />}
-                    type="primary"
-                    onClick={() => setIsOpen(true)}
-                    tooltip="Weaver"
-                    style={{ left: 24, bottom: 24 }}
-                />
+            <ChatButtonContainer onClick={() => setIsOpen(true)} title="Weaver">
+                <WeaverAvatar size={80} />
             </ChatButtonContainer>
 
             <StyledDrawer
@@ -119,8 +114,10 @@ const ChatWidget = () => {
                 <ChatContainer>
                     <MessagesArea>
                         {messages.length === 0 && (
-                            <div style={{ color: '#666', textAlign: 'center', marginTop: '50px' }}>
-                                <RobotOutlined style={{ fontSize: '40px', marginBottom: '10px' }} />
+                            <div style={{ color: '#666', textAlign: 'center', marginTop: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                <div style={{ marginBottom: '20px' }}>
+                                    <WeaverAvatar size={120} floating={true} />
+                                </div>
                                 <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
                             </div>
                         )}
