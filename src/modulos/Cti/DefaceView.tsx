@@ -1,26 +1,143 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Tag, Button, Select, message, Card, Space, Typography, Row, Col, Popconfirm, Modal, Input, Spin } from 'antd';
+import { Table, Alert, Tag, Button, Select, message, Space, Typography, Popconfirm, Modal, Input, Spin, Tabs, Tooltip } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
-import { SettingOutlined } from '@ant-design/icons';
+import { SettingOutlined, ReloadOutlined, RadarChartOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { TabPane } = Tabs;
 
 const Container = styled.div`
   display: flex;
   flex-direction: column;
+  gap: 12px;
   height: 100%;
+  padding: 8px 0;
 `;
 
-const TabelaContainer = styled.div`
-  flex-grow: 1;
-  overflow-y: auto;
+const Grade = styled.div`
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+  height: 100%;
   min-height: 0;
+`;
+
+const PainelVidro = styled.div`
+  background: ${({ theme }) => theme.glass.card};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: ${({ theme }) => theme.borders.radius};
+  box-shadow: ${({ theme }) => theme.shadows.soft};
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+`;
+
+const Cabecalho = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const BlocoTitulo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const Subtitulo = styled(Text)`
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const SeletorAlvo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+`;
+
+const Etiqueta = styled.span`
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+const AreaTabela = styled.div`
+  flex: 1;
+  min-height: 0;
+
+  .ant-table-container {
+    border-radius: ${({ theme }) => theme.borders.radius};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
+    overflow: hidden;
+    box-shadow: ${({ theme }) => theme.shadows.soft};
+  }
+`;
+
+const PainelFerramentas = styled(PainelVidro)`
+  background: ${({ theme }) => theme.glass.default};
+`;
+
+const AbasFerramentas = styled(Tabs)`
+  .ant-tabs-nav {
+    margin: 0 0 8px 0;
+  }
+
+  .ant-tabs-tab {
+    font-weight: 600;
+  }
+`;
+
+const ListaFerramentas = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const ItemFerramenta = styled.div`
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+`;
+
+const BotaoFerramenta = styled(Button)`
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: ${({ theme }) => theme.borders.radius};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  background: ${({ theme }) => theme.gradients.surface};
+  color: ${({ theme }) => theme.colors.text};
+  box-shadow: ${({ theme }) => theme.shadows.soft};
+
+  &:hover,
+  &:focus {
+    border-color: ${({ theme }) => theme.colors.primary};
+    color: ${({ theme }) => theme.colors.text};
+  }
+`;
+
+const BotaoConfiguracao = styled(Button)`
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
 `;
 
 interface DefaceRecord {
@@ -33,245 +150,256 @@ interface DefaceRecord {
     };
 }
 
+const formatarCategoria = (categoria: string) => categoria.split(/[-_]/).map(parte => parte.charAt(0).toUpperCase() + parte.slice(1)).join(' ');
+
 const DefaceView = () => {
     const { projeto } = useStore();
     const projetoId = projeto?.get()?.id;
     const [dominios, setDominios] = useState<Dominio[]>([]);
-    const [selectedDominio, setSelectedDominio] = useState<number | null>(null);
-    const [data, setData] = useState<DefaceRecord[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [executing, setExecuting] = useState<string | null>(null);
-    const [error, setError] = useState<string | null>(null);
+    const [dominioSelecionado, setDominioSelecionado] = useState<number | null>(null);
+    const [dados, setDados] = useState<DefaceRecord[]>([]);
+    const [carregando, setCarregando] = useState(false);
+    const [executando, setExecutando] = useState<string | null>(null);
+    const [erro, setErro] = useState<string | null>(null);
+    const [categoriasDork, setCategoriasDork] = useState<string[]>([]);
+    const [modalConfiguracaoVisivel, setModalConfiguracaoVisivel] = useState(false);
+    const [categoriaAtualConfiguracao, setCategoriaAtualConfiguracao] = useState<string | null>(null);
+    const [listaAtualConfiguracao, setListaAtualConfiguracao] = useState<string>("");
+    const [salvandoConfiguracao, setSalvandoConfiguracao] = useState(false);
 
-    // Configuration State
-    const [dorkCategories, setDorkCategories] = useState<string[]>([]);
-    const [configModalVisible, setConfigModalVisible] = useState(false);
-    const [currentConfigCategory, setCurrentConfigCategory] = useState<string | null>(null);
-    const [currentConfigList, setCurrentConfigList] = useState<string>("");
-    const [savingConfig, setSavingConfig] = useState(false);
-
-    const fetchDominios = useCallback(async () => {
+    const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
         try {
-            const response = await fetch(`/api/v1/projetos/${projetoId}/dominios`);
-            const result = await response.json();
-            setDominios(result);
-        } catch (err) {
-            message.error("Falha ao carregar a lista de domínios.");
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/dominios`);
+            const resultado = await resposta.json();
+            setDominios(resultado);
+        } catch {
+            message.error('Falha ao carregar a lista de domínios.');
         }
     }, [projetoId]);
 
-    const fetchData = useCallback(async () => {
+    const buscarDados = useCallback(async () => {
         if (!projetoId) return;
-        setLoading(true);
-        setError(null);
+        setCarregando(true);
+        setErro(null);
         try {
-            const response = await fetch(`/api/v1/projetos/${projetoId}/cti/deface`);
-            if (!response.ok) throw new Error('Falha ao buscar os dados.');
-            const result = await response.json();
-            setData(result);
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface`);
+            if (!resposta.ok) throw new Error('Falha ao buscar os dados.');
+            const resultado = await resposta.json();
+            setDados(resultado);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
+            setErro(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
         } finally {
-            setLoading(false);
+            setCarregando(false);
         }
     }, [projetoId]);
 
-    const fetchDorkConfig = useCallback(async () => {
+    const buscarConfiguracaoDork = useCallback(async () => {
         try {
-            const response = await fetch('/api/v1/configuracoes/dorks');
-            if (response.ok) {
-                const config = await response.json();
-                setDorkCategories(Object.keys(config));
+            const resposta = await fetch('/api/v1/configuracoes/dorks');
+            if (resposta.ok) {
+                const configuracao = await resposta.json();
+                setCategoriasDork(Object.keys(configuracao));
             }
-        } catch (err) {
-            console.error("Failed to load dork config", err);
+        } catch {
+            message.error('Falha ao carregar as categorias de dorks.');
         }
     }, []);
 
     useEffect(() => {
-        fetchDominios();
-        fetchData();
-        fetchDorkConfig();
-    }, [fetchDominios, fetchData, fetchDorkConfig]);
+        buscarDominios();
+        buscarDados();
+        buscarConfiguracaoDork();
+    }, [buscarDominios, buscarDados, buscarConfiguracaoDork]);
 
-    const handleExecute = async (category: string) => {
-        if (!selectedDominio) {
-            message.warning('Por favor, selecione um domínio alvo.');
+    const executarCategoria = async (categoria: string) => {
+        if (!dominioSelecionado) {
+            message.warning('Selecione um domínio alvo para continuar.');
             return;
         }
-        setExecuting(category);
+        setExecutando(categoria);
+        const rotulo = formatarCategoria(categoria);
         try {
-            const response = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/executar`, {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/executar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: selectedDominio, ferramenta: category }),
+                body: JSON.stringify({ dominioId: dominioSelecionado, ferramenta: categoria }),
             });
-            if (!response.ok) throw new Error('Falha ao enfileirar a tarefa.');
-            message.success(`Tarefa 'Dork [${category}]' enfileirada!`);
+            if (!resposta.ok) throw new Error('Falha ao enfileirar a tarefa.');
+            message.success(`Tarefa '${rotulo}' enfileirada.`);
         } catch (err) {
             message.error(err instanceof Error ? err.message : 'Erro desconhecido.');
         } finally {
-            setExecuting(null);
+            setExecutando(null);
         }
     };
 
-    const handleLimpar = async () => {
+    const limparDados = async () => {
         if (!projetoId) return;
-        setLoading(true);
+        setCarregando(true);
         try {
-            const response = await fetch(`/api/v1/projetos/${projetoId}/cti/deface`, {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface`, {
                 method: 'DELETE',
             });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Falha ao limpar os dados.');
+            if (!resposta.ok) {
+                const dadosErro = await resposta.json();
+                throw new Error(dadosErro.error || 'Falha ao limpar os dados.');
             }
-            message.success("Dados de deface limpos com sucesso.");
-            setData([]);
+            message.success('Dados de deface limpos com sucesso.');
+            setDados([]);
         } catch (err) {
             message.error(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
         } finally {
-            setLoading(false);
+            setCarregando(false);
         }
     };
 
-    const openConfigModal = async (category: string) => {
-        setCurrentConfigCategory(category);
-        setSavingConfig(true);
+    const abrirModalConfiguracao = async (categoria: string) => {
+        setCategoriaAtualConfiguracao(categoria);
+        setSalvandoConfiguracao(true);
         try {
-            const response = await fetch('/api/v1/configuracoes/dorks');
-            const config = await response.json();
-            const list = config[category] || [];
-            setCurrentConfigList(list.join('\n'));
-            setConfigModalVisible(true);
-        } catch (err) {
-            message.error("Erro ao carregar configuração.");
+            const resposta = await fetch('/api/v1/configuracoes/dorks');
+            const configuracao = await resposta.json();
+            const lista = configuracao[categoria] || [];
+            setListaAtualConfiguracao(lista.join('\n'));
+            setModalConfiguracaoVisivel(true);
+        } catch {
+            message.error('Erro ao carregar configuração.');
         } finally {
-            setSavingConfig(false);
+            setSalvandoConfiguracao(false);
         }
     };
 
-    const saveConfig = async () => {
-        if (!currentConfigCategory) return;
-        setSavingConfig(true);
+    const salvarConfiguracao = async () => {
+        if (!categoriaAtualConfiguracao) return;
+        setSalvandoConfiguracao(true);
         try {
-            // Fetch current full config first
-            const getResponse = await fetch('/api/v1/configuracoes/dorks');
-            const currentConfig = await getResponse.json();
-
-            // Update specific category
-            const newList = currentConfigList.split('\n').map(s => s.trim()).filter(s => s.length > 0);
-            currentConfig[currentConfigCategory] = newList;
-
-            const postResponse = await fetch('/api/v1/configuracoes/dorks', {
+            const respostaConfiguracao = await fetch('/api/v1/configuracoes/dorks');
+            const configuracaoAtual = await respostaConfiguracao.json();
+            const novaLista = listaAtualConfiguracao.split('\n').map(item => item.trim()).filter(item => item.length > 0);
+            configuracaoAtual[categoriaAtualConfiguracao] = novaLista;
+            const respostaEnvio = await fetch('/api/v1/configuracoes/dorks', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(currentConfig)
+                body: JSON.stringify(configuracaoAtual)
             });
-
-            if (!postResponse.ok) throw new Error("Falha ao salvar");
-            message.success("Configuração atualizada com sucesso.");
-            setConfigModalVisible(false);
-            fetchDorkConfig(); // Refresh categories if needed (though unlikely to change keys here)
-        } catch (err) {
-            message.error("Erro ao salvar configuração.");
+            if (!respostaEnvio.ok) throw new Error('Falha ao salvar.');
+            message.success('Configuração atualizada com sucesso.');
+            setModalConfiguracaoVisivel(false);
+            buscarConfiguracaoDork();
+        } catch {
+            message.error('Erro ao salvar configuração.');
         } finally {
-            setSavingConfig(false);
+            setSalvandoConfiguracao(false);
         }
     };
 
-    const columns = [
-        { title: 'URL', dataIndex: 'url', key: 'url', render: (text: string) => <a href={text} target="_blank" rel="noopener noreferrer">{text}</a> },
+    const colunas = [
+        { title: 'URL', dataIndex: 'url', key: 'url', render: (texto: string) => <a href={texto} target="_blank" rel="noopener noreferrer">{texto}</a> },
         { title: 'Domínio', dataIndex: ['dominio', 'endereco'], key: 'dominio' },
         { title: 'Fonte', dataIndex: 'fonte', key: 'fonte', render: (fonte: string) => <Tag color="blue">{fonte}</Tag> },
-        { title: 'Data da Descoberta', dataIndex: 'createdAt', key: 'createdAt', render: (text: string) => new Date(text).toLocaleString() },
+        { title: 'Data da Descoberta', dataIndex: 'createdAt', key: 'createdAt', render: (texto: string) => new Date(texto).toLocaleString() },
     ];
 
     return (
         <Container>
-            <Row gutter={24} style={{ height: '100%', display: 'flex' }}>
-                <Col span={18} style={{ display: 'flex', flexDirection: 'column' }}>
-                    <Card style={{ marginBottom: 24, flexShrink: 0 }}>
-                        <Title level={5}>Alvo</Title>
+            <Grade>
+                <PainelVidro>
+                    <Cabecalho>
+                        <BlocoTitulo>
+                            <Title level={4} style={{ margin: 0 }}>Deface Scanner</Title>
+                            <Subtitulo>Visual hacker com foco em resposta rápida.</Subtitulo>
+                        </BlocoTitulo>
+                        <Space>
+                            <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>
+                                Atualizar
+                            </Button>
+                            <Popconfirm
+                                title="Limpar todos os dados?"
+                                description="Esta ação é irreversível. Deseja continuar?"
+                                onConfirm={limparDados}
+                                okText="Sim"
+                                cancelText="Não"
+                            >
+                                <Button danger>Limpar</Button>
+                            </Popconfirm>
+                        </Space>
+                    </Cabecalho>
+                    <SeletorAlvo>
+                        <div style={{ minWidth: 120 }}>
+                            <Etiqueta>Domínio alvo</Etiqueta>
+                        </div>
                         <Select
                             style={{ width: '100%' }}
                             placeholder="Selecione um domínio"
-                            onChange={(value) => setSelectedDominio(value)}
+                            onChange={(valor) => setDominioSelecionado(valor)}
                             allowClear
                             disabled={!projetoId}
+                            value={dominioSelecionado ?? undefined}
                         >
-                            {dominios.map(d => <Option key={d.id} value={d.id}>{d.endereco}</Option>)}
+                            {dominios.map(dominio => <Option key={dominio.id} value={dominio.id}>{dominio.endereco}</Option>)}
                         </Select>
-                    </Card>
-                    <TabelaContainer>
+                        <Tooltip title="Recarregar domínios">
+                            <Button icon={<RadarChartOutlined />} onClick={buscarDominios} disabled={!projetoId} />
+                        </Tooltip>
+                    </SeletorAlvo>
+                    <AreaTabela>
                         <Table
-                            dataSource={data}
-                            columns={columns}
+                            dataSource={dados}
+                            columns={colunas}
                             rowKey="id"
-                            bordered
-                            loading={loading}
-                            title={() => (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <span>Resultados da Verificação de Deface</span>
-                                    <Space>
-                                        <Button onClick={() => fetchData()} type="primary">Atualizar Resultados</Button>
-                                        <Popconfirm
-                                            title="Limpar todos os dados?"
-                                            description="Esta ação é irreversível. Deseja continuar?"
-                                            onConfirm={handleLimpar}
-                                            okText="Sim"
-                                            cancelText="Não"
-                                        >
-                                            <Button danger>Limpar</Button>
-                                        </Popconfirm>
-                                    </Space>
-                                </div>
-                            )}
+                            bordered={false}
+                            loading={carregando}
+                            pagination={{ pageSize: 8 }}
                         />
-                    </TabelaContainer>
-                </Col>
-                <Col span={6}>
-                    <Card title="Ferramentas (Dorks)" style={{ height: '100%', overflowY: 'auto' }}>
-                         <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-                            Execute buscas agrupadas por categoria.
-                        </Text>
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                            {dorkCategories.length === 0 && <Spin />}
-                            {dorkCategories.map(category => (
-                                <div key={category} style={{ display: 'flex', gap: 8 }}>
-                                    <Button
-                                        block
-                                        onClick={() => handleExecute(category)}
-                                        loading={executing === category}
-                                        disabled={!!executing}
-                                    >
-                                        Dork [{category.charAt(0).toUpperCase() + category.slice(1)}]
-                                    </Button>
-                                    <Button
-                                        icon={<SettingOutlined />}
-                                        onClick={() => openConfigModal(category)}
-                                    />
-                                </div>
-                            ))}
-                        </Space>
-                    </Card>
-                </Col>
-            </Row>
-            {error && <Alert message="Erro" description={error} type="error" showIcon style={{ marginTop: 16 }} />}
+                    </AreaTabela>
+                </PainelVidro>
+                <PainelFerramentas>
+                    <AbasFerramentas defaultActiveKey="dorks">
+                        <TabPane tab="Dorks" key="dorks">
+                            <Subtitulo style={{ display: 'block', marginBottom: 8 }}>Selecione a busca desejada.</Subtitulo>
+                            <ListaFerramentas>
+                                {categoriasDork.length === 0 && <Spin />}
+                                {categoriasDork.map(categoria => {
+                                    const rotulo = formatarCategoria(categoria);
+                                    return (
+                                        <ItemFerramenta key={categoria}>
+                                            <BotaoFerramenta
+                                                onClick={() => executarCategoria(categoria)}
+                                                loading={executando === categoria}
+                                                disabled={!!executando || !dominioSelecionado}
+                                            >
+                                                <span>{rotulo}</span>
+                                                <Tag color="blue" style={{ margin: 0 }}>{categoria.toUpperCase()}</Tag>
+                                            </BotaoFerramenta>
+                                            <BotaoConfiguracao
+                                                icon={<SettingOutlined />}
+                                                onClick={() => abrirModalConfiguracao(categoria)}
+                                                loading={salvandoConfiguracao && categoriaAtualConfiguracao === categoria}
+                                            />
+                                        </ItemFerramenta>
+                                    );
+                                })}
+                            </ListaFerramentas>
+                        </TabPane>
+                        <TabPane tab="Em breve" key="futuro" disabled />
+                    </AbasFerramentas>
+                </PainelFerramentas>
+            </Grade>
+            {erro && <Alert message="Erro" description={erro} type="error" showIcon />}
 
             <Modal
-                title={`Configurar Dorks: ${currentConfigCategory}`}
-                open={configModalVisible}
-                onOk={saveConfig}
-                onCancel={() => setConfigModalVisible(false)}
-                confirmLoading={savingConfig}
+                title={`Configurar Dorks: ${categoriaAtualConfiguracao}`}
+                open={modalConfiguracaoVisivel}
+                onOk={salvarConfiguracao}
+                onCancel={() => setModalConfiguracaoVisivel(false)}
+                confirmLoading={salvandoConfiguracao}
             >
                 <Alert message="Insira uma frase/palavra por linha." type="info" style={{ marginBottom: 16 }} />
                 <TextArea
                     rows={10}
-                    value={currentConfigList}
-                    onChange={(e) => setCurrentConfigList(e.target.value)}
+                    value={listaAtualConfiguracao}
+                    onChange={(evento) => setListaAtualConfiguracao(evento.target.value)}
                 />
             </Modal>
         </Container>
