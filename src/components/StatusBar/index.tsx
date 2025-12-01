@@ -1,74 +1,74 @@
-import { StyledStatusBar, StatusItem } from "./styles";
+import { StyledStatusBar, StatusItem, AreaTerminais } from "./styles";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle, faTerminal, faCircleNotch, faExclamationTriangle, faCog } from "@fortawesome/free-solid-svg-icons";
 import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import { Command } from "@prisma/client";
-import { Drawer, Tabs, List, Tag, Popconfirm, Button } from "antd";
-import { DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Drawer, Tabs, Tag, Popconfirm, Button } from "antd";
+import { DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import { VscTerminal } from "react-icons/vsc";
 
 const StatusBar = () => {
-    const [commands, setCommands] = useState<Command[]>([]);
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+    const [comandos, definirComandos] = useState<Command[]>([]);
+    const [gavetaAberta, definirGavetaAberta] = useState(false);
+    const [expandidos, definirExpandidos] = useState<Record<number, boolean>>({});
     const { projeto, isConfiguracoesOpen } = useContext(StoreContext);
     const api = useApi();
-    const timeout = useRef<NodeJS.Timeout>(null);
+    const temporizador = useRef<NodeJS.Timeout>(null);
 
-    const projectId = projeto?.get()?.id;
+    const idProjeto = projeto?.get()?.id;
 
-    const fetchCommands = useCallback(async () => {
-        if (!projectId) return;
+    const carregarComandos = useCallback(async () => {
+        if (!idProjeto) return;
         try {
-            const data = await api.queue.getCommands(projectId);
-            setCommands(data);
-            timeout.current && clearTimeout(timeout.current);
-            timeout.current = setTimeout(fetchCommands, 5000); // Polling faster for status bar
+            const dados = await api.queue.getCommands(idProjeto);
+            definirComandos(dados);
+            if (temporizador.current) clearTimeout(temporizador.current);
+            temporizador.current = setTimeout(carregarComandos, 5000);
         } catch (error) {
-            console.error("Failed to fetch commands", error);
+            console.error("Falha ao buscar comandos", error);
         }
-    }, [projectId, api.queue]);
+    }, [idProjeto, api.queue]);
 
     useEffect(() => {
-        fetchCommands();
+        carregarComandos();
         return () => {
-            timeout.current && clearTimeout(timeout.current);
+            if (temporizador.current) clearTimeout(temporizador.current);
         }
-    }, [fetchCommands]);
+    }, [carregarComandos]);
 
-    const runningCommands = commands.filter(c => c.status === 'RUNNING');
-    const failedCommands = commands.filter(c => c.status === 'FAILED');
+    const comandosExecutando = comandos.filter(c => c.status === 'RUNNING');
+    const comandosFalhos = comandos.filter(c => c.status === 'FAILED');
+    const comandosPendentes = comandos.filter(c => c.status === 'PENDING');
+    const comandosHistorico = comandos.filter(c => c.status === 'COMPLETED' || c.status === 'FAILED');
 
-    // Status Bar Logic
-    const isRunning = runningCommands.length > 0;
-    const hasFailures = failedCommands.length > 0;
+    const executando = comandosExecutando.length > 0;
+    const falhas = comandosFalhos.length > 0;
 
-    let statusText = "Pronto";
-    let statusIcon = faCheckCircle;
-    let statusColor = "inherit"; // default white from CSS
+    let textoStatus = "Pronto";
+    let iconeStatus = faCheckCircle;
+    let corStatus = "inherit";
 
-    if (isRunning) {
-        statusText = `Executando ${runningCommands[0].command}... (${runningCommands.length} em fila)`;
-        statusIcon = faCircleNotch;
-        // Animation would be nice here
-    } else if (hasFailures) {
-        statusText = "Alguns comandos falharam";
-        statusIcon = faExclamationTriangle;
-        statusColor = "#ffccc7";
+    if (executando) {
+        textoStatus = `Executando ${comandosExecutando[0].command}... (${comandosExecutando.length} em fila)`;
+        iconeStatus = faCircleNotch;
+    } else if (falhas) {
+        textoStatus = "Alguns comandos falharam";
+        iconeStatus = faExclamationTriangle;
+        corStatus = "#ffccc7";
     }
 
-    // --- Drawer Logic (Reusing QueueStatus) ---
-     const handleCancelCommand = async (commandId: number) => {
+    const cancelarComando = async (id: number) => {
         try {
-            await api.queue.cancelCommand(commandId);
-            fetchCommands();
+            await api.queue.cancelCommand(id);
+            carregarComandos();
         } catch (error) {
-            console.error("Failed to cancel command", error);
+            console.error("Falha ao cancelar comando", error);
         }
     };
 
-    const getStatusTag = (status: string) => {
+    const obterEtiquetaStatus = (status: string) => {
         switch (status) {
             case 'RUNNING': return <Tag icon={<LoadingOutlined spin />} color="processing">Executando</Tag>;
             case 'PENDING': return <Tag color="warning">Aguardando</Tag>;
@@ -78,55 +78,115 @@ const StatusBar = () => {
         }
     };
 
-    // Reuse renderCommandList logic... simplified for brevity
-     const renderList = (data: Command[], showCancel: boolean) => (
-        <List
-            dataSource={data}
-            renderItem={item => (
-                <List.Item
-                     actions={showCancel ? [
-                        <Popconfirm
-                            key="delete"
-                            title="Cancelar?"
-                            onConfirm={() => handleCancelCommand(item.id)}
-                        >
-                            <Button icon={<DeleteOutlined />} size="small" danger type="text" />
-                        </Popconfirm>
-                    ] : []}
-                >
-                    <List.Item.Meta
-                        avatar={<VscTerminal />}
-                        title={item.command}
-                        description={getStatusTag(item.status)}
-                    />
-                     {(item.status === 'FAILED' || item.status === 'COMPLETED') && (
-                        <div style={{fontSize: '0.8em', color: '#888'}}>
-                           {/* Click to see output could go here */}
+    const interpretarParametros = (conteudo: string) => {
+        if (!conteudo) return null;
+        try {
+            return JSON.parse(conteudo);
+        } catch {
+            return null;
+        }
+    };
+
+    const formatarParametros = (conteudo: string) => {
+        const parametros = interpretarParametros(conteudo);
+        if (!parametros) return conteudo;
+        if (Array.isArray(parametros)) return parametros.join(' ');
+        if (typeof parametros === 'object') return Object.entries(parametros).map(([chave, valor]) => `${chave}=${typeof valor === 'object' ? JSON.stringify(valor) : valor}`).join(' ');
+        return `${parametros}`;
+    };
+
+    const montarLinhaComando = (comando: Command) => {
+        if (comando.executedCommand) return comando.executedCommand;
+        const parametros = formatarParametros(comando.args);
+        if (parametros && parametros.trim().length > 0) return `${comando.command} ${parametros}`.trim();
+        return comando.command;
+    };
+
+    const obterSaida = (comando: Command) => {
+        const conteudo = comando.rawOutput || comando.output;
+        if (conteudo) return conteudo;
+        if (comando.status === 'RUNNING') return 'Comando em execução...';
+        if (comando.status === 'PENDING') return 'Aguardando execução...';
+        return 'Nenhum resultado disponível.';
+    };
+
+    const renderizarTerminais = (dados: Command[], permitirCancelar: boolean) => (
+        <div className="lista-terminais">
+            {dados.map(item => {
+                const comandoFormatado = montarLinhaComando(item);
+                const aberto = expandidos[item.id] ?? true;
+                const alternarTerminal = () => definirExpandidos(valorAnterior => ({ ...valorAnterior, [item.id]: !aberto }));
+                return (
+                    <div key={item.id} className="terminal-cartao">
+                        <div className="terminal-barra">
+                            <div className="terminal-titulo" onClick={alternarTerminal}>
+                                <div className="terminal-dots">
+                                    <span />
+                                    <span />
+                                    <span />
+                                </div>
+                                <VscTerminal />
+                                <span>{comandoFormatado}</span>
+                            </div>
+                            <div className="terminal-acoes">
+                                {obterEtiquetaStatus(item.status)}
+                                <Button icon={aberto ? <UpOutlined /> : <DownOutlined />} onClick={alternarTerminal} shape="circle" />
+                                {permitirCancelar && (
+                                    <Popconfirm
+                                        title="Cancelar comando?"
+                                        onConfirm={() => cancelarComando(item.id)}
+                                        okText="Sim"
+                                        cancelText="Não"
+                                    >
+                                        <Button icon={<DeleteOutlined />} type="primary" danger shape="circle" />
+                                    </Popconfirm>
+                                )}
+                            </div>
                         </div>
-                     )}
-                </List.Item>
-            )}
-        />
+                        {aberto && (
+                            <div className="terminal-corpo">
+                                <div className="terminal-cabecalho">
+                                    <span className="terminal-sessao">root@kali</span>
+                                    <span className="terminal-local">~/estrutura</span>
+                                </div>
+                                <div className="terminal-linha">
+                                    <span className="terminal-prompt">#</span>
+                                    <span className="terminal-comando">{comandoFormatado}</span>
+                                </div>
+                                <div className="terminal-resultado">
+                                    <pre>{obterSaida(item)}</pre>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
+        </div>
     );
 
-    const drawerItems = [
+    const itensGaveta = [
         {
             key: '1',
-            label: `Ativos (${runningCommands.length})`,
-            children: renderList(runningCommands, false),
+            label: `Executando (${comandosExecutando.length})`,
+            children: renderizarTerminais(comandosExecutando, false),
         },
         {
             key: '2',
+            label: `Aguardando (${comandosPendentes.length})`,
+            children: renderizarTerminais(comandosPendentes, true),
+        },
+        {
+            key: '3',
             label: 'Histórico',
-            children: renderList(commands.filter(c => c.status !== 'RUNNING' && c.status !== 'PENDING'), false),
+            children: renderizarTerminais(comandosHistorico, false),
         }
     ];
 
     return (
         <>
             <StyledStatusBar>
-                <StatusItem style={{ color: statusColor }}>
-                    <FontAwesomeIcon icon={statusIcon} spin={isRunning} /> Threat Weaver
+                <StatusItem style={{ color: corStatus }}>
+                    <FontAwesomeIcon icon={iconeStatus} spin={executando} /> Threat Weaver
                 </StatusItem>
 
                 <div style={{ flex: 1 }}></div>
@@ -135,8 +195,8 @@ const StatusBar = () => {
                     <FontAwesomeIcon icon={faCog} /> Configurações
                 </StatusItem>
 
-                <StatusItem style={{ cursor: 'pointer' }} onClick={() => setIsDrawerOpen(true)}>
-                    <FontAwesomeIcon icon={faTerminal} /> Output / Fila
+                <StatusItem style={{ cursor: 'pointer' }} onClick={() => definirGavetaAberta(true)}>
+                    <FontAwesomeIcon icon={faTerminal} /> {textoStatus}
                 </StatusItem>
             </StyledStatusBar>
 
@@ -144,10 +204,12 @@ const StatusBar = () => {
                 title="Console de Execução"
                 placement="bottom"
                 height={400}
-                onClose={() => setIsDrawerOpen(false)}
-                open={isDrawerOpen}
+                onClose={() => definirGavetaAberta(false)}
+                open={gavetaAberta}
             >
-                 <Tabs defaultActiveKey="1" items={drawerItems} />
+                <AreaTerminais>
+                    <Tabs defaultActiveKey="1" items={itensGaveta} />
+                </AreaTerminais>
             </Drawer>
         </>
     );
