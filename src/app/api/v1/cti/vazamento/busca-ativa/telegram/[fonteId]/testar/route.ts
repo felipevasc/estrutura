@@ -59,11 +59,8 @@ export async function POST(request: Request, contexto: { params: Promise<{ fonte
 
         const metodoAutenticacao = fonte.parametros?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
         const credenciais = credenciaisTelegram();
-        if (
-            metodoAutenticacao === 'SESSAO' &&
-            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais || !credenciais.sessao)
-        )
-            return NextResponse.json({ error: 'Configure sessão, API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
+        if (metodoAutenticacao === 'SESSAO' && (!credenciais.apiId || !credenciais.apiHash || !credenciais.sessao))
+            return NextResponse.json({ error: 'Configure sessão, API ID e API Hash do Telegram' }, { status: 400 });
         if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
             return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 
