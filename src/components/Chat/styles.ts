@@ -2,7 +2,22 @@ import styled from 'styled-components';
 import { Drawer as AntDrawer } from 'antd';
 
 export const ChatButtonContainer = styled.div`
-    /* Used to position the float button if not using Antd FloatButton default */
+    position: fixed;
+    bottom: 24px;
+    left: 24px;
+    z-index: 1000;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+
+    &:hover {
+        transform: scale(1.1);
+        filter: drop-shadow(0 6px 12px rgba(0,0,0,0.5));
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
 `;
 
 // @ts-ignore - Fixing TS4023
