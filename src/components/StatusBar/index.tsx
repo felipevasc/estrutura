@@ -1,3 +1,5 @@
+"use client";
+
 import { StyledStatusBar, StatusItem, AreaTerminais } from "./styles";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle, faTerminal, faCircleNotch, faExclamationTriangle, faCog } from "@fortawesome/free-solid-svg-icons";
@@ -110,8 +112,10 @@ const StatusBar = () => {
         return 'Nenhum resultado disponível.';
     };
 
-    const renderizarTerminais = (dados: Command[], permitirCancelar: boolean) => (
-        <div className="lista-terminais">
+    const renderizarTerminais = (dados: Command[], permitirCancelar: boolean) => {
+        if (!dados.length) return <div className="mensagem-vazia">Nenhum comando nessa categoria.</div>;
+        return (
+            <div className="lista-terminais">
             {dados.map(item => {
                 const comandoFormatado = montarLinhaComando(item);
                 const aberto = expandidos[item.id] ?? true;
@@ -161,8 +165,9 @@ const StatusBar = () => {
                     </div>
                 );
             })}
-        </div>
-    );
+            </div>
+        );
+    };
 
     const itensGaveta = [
         {

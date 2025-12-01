@@ -23,6 +23,16 @@ export const StatusItem = styled.div`
 `;
 
 export const AreaTerminais = styled.div`
+    .mensagem-vazia {
+        color: #cbd5e1;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        background: #0a0f1a;
+        border: 1px dashed #1f2937;
+        border-radius: 10px;
+        padding: 14px 16px;
+        text-align: center;
+    }
+
     .lista-terminais {
         display: grid;
         grid-template-columns: 1fr;
