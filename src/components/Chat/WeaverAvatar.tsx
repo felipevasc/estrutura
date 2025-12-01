@@ -3,7 +3,7 @@ import styled, { keyframes, css } from 'styled-components';
 
 const ANIMATIONS: Record<number, number> = {
     1: 7,
-    2: 9,
+    2: 5,
     3: 5,
     4: 10,
     5: 8
@@ -69,6 +69,8 @@ const BackLayer = styled.img`
     width: 100%;
     height: 100%;
     object-fit: contain;
+    border-radius: 100%;
+    border-color: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     z-index: 1;
     opacity: 1;
 `;
@@ -80,11 +82,12 @@ const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
     left: 0;
     width: 100%;
     height: 100%;
+    border-radius: 100%;
     object-fit: contain;
     z-index: 2;
     transition: opacity ${props => props.$instant ? '0s' : '0.8s'} ease-in-out;
     opacity: ${props => props.$visible ? 1 : 0};
-    pointer-events: none; /* Let clicks pass to container */
+    pointer-events: none;
 `;
 
 interface WeaverAvatarProps {
@@ -140,7 +143,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
         setFrontVisible(false);
 
         // 5. Hold remainder of frame time (total 1000ms -> wait 200ms)
-        await new Promise(r => setTimeout(r, 200));
+        await new Promise(r => setTimeout(r, 100));
     };
 
     useEffect(() => {
@@ -151,7 +154,8 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
 
             setIsIdle(false);
 
-            const animId = Math.floor(Math.random() * 5) + 1;
+            //const animId = Math.floor(Math.random() * 5) + 1;
+            const animId = 5;
             const count = ANIMATIONS[animId];
             const sequence = generateSequence(count);
 
@@ -169,12 +173,12 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick }) => {
 
             // Schedule next
             if (isMounted.current) {
-                const nextDelay = 4000 + Math.random() * 3000;
+                const nextDelay = 3000 + Math.random() * 3000;
                 timer = setTimeout(playSequence, nextDelay);
             }
         };
 
-        timer = setTimeout(playSequence, 100);
+        timer = setTimeout(playSequence, 1000);
         return () => clearTimeout(timer);
     }, []);
 
