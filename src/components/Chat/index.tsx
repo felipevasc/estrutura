@@ -28,11 +28,11 @@ const escolherAnimacao = (atual: number) => {
 };
 
 const gerarVariacaoSuave = () => ({
-    angulo: (Math.random() - 0.5) * 4,
-    escala: 0.98 + Math.random() * 0.04,
-    deslocamento: (Math.random() - 0.5) * 4,
-    opacidade: 0.9 + Math.random() * 0.08,
-    brilho: 0.28 + Math.random() * 0.22,
+    angulo: (Math.random() - 0.5) * 1.6,
+    escala: 0.992 + Math.random() * 0.012,
+    deslocamento: (Math.random() - 0.5) * 1.6,
+    opacidade: 0.94 + Math.random() * 0.04,
+    brilho: 0.22 + Math.random() * 0.16,
 });
 
 const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
@@ -40,6 +40,8 @@ const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
     const [quadro, setQuadro] = useState(0);
     const [animando, setAnimando] = useState(false);
     const [variacao, setVariacao] = useState(() => gerarVariacaoSuave());
+    const agendamentoRef = useRef<NodeJS.Timeout | null>(null);
+    const estadoAnimandoRef = useRef(false);
 
     useEffect(() => {
         const variar = setInterval(() => {
@@ -49,21 +51,35 @@ const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
     }, [animando]);
 
     useEffect(() => {
+        estadoAnimandoRef.current = animando;
+    }, [animando]);
+
+    useEffect(() => {
         const iniciar = () => {
+            if (estadoAnimandoRef.current) return;
+
             setAnimacao(atual => {
                 const proxima = escolherAnimacao(atual);
                 setQuadro(0);
                 setAnimando(true);
-                setVariacao({ angulo: 0, escala: 1, deslocamento: 0, opacidade: 1, brilho: 0.3 });
+                setVariacao({ angulo: 0, escala: 1, deslocamento: 0, opacidade: 1, brilho: 0.26 });
                 return proxima;
             });
         };
 
-        const agendamentoInicial = setTimeout(iniciar, 1200);
-        const agendamento = setInterval(iniciar, 5200);
+        const agendarCiclo = () => {
+            const pausa = 4600 + Math.random() * 1800;
+            agendamentoRef.current = setTimeout(() => {
+                if (Math.random() > 0.45) iniciar();
+                agendarCiclo();
+            }, pausa);
+        };
+
+        const agendamentoInicial = setTimeout(agendarCiclo, 1200);
+
         return () => {
             clearTimeout(agendamentoInicial);
-            clearInterval(agendamento);
+            if (agendamentoRef.current) clearTimeout(agendamentoRef.current);
         };
     }, []);
 
@@ -82,7 +98,7 @@ const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
                 }
                 return proximo;
             });
-        }, 140);
+        }, 160);
 
         return () => clearInterval(intervaloQuadros);
     }, [animando, animacao]);

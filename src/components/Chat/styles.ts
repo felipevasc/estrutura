@@ -1,9 +1,7 @@
 import styled from 'styled-components';
 import { Drawer as AntDrawer } from 'antd';
 
-export const ChatButtonContainer = styled.div`
-    /* Used to position the float button if not using Antd FloatButton default */
-`;
+export const ChatButtonContainer = styled.div``;
 
 // @ts-ignore - Fixing TS4023
 export const StyledDrawer = styled(AntDrawer)`
@@ -83,10 +81,10 @@ export const AvatarIlustracao = styled.img<{ $angulo: number; $escala: number; $
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 0.8s ease-in-out, opacity 0.65s ease-in-out, filter 0.8s ease-in-out;
+    transition: transform 1.15s ease-in-out, opacity 0.9s ease-in-out, filter 1.15s ease-in-out;
     transform: translateY(${({ $deslocamento }) => $deslocamento}px) scale(${({ $escala }) => $escala}) rotate(${({ $angulo }) => $angulo}deg);
     opacity: ${({ $opacidade }) => $opacidade};
-    filter: drop-shadow(0 0 10px rgba(78, 192, 255, ${({ $brilho }) => $brilho}));
+    filter: drop-shadow(0 0 8px rgba(78, 192, 255, ${({ $brilho }) => $brilho}));
 `;
 
 export const MessagesArea = styled.div`
