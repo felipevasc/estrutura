@@ -1,4 +1,4 @@
-import { faFingerprint, faFolder } from "@fortawesome/free-solid-svg-icons";
+import { faBoxes, faFolder } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { WhatwebResultadoResponse } from "@/types/WhatwebResultadoResponse";
 import { NoCarregavel } from "../tipos";
@@ -19,12 +19,12 @@ const useElementoWhatweb = () => {
       // If there are multiple items for the same plugin, create a folder
       if (itens.length > 1) {
         return {
-          key: `${chave}-whatweb-${plugin}`,
+          key: `${chave}-outros-${plugin}`,
           title: <div><FontAwesomeIcon icon={faFolder} /> {plugin} ({itens.length})</div>,
           className: "folder",
           isLeaf: false,
           children: itens.map((item, index) => ({
-            key: `${chave}-whatweb-${plugin}-${item.id ?? index}`,
+            key: `${chave}-outros-${plugin}-${item.id ?? index}`,
             title: (
               <Tooltip title={<pre className="max-h-64 overflow-auto text-xs">{JSON.stringify(item.dados, null, 2)}</pre>} placement="right">
                 <div>{item.valor}</div>
@@ -38,7 +38,7 @@ const useElementoWhatweb = () => {
       // Single item, display directly
       const item = itens[0];
       return {
-        key: `${chave}-whatweb-${plugin}-${item.id}`,
+        key: `${chave}-outros-${plugin}-${item.id}`,
         title: (
           <Tooltip title={<pre className="max-h-64 overflow-auto text-xs">{JSON.stringify(item.dados, null, 2)}</pre>} placement="right">
             <div>{plugin}: {item.valor}</div>
@@ -49,8 +49,8 @@ const useElementoWhatweb = () => {
     });
 
     return {
-      key: `${chave}-whatweb`,
-      title: <div><FontAwesomeIcon icon={faFingerprint} /> WhatWeb</div>,
+      key: `${chave}-outros`,
+      title: <div><FontAwesomeIcon icon={faBoxes} /> Outros</div>,
       children: filhos,
       className: "folder",
       isLeaf: filhos.length === 0
