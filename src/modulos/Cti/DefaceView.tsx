@@ -16,7 +16,6 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
-  height: 100%;
   padding: 8px 0;
 `;
 
@@ -24,8 +23,7 @@ const Grade = styled.div`
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 16px;
-  height: 100%;
-  min-height: 0;
+  align-items: start;
 `;
 
 const PainelVidro = styled.div`
@@ -37,8 +35,6 @@ const PainelVidro = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: 100%;
-  min-height: 0;
 `;
 
 const Cabecalho = styled.div`
@@ -116,10 +112,10 @@ const BotaoFerramenta = styled(Button)`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-radius: ${({ theme }) => theme.borders.radius};
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  background: ${({ theme }) => theme.gradients.surface};
+  background: ${({ theme }) => theme.glass.card};
   color: ${({ theme }) => theme.colors.text};
   box-shadow: ${({ theme }) => theme.shadows.soft};
 
@@ -131,13 +127,14 @@ const BotaoFerramenta = styled(Button)`
 `;
 
 const BotaoConfiguracao = styled(Button)`
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  border-radius: ${({ theme }) => theme.borders.radius};
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  background: ${({ theme }) => theme.glass.card};
 `;
 
 interface DefaceRecord {
