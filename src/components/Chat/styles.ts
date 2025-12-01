@@ -74,17 +74,19 @@ export const AvatarContainer = styled.div<{ $tamanho: number }>`
     display: flex;
     align-items: center;
     justify-content: center;
-    filter: drop-shadow(0 8px 18px rgba(28, 123, 199, 0.28));
+    filter: drop-shadow(0 10px 20px rgba(28, 123, 199, 0.24));
 `;
 
-export const AvatarIlustracao = styled.img<{ $angulo: number; $escala: number; $deslocamento: number; $opacidade: number; $brilho: number }>`
+export const AvatarIlustracao = styled.img<{ $angulo: number; $escala: number; $deslocamento: number; $opacidade: number; $brilho: number; $visivel: boolean }>`
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 1.15s ease-in-out, opacity 0.9s ease-in-out, filter 1.15s ease-in-out;
+    position: absolute;
+    inset: 0;
+    transition: opacity 0.45s ease, transform 1.2s ease-in-out, filter 1.2s ease-in-out;
     transform: translateY(${({ $deslocamento }) => $deslocamento}px) scale(${({ $escala }) => $escala}) rotate(${({ $angulo }) => $angulo}deg);
-    opacity: ${({ $opacidade }) => $opacidade};
-    filter: drop-shadow(0 0 8px rgba(78, 192, 255, ${({ $brilho }) => $brilho}));
+    opacity: ${({ $visivel, $opacidade }) => ($visivel ? $opacidade : 0)};
+    filter: drop-shadow(0 0 7px rgba(78, 192, 255, ${({ $brilho }) => $brilho}));
 `;
 
 export const MessagesArea = styled.div`

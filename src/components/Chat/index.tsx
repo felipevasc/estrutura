@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useContext } from 'react';
+import { useState, useRef, useEffect, useContext, useMemo } from 'react';
 import { Button, Input, Spin, FloatButton, message as antMessage } from 'antd';
 import { SendOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions, PainelAgente, DadosAgente, TituloAgente, SubtituloAgente, AvatarContainer, AvatarIlustracao } from './styles';
@@ -41,7 +41,11 @@ const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
     const [animando, setAnimando] = useState(false);
     const [variacao, setVariacao] = useState(() => gerarVariacaoSuave());
     const agendamentoRef = useRef<NodeJS.Timeout | null>(null);
+    const transicaoRef = useRef<NodeJS.Timeout | null>(null);
+    const ultimoCaminhoRef = useRef('/weaver/animacao1/p1.png');
     const estadoAnimandoRef = useRef(false);
+    const [caminhoAnterior, setCaminhoAnterior] = useState('/weaver/animacao1/p1.png');
+    const [misturando, setMisturando] = useState(false);
 
     useEffect(() => {
         const variar = setInterval(() => {
@@ -98,25 +102,49 @@ const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
                 }
                 return proximo;
             });
-        }, 160);
+        }, 260);
 
         return () => clearInterval(intervaloQuadros);
     }, [animando, animacao]);
 
     const pasta = animando ? sequencias[animacao].pasta : 'animacao1';
     const indiceQuadro = animando ? quadro : 0;
-    const caminho = `/weaver/${pasta}/p${indiceQuadro + 1}.png`;
+    const caminhoAtual = useMemo(() => `/weaver/${pasta}/p${indiceQuadro + 1}.png`, [pasta, indiceQuadro]);
+
+    useEffect(() => {
+        if (caminhoAtual === ultimoCaminhoRef.current) return;
+        setCaminhoAnterior(ultimoCaminhoRef.current);
+        ultimoCaminhoRef.current = caminhoAtual;
+        setMisturando(true);
+        if (transicaoRef.current) clearTimeout(transicaoRef.current);
+        transicaoRef.current = setTimeout(() => setMisturando(false), 340);
+    }, [caminhoAtual]);
+
+    useEffect(() => () => {
+        if (transicaoRef.current) clearTimeout(transicaoRef.current);
+    }, []);
 
     return (
         <AvatarContainer $tamanho={tamanho}>
             <AvatarIlustracao
-                src={caminho}
+                src={caminhoAnterior}
                 alt="Weaver"
                 $angulo={variacao.angulo}
                 $escala={variacao.escala}
                 $deslocamento={variacao.deslocamento}
                 $opacidade={variacao.opacidade}
                 $brilho={variacao.brilho}
+                $visivel={misturando}
+            />
+            <AvatarIlustracao
+                src={caminhoAtual}
+                alt="Weaver"
+                $angulo={variacao.angulo}
+                $escala={variacao.escala}
+                $deslocamento={variacao.deslocamento}
+                $opacidade={variacao.opacidade}
+                $brilho={variacao.brilho}
+                $visivel={!misturando}
             />
         </AvatarContainer>
     );
