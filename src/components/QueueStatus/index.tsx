@@ -1,5 +1,5 @@
 import { Drawer, Button, Tabs, Tag, Popconfirm } from 'antd';
-import { UnorderedListOutlined, DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { UnorderedListOutlined, DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import { useContext, useEffect, useRef, useState } from 'react';
 import useApi from '@/api';
 import { Command, CommandStatus } from '@prisma/client';
@@ -10,6 +10,7 @@ import { VscTerminal } from "react-icons/vsc";
 const QueueStatus = () => {
     const [aberto, definirAberto] = useState(false);
     const [comandos, definirComandos] = useState<Command[]>([]);
+    const [expandidos, definirExpandidos] = useState<Record<number, boolean>>({});
     const api = useApi();
     const { projeto } = useContext(StoreContext);
     const intervalo = useRef<NodeJS.Timeout>(null);
@@ -73,15 +74,23 @@ const QueueStatus = () => {
         <div className="lista-terminais">
             {dados.map(item => {
                 const comandoFormatado = item.executedCommand || item.command;
+                const aberto = expandidos[item.id] ?? true;
+                const alternarTerminal = () => definirExpandidos(valorAnterior => ({ ...valorAnterior, [item.id]: !aberto }));
                 return (
                     <div key={item.id} className="terminal-cartao">
                         <div className="terminal-barra">
-                            <div className="terminal-titulo">
+                            <div className="terminal-titulo" onClick={alternarTerminal}>
+                                <div className="terminal-dots">
+                                    <span />
+                                    <span />
+                                    <span />
+                                </div>
                                 <VscTerminal />
                                 <span>{comandoFormatado}</span>
                             </div>
                             <div className="terminal-acoes">
                                 {obterEtiquetaStatus(item.status)}
+                                <Button icon={aberto ? <UpOutlined /> : <DownOutlined />} onClick={alternarTerminal} shape="circle" />
                                 {permitirCancelar && (
                                     <Popconfirm
                                         title="Cancelar comando?"
@@ -94,13 +103,15 @@ const QueueStatus = () => {
                                 )}
                             </div>
                         </div>
-                        <div className="terminal-corpo">
-                            <div className="terminal-linha">
-                                <span className="terminal-prompt">$</span>
-                                <span>{comandoFormatado}</span>
+                        {aberto && (
+                            <div className="terminal-corpo">
+                                <div className="terminal-linha">
+                                    <span className="terminal-prompt">$</span>
+                                    <span>{comandoFormatado}</span>
+                                </div>
+                                <pre className="terminal-resultado">{obterSaida(item)}</pre>
                             </div>
-                            <pre className="terminal-resultado">{obterSaida(item)}</pre>
-                        </div>
+                        )}
                     </div>
                 );
             })}

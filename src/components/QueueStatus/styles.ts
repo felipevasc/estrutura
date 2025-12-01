@@ -39,6 +39,7 @@ export const StyledQueueStatus = styled.div`
         align-items: center;
         gap: 10px;
         font-weight: 600;
+        cursor: pointer;
     }
 
     .terminal-acoes {
@@ -46,6 +47,23 @@ export const StyledQueueStatus = styled.div`
         align-items: center;
         gap: 10px;
     }
+
+    .terminal-dots {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .terminal-dots span {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        display: block;
+    }
+
+    .terminal-dots span:nth-child(1) { background: #ef4444; }
+    .terminal-dots span:nth-child(2) { background: #f59e0b; }
+    .terminal-dots span:nth-child(3) { background: #10b981; }
 
     .terminal-corpo {
         background: #0b1220;
