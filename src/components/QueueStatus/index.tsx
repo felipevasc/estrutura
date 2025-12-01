@@ -62,6 +62,30 @@ const QueueStatus = () => {
         }
     };
 
+    const interpretarParametros = (conteudo: string) => {
+        if (!conteudo) return null;
+        try {
+            return JSON.parse(conteudo);
+        } catch {
+            return null;
+        }
+    };
+
+    const formatarParametros = (conteudo: string) => {
+        const parametros = interpretarParametros(conteudo);
+        if (!parametros) return conteudo;
+        if (Array.isArray(parametros)) return parametros.join(' ');
+        if (typeof parametros === 'object') return Object.entries(parametros).map(([chave, valor]) => `${chave}=${typeof valor === 'object' ? JSON.stringify(valor) : valor}`).join(' ');
+        return `${parametros}`;
+    };
+
+    const montarLinhaComando = (comando: Command) => {
+        if (comando.executedCommand) return comando.executedCommand;
+        const parametros = formatarParametros(comando.args);
+        if (parametros && parametros.trim().length > 0) return `${comando.command} ${parametros}`.trim();
+        return comando.command;
+    };
+
     const obterSaida = (comando: Command) => {
         const conteudo = comando.rawOutput || comando.output;
         if (conteudo) return conteudo;
@@ -73,7 +97,7 @@ const QueueStatus = () => {
     const renderizarTerminais = (dados: Command[], permitirCancelar: boolean) => (
         <div className="lista-terminais">
             {dados.map(item => {
-                const comandoFormatado = item.executedCommand || item.command;
+                const comandoFormatado = montarLinhaComando(item);
                 const aberto = expandidos[item.id] ?? true;
                 const alternarTerminal = () => definirExpandidos(valorAnterior => ({ ...valorAnterior, [item.id]: !aberto }));
                 return (
@@ -105,11 +129,17 @@ const QueueStatus = () => {
                         </div>
                         {aberto && (
                             <div className="terminal-corpo">
-                                <div className="terminal-linha">
-                                    <span className="terminal-prompt">$</span>
-                                    <span>{comandoFormatado}</span>
+                                <div className="terminal-cabecalho">
+                                    <span className="terminal-sessao">root@kali</span>
+                                    <span className="terminal-local">~/estrutura</span>
                                 </div>
-                                <pre className="terminal-resultado">{obterSaida(item)}</pre>
+                                <div className="terminal-linha">
+                                    <span className="terminal-prompt">#</span>
+                                    <span className="terminal-comando">{comandoFormatado}</span>
+                                </div>
+                                <div className="terminal-resultado">
+                                    <pre>{obterSaida(item)}</pre>
+                                </div>
                             </div>
                         )}
                     </div>
