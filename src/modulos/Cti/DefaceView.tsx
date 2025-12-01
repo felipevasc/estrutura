@@ -17,13 +17,17 @@ const Container = styled.div`
   flex-direction: column;
   gap: 12px;
   padding: 8px 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 `;
 
 const Grade = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
   gap: 16px;
   align-items: start;
+  width: 100%;
 `;
 
 const PainelVidro = styled.div`
@@ -35,6 +39,7 @@ const PainelVidro = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 `;
 
 const Cabecalho = styled.div`
@@ -71,6 +76,8 @@ const Etiqueta = styled.span`
 const AreaTabela = styled.div`
   flex: 1;
   min-height: 0;
+  width: 100%;
+  overflow: hidden;
 
   .ant-table-container {
     border-radius: ${({ theme }) => theme.borders.radius};
@@ -82,42 +89,53 @@ const AreaTabela = styled.div`
 
 const PainelFerramentas = styled(PainelVidro)`
   background: ${({ theme }) => theme.glass.default};
+  gap: 12px;
 `;
 
 const AbasFerramentas = styled(Tabs)`
   .ant-tabs-nav {
-    margin: 0 0 8px 0;
+    margin: 0;
+  }
+
+  .ant-tabs-nav-list {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 6px;
   }
 
   .ant-tabs-tab {
+    justify-content: center;
+    margin: 0;
     font-weight: 600;
   }
 `;
 
 const ListaFerramentas = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
 `;
 
 const ItemFerramenta = styled.div`
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  align-items: stretch;
   gap: 10px;
-  align-items: center;
 `;
 
 const BotaoFerramenta = styled(Button)`
-  width: 100%;
+  flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border-radius: ${({ theme }) => theme.borders.radius};
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
   background: ${({ theme }) => theme.glass.card};
   color: ${({ theme }) => theme.colors.text};
   box-shadow: ${({ theme }) => theme.shadows.soft};
+  text-align: left;
+  gap: 12px;
 
   &:hover,
   &:focus {
@@ -126,15 +144,32 @@ const BotaoFerramenta = styled(Button)`
   }
 `;
 
+const BlocoInfoFerramenta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+`;
+
+const RotuloFerramenta = styled.span`
+  font-weight: 700;
+  font-size: 15px;
+`;
+
+const DescricaoFerramenta = styled.span`
+  font-size: 12px;
+  color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
 const BotaoConfiguracao = styled(Button)`
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: ${({ theme }) => theme.borders.radius};
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
   background: ${({ theme }) => theme.glass.card};
+  box-shadow: ${({ theme }) => theme.shadows.soft};
 `;
 
 interface DefaceRecord {
@@ -148,6 +183,7 @@ interface DefaceRecord {
 }
 
 const formatarCategoria = (categoria: string) => categoria.split(/[-_]/).map(parte => parte.charAt(0).toUpperCase() + parte.slice(1)).join(' ');
+const gerarDescricao = (rotulo: string) => `Varredura específica de ${rotulo.toLowerCase()}.`;
 
 const DefaceView = () => {
     const { projeto } = useStore();
@@ -348,6 +384,7 @@ const DefaceView = () => {
                             bordered={false}
                             loading={carregando}
                             pagination={{ pageSize: 8 }}
+                            scroll={{ x: true }}
                         />
                     </AreaTabela>
                 </PainelVidro>
@@ -359,6 +396,7 @@ const DefaceView = () => {
                                 {categoriasDork.length === 0 && <Spin />}
                                 {categoriasDork.map(categoria => {
                                     const rotulo = formatarCategoria(categoria);
+                                    const descricao = gerarDescricao(rotulo);
                                     return (
                                         <ItemFerramenta key={categoria}>
                                             <BotaoFerramenta
@@ -366,7 +404,10 @@ const DefaceView = () => {
                                                 loading={executando === categoria}
                                                 disabled={!!executando || !dominioSelecionado}
                                             >
-                                                <span>{rotulo}</span>
+                                                <BlocoInfoFerramenta>
+                                                    <RotuloFerramenta>{rotulo}</RotuloFerramenta>
+                                                    <DescricaoFerramenta>{descricao}</DescricaoFerramenta>
+                                                </BlocoInfoFerramenta>
                                                 <Tag color="blue" style={{ margin: 0 }}>{categoria.toUpperCase()}</Tag>
                                             </BotaoFerramenta>
                                             <BotaoConfiguracao
