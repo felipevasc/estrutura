@@ -4,6 +4,7 @@ import { clienteTelegramSessao } from './buscaAtiva/ClienteTelegramSessao';
 
 export class BuscaAtivaVazamentoService extends NanoService {
     comando = 'busca_ativa_vazamento_telegram';
+    comandoTeste = 'busca_ativa_vazamento_telegram_teste';
 
     constructor() {
         super('BuscaAtivaVazamentoService');
@@ -11,32 +12,29 @@ export class BuscaAtivaVazamentoService extends NanoService {
 
     initialize() {
         this.listen('COMMAND_RECEIVED', async ({ command, id, args }) => {
-            if (command !== this.comando) return;
+            if (command !== this.comando && command !== this.comandoTeste) return;
             const alvo = args?.parametrosFonte?.canalOuGrupo || args?.parametrosFonte?.idGrupo || 'Canal não definido';
             const metodo = args?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
+            const cliente = metodo === 'SESSAO' ? clienteTelegramSessao : clienteTelegramBot;
+            const entrada = {
+                alvo,
+                extensoes: args?.extensoes,
+                ultimaCapturaSucesso: args?.ultimaCapturaSucesso,
+                destinoCentral: args?.destinoCentral,
+                credenciais: args?.credenciais,
+                nomeSessao: args?.nomeSessao,
+                tokenBot: args?.tokenBot,
+                parametrosFonte: args?.parametrosFonte,
+                etapaTeste: args?.etapaTeste,
+            };
             try {
                 const resultado =
-                    metodo === 'SESSAO'
-                        ? await clienteTelegramSessao.executar({
-                              fonteId: args?.fonteId,
-                              alvo,
-                              extensoes: args?.extensoes,
-                              ultimaCapturaSucesso: args?.ultimaCapturaSucesso,
-                              destinoCentral: args?.destinoCentral,
-                              credenciais: args?.credenciais,
-                              nomeSessao: args?.nomeSessao,
-                          })
-                        : await clienteTelegramBot.executar({
-                              fonteId: args?.fonteId,
-                              alvo,
-                              extensoes: args?.extensoes,
-                              ultimaCapturaSucesso: args?.ultimaCapturaSucesso,
-                              destinoCentral: args?.destinoCentral,
-                              tokenBot: args?.tokenBot,
-                          });
+                    command === this.comandoTeste
+                        ? await cliente.testar(entrada)
+                        : await cliente.executar(entrada);
                 this.bus.emit('JOB_COMPLETED', {
                     id,
-                    result: { ...resultado, metodoAutenticacao: metodo },
+                    result: { ...resultado, metodoAutenticacao: metodo, tipo: command === this.comandoTeste ? 'TESTE' : 'EXECUCAO' },
                 });
             } catch (erro) {
                 this.bus.emit('JOB_FAILED', { id, error: erro });
