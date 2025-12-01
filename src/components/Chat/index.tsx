@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useContext } from 'react';
 import { Button, Input, Spin, FloatButton, message as antMessage } from 'antd';
-import { RobotOutlined, SendOutlined, CaretRightOutlined } from '@ant-design/icons';
-import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions } from './styles';
+import { SendOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions, TopoWeaver, AvatarWeaver, BrilhoWeaver, ImagemWeaver, SaudacaoWeaver, TituloWeaver, LegendaWeaver, AreaVazia, MiniaturaWeaver } from './styles';
 import StoreContext from '@/store';
 import useApi from '@/api';
 
@@ -11,17 +11,46 @@ interface Message {
     commands?: any[];
 }
 
+const sequencias = [
+    Array.from({ length: 7 }, (_, indice) => `/weaver/animacao1/p${indice + 1}.png`),
+    Array.from({ length: 9 }, (_, indice) => `/weaver/animacao2/p${indice + 1}.png`),
+    Array.from({ length: 5 }, (_, indice) => `/weaver/animacao3/p${indice + 1}.png`),
+    Array.from({ length: 10 }, (_, indice) => `/weaver/animacao4/p${indice + 1}.png`),
+    Array.from({ length: 8 }, (_, indice) => `/weaver/animacao5/p${indice + 1}.png`),
+];
+
 const ChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState('');
     const [loading, setLoading] = useState(false);
+    const [indiceAnimacao, setIndiceAnimacao] = useState(0);
+    const [indiceQuadro, setIndiceQuadro] = useState(0);
+    const [opacidadeQuadro, setOpacidadeQuadro] = useState(1);
+    const [transformacaoQuadro, setTransformacaoQuadro] = useState('scale(1)');
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { projeto } = useContext(StoreContext);
     const api = useApi();
 
-    // Safety check for project ID
     const projectId = projeto?.get ? projeto.get()?.id : null;
+
+    const imagemAtual = sequencias[indiceAnimacao][indiceQuadro];
+
+    const gerarTransformacao = () => {
+        const deslocamentoX = (Math.random() * 4 - 2).toFixed(2);
+        const deslocamentoY = (Math.random() * 6 - 3).toFixed(2);
+        const escala = (1 + Math.random() * 0.06).toFixed(2);
+        const rotacao = (Math.random() * 4 - 2).toFixed(2);
+        return `translate(${deslocamentoX}px, ${deslocamentoY}px) scale(${escala}) rotate(${rotacao}deg)`;
+    };
+
+    const escolherAnimacao = (indiceAtual: number) => {
+        let novoIndice = indiceAtual;
+        while (novoIndice === indiceAtual) {
+            novoIndice = Math.floor(Math.random() * sequencias.length);
+        }
+        return novoIndice;
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,11 +125,34 @@ const ChatWidget = () => {
         }
     };
 
+    useEffect(() => {
+        const intervalo = setInterval(() => {
+            setIndiceQuadro(indiceAnterior => {
+                const proximo = indiceAnterior + 1;
+                const limite = sequencias[indiceAnimacao].length;
+                setTransformacaoQuadro(gerarTransformacao());
+                if (proximo >= limite) {
+                    setIndiceAnimacao(escolherAnimacao(indiceAnimacao));
+                    return 0;
+                }
+                return proximo;
+            });
+        }, 180);
+
+        return () => clearInterval(intervalo);
+    }, [indiceAnimacao]);
+
+    useEffect(() => {
+        setOpacidadeQuadro(0.45);
+        const temporizador = setTimeout(() => setOpacidadeQuadro(1), 80);
+        return () => clearTimeout(temporizador);
+    }, [imagemAtual]);
+
     return (
         <>
             <ChatButtonContainer>
                 <FloatButton
-                    icon={<RobotOutlined />}
+                    icon={<MiniaturaWeaver src="/weaver/animacao1/p1.png" alt="Weaver" />}
                     type="primary"
                     onClick={() => setIsOpen(true)}
                     tooltip="Weaver"
@@ -114,15 +166,30 @@ const ChatWidget = () => {
                 width={500}
                 onClose={() => setIsOpen(false)}
                 open={isOpen}
-                mask={false} 
+                mask={false}
             >
                 <ChatContainer>
+                    <TopoWeaver>
+                        <AvatarWeaver>
+                            <BrilhoWeaver>
+                                <ImagemWeaver src={imagemAtual} alt="Weaver" $opacidade={opacidadeQuadro} $transformacao={transformacaoQuadro} />
+                            </BrilhoWeaver>
+                        </AvatarWeaver>
+                        <SaudacaoWeaver>
+                            <TituloWeaver>Weaver</TituloWeaver>
+                            <LegendaWeaver>Sempre pronta para explorar achados e executar comandos.</LegendaWeaver>
+                        </SaudacaoWeaver>
+                    </TopoWeaver>
                     <MessagesArea>
                         {messages.length === 0 && (
-                            <div style={{ color: '#666', textAlign: 'center', marginTop: '50px' }}>
-                                <RobotOutlined style={{ fontSize: '40px', marginBottom: '10px' }} />
+                            <AreaVazia>
+                                <AvatarWeaver>
+                                    <BrilhoWeaver>
+                                        <ImagemWeaver src={imagemAtual} alt="Weaver" $opacidade={opacidadeQuadro} $transformacao={transformacaoQuadro} />
+                                    </BrilhoWeaver>
+                                </AvatarWeaver>
                                 <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
-                            </div>
+                            </AreaVazia>
                         )}
                         {messages.map((msg, idx) => (
                             <div key={idx} style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>

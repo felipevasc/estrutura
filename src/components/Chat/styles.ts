@@ -1,8 +1,7 @@
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Drawer as AntDrawer } from 'antd';
 
 export const ChatButtonContainer = styled.div`
-    /* Used to position the float button if not using Antd FloatButton default */
 `;
 
 // @ts-ignore - Fixing TS4023
@@ -119,4 +118,87 @@ export const CommandActions = styled.div`
     border-top: 1px solid ${({ theme }) => theme.colors.borderColor};
     display: flex;
     justify-content: flex-end;
+`;
+
+const pulsar = keyframes`
+    0% { box-shadow: 0 0 0 0 rgba(124, 101, 252, 0.35); }
+    50% { box-shadow: 0 0 0 18px rgba(124, 101, 252, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(124, 101, 252, 0); }
+`;
+
+export const TopoWeaver = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: ${({ theme }) => theme.glass.card};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
+`;
+
+export const AvatarWeaver = styled.div`
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    background: radial-gradient(circle at 30% 30%, rgba(132, 97, 255, 0.3), transparent), ${({ theme }) => theme.glass.heavy};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
+    animation: ${pulsar} 6s ease-in-out infinite;
+    overflow: hidden;
+`;
+
+export const BrilhoWeaver = styled.div`
+    width: 80px;
+    height: 80px;
+    border-radius: 14px;
+    background: linear-gradient(140deg, rgba(147, 110, 255, 0.45), rgba(69, 196, 255, 0.32));
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+`;
+
+export const ImagemWeaver = styled.img<{ $opacidade: number; $transformacao: string }>`
+    width: 78px;
+    height: 78px;
+    object-fit: contain;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    opacity: ${({ $opacidade }) => $opacidade};
+    transform: ${({ $transformacao }) => $transformacao};
+    filter: drop-shadow(0 8px 18px rgba(41, 28, 84, 0.35));
+`;
+
+export const SaudacaoWeaver = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+export const TituloWeaver = styled.span`
+    font-weight: 700;
+    color: ${({ theme }) => theme.colors.text};
+    font-size: 18px;
+`;
+
+export const LegendaWeaver = styled.span`
+    color: ${({ theme }) => theme.colors.textSecondary};
+    font-size: 13px;
+`;
+
+export const AreaVazia = styled.div`
+    color: ${({ theme }) => theme.colors.textSecondary};
+    text-align: center;
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+`;
+
+export const MiniaturaWeaver = styled.img`
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    object-fit: contain;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
 `;
