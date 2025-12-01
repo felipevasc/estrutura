@@ -113,46 +113,49 @@ const AbasFerramentas = styled(Tabs)`
 
 const ListaFerramentas = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+`;
+
+const CartaoFerramenta = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-`;
-
-const ItemFerramenta = styled.div`
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-`;
-
-const BotaoFerramenta = styled(Button)`
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 18px;
-  border-radius: ${({ theme }) => theme.borders.radius};
-  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  padding: 16px 16px 14px 16px;
   background: ${({ theme }) => theme.glass.card};
-  color: ${({ theme }) => theme.colors.text};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: ${({ theme }) => theme.borders.radius};
   box-shadow: ${({ theme }) => theme.shadows.soft};
-  text-align: left;
-  gap: 12px;
+  overflow: hidden;
 
-  &:hover,
-  &:focus {
-    border-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.text};
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -1px auto -1px -1px;
+    width: 4px;
+    background: linear-gradient(180deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.info} 100%);
   }
+`;
+
+const CabecalhoFerramenta = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
 `;
 
 const BlocoInfoFerramenta = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 `;
 
 const RotuloFerramenta = styled.span`
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 `;
 
 const DescricaoFerramenta = styled.span`
@@ -160,16 +163,40 @@ const DescricaoFerramenta = styled.span`
   color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
-const BotaoConfiguracao = styled(Button)`
-  width: 44px;
-  height: 44px;
-  border-radius: ${({ theme }) => theme.borders.radius};
+const GrupoAcoes = styled.div`
   display: flex;
   align-items: center;
+  gap: 8px;
+`;
+
+const TagCategoria = styled(Tag)`
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+`;
+
+const BotaoConfiguracao = styled(Button)`
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  border-radius: ${({ theme }) => theme.borders.radius};
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  background: ${({ theme }) => theme.glass.card};
+  background: ${({ theme }) => theme.glass.default};
   box-shadow: ${({ theme }) => theme.shadows.soft};
+`;
+
+const RodapeFerramenta = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const Acionador = styled(Button)`
+  flex: 1;
+  font-weight: 700;
 `;
 
 interface DefaceRecord {
@@ -398,24 +425,33 @@ const DefaceView = () => {
                                     const rotulo = formatarCategoria(categoria);
                                     const descricao = gerarDescricao(rotulo);
                                     return (
-                                        <ItemFerramenta key={categoria}>
-                                            <BotaoFerramenta
-                                                onClick={() => executarCategoria(categoria)}
-                                                loading={executando === categoria}
-                                                disabled={!!executando || !dominioSelecionado}
-                                            >
+                                        <CartaoFerramenta key={categoria}>
+                                            <CabecalhoFerramenta>
                                                 <BlocoInfoFerramenta>
                                                     <RotuloFerramenta>{rotulo}</RotuloFerramenta>
                                                     <DescricaoFerramenta>{descricao}</DescricaoFerramenta>
                                                 </BlocoInfoFerramenta>
-                                                <Tag color="blue" style={{ margin: 0 }}>{categoria.toUpperCase()}</Tag>
-                                            </BotaoFerramenta>
-                                            <BotaoConfiguracao
-                                                icon={<SettingOutlined />}
-                                                onClick={() => abrirModalConfiguracao(categoria)}
-                                                loading={salvandoConfiguracao && categoriaAtualConfiguracao === categoria}
-                                            />
-                                        </ItemFerramenta>
+                                                <GrupoAcoes>
+                                                    <TagCategoria color="blue">{categoria.toUpperCase()}</TagCategoria>
+                                                    <BotaoConfiguracao
+                                                        icon={<SettingOutlined />}
+                                                        onClick={() => abrirModalConfiguracao(categoria)}
+                                                        loading={salvandoConfiguracao && categoriaAtualConfiguracao === categoria}
+                                                    />
+                                                </GrupoAcoes>
+                                            </CabecalhoFerramenta>
+                                            <RodapeFerramenta>
+                                                <Acionador
+                                                    type="primary"
+                                                    icon={<RadarChartOutlined />}
+                                                    onClick={() => executarCategoria(categoria)}
+                                                    loading={executando === categoria}
+                                                    disabled={!!executando || !dominioSelecionado}
+                                                >
+                                                    Executar varredura
+                                                </Acionador>
+                                            </RodapeFerramenta>
+                                        </CartaoFerramenta>
                                     );
                                 })}
                             </ListaFerramentas>
