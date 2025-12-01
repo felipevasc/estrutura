@@ -1,9 +1,7 @@
 import styled from 'styled-components';
 import { Drawer as AntDrawer } from 'antd';
 
-export const ChatButtonContainer = styled.div`
-    /* Used to position the float button if not using Antd FloatButton default */
-`;
+export const ChatButtonContainer = styled.div``;
 
 // @ts-ignore - Fixing TS4023
 export const StyledDrawer = styled(AntDrawer)`
@@ -39,6 +37,54 @@ export const ChatContainer = styled.div`
     display: flex;
     flex-direction: column;
     height: 100%;
+`;
+
+export const PainelAgente = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: ${({ theme }) => theme.glass.card};
+    border-bottom: 1px solid ${({ theme }) => theme.colors.borderColor};
+    box-shadow: ${({ theme }) => theme.shadows.soft};
+`;
+
+export const DadosAgente = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: ${({ theme }) => theme.colors.text};
+`;
+
+export const TituloAgente = styled.div`
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 0.4px;
+`;
+
+export const SubtituloAgente = styled.div`
+    font-size: 12px;
+    color: ${({ theme }) => theme.colors.textSecondary};
+`;
+
+export const AvatarContainer = styled.div<{ $tamanho: number }>`
+    width: ${({ $tamanho }) => $tamanho}px;
+    height: ${({ $tamanho }) => $tamanho}px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    filter: drop-shadow(0 8px 18px rgba(28, 123, 199, 0.28));
+`;
+
+export const AvatarIlustracao = styled.img<{ $angulo: number; $escala: number; $deslocamento: number; $opacidade: number; $brilho: number }>`
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: transform 1.15s ease-in-out, opacity 0.9s ease-in-out, filter 1.15s ease-in-out;
+    transform: translateY(${({ $deslocamento }) => $deslocamento}px) scale(${({ $escala }) => $escala}) rotate(${({ $angulo }) => $angulo}deg);
+    opacity: ${({ $opacidade }) => $opacidade};
+    filter: drop-shadow(0 0 8px rgba(78, 192, 255, ${({ $brilho }) => $brilho}));
 `;
 
 export const MessagesArea = styled.div`
