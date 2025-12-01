@@ -27,38 +27,69 @@ const escolherAnimacao = (atual: number) => {
     return proxima;
 };
 
-const gerarVariacao = () => ({
-    angulo: (Math.random() - 0.5) * 12,
-    escala: 1 + Math.random() * 0.08,
-    deslocamento: (Math.random() - 0.5) * 12,
-    opacidade: 0.82 + Math.random() * 0.18,
-    brilho: 0.25 + Math.random() * 0.4,
+const gerarVariacaoSuave = () => ({
+    angulo: (Math.random() - 0.5) * 4,
+    escala: 0.98 + Math.random() * 0.04,
+    deslocamento: (Math.random() - 0.5) * 4,
+    opacidade: 0.9 + Math.random() * 0.08,
+    brilho: 0.28 + Math.random() * 0.22,
 });
 
 const AgenteWeaver = ({ tamanho }: { tamanho: number }) => {
-    const [animacao, setAnimacao] = useState(() => Math.floor(Math.random() * sequencias.length));
+    const [animacao, setAnimacao] = useState(0);
     const [quadro, setQuadro] = useState(0);
-    const [variacao, setVariacao] = useState(() => gerarVariacao());
+    const [animando, setAnimando] = useState(false);
+    const [variacao, setVariacao] = useState(() => gerarVariacaoSuave());
 
     useEffect(() => {
-        const intervalo = setInterval(() => {
+        const variar = setInterval(() => {
+            if (!animando) setVariacao(gerarVariacaoSuave());
+        }, 1800);
+        return () => clearInterval(variar);
+    }, [animando]);
+
+    useEffect(() => {
+        const iniciar = () => {
+            setAnimacao(atual => {
+                const proxima = escolherAnimacao(atual);
+                setQuadro(0);
+                setAnimando(true);
+                setVariacao({ angulo: 0, escala: 1, deslocamento: 0, opacidade: 1, brilho: 0.3 });
+                return proxima;
+            });
+        };
+
+        const agendamentoInicial = setTimeout(iniciar, 1200);
+        const agendamento = setInterval(iniciar, 5200);
+        return () => {
+            clearTimeout(agendamentoInicial);
+            clearInterval(agendamento);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!animando) return;
+
+        const sequencia = sequencias[animacao];
+        const intervaloQuadros = setInterval(() => {
             setQuadro(anterior => {
-                const sequencia = sequencias[animacao];
                 const proximo = anterior + 1;
                 if (proximo >= sequencia.quadros) {
-                    const novaAnimacao = escolherAnimacao(animacao);
-                    setAnimacao(novaAnimacao);
-                    setVariacao(gerarVariacao());
+                    setAnimando(false);
+                    setAnimacao(0);
+                    setVariacao(gerarVariacaoSuave());
                     return 0;
                 }
-                setVariacao(gerarVariacao());
                 return proximo;
             });
-        }, 170);
-        return () => clearInterval(intervalo);
-    }, [animacao]);
+        }, 140);
 
-    const caminho = `/weaver/${sequencias[animacao].pasta}/p${quadro + 1}.png`;
+        return () => clearInterval(intervaloQuadros);
+    }, [animando, animacao]);
+
+    const pasta = animando ? sequencias[animacao].pasta : 'animacao1';
+    const indiceQuadro = animando ? quadro : 0;
+    const caminho = `/weaver/${pasta}/p${indiceQuadro + 1}.png`;
 
     return (
         <AvatarContainer $tamanho={tamanho}>
