@@ -33,8 +33,8 @@ const esperarResultado = async (commandId: number) => {
     return null;
 };
 
-export async function POST(request: Request, contexto: { params: { fonteId: string } }) {
-    const { fonteId: parametroFonteId } = contexto.params;
+export async function POST(request: Request, contexto: { params: Promise<{ fonteId: string }> }) {
+    const { fonteId: parametroFonteId } = await contexto.params;
     const fonteId = parseInt(parametroFonteId, 10);
     if (Number.isNaN(fonteId)) return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
     const url = new URL(request.url);
