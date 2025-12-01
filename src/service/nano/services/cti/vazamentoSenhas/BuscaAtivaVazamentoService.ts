@@ -25,6 +25,7 @@ export class BuscaAtivaVazamentoService extends NanoService {
                 nomeSessao: args?.nomeSessao,
                 tokenBot: args?.tokenBot,
                 parametrosFonte: args?.parametrosFonte,
+                etapaTeste: args?.etapaTeste,
             };
             try {
                 const resultado =

@@ -28,6 +28,8 @@ export type ResultadoTesteTelegram = {
     tipo?: string;
 };
 
+export type EtapaTesteTelegram = 'conexao' | 'leitura' | 'download';
+
 const API_BASE_URL = '/api/v1/cti/vazamento/busca-ativa/telegram';
 
 export const useBuscaAtivaTelegram = (projetoId?: number) => {
@@ -78,8 +80,8 @@ export const useBuscaAtivaTelegram = (projetoId?: number) => {
     });
 
     const testarFluxo = useMutation({
-        mutationFn: (fonteId: number) =>
-            fetch(`${API_BASE_URL}/${fonteId}/testar`, {
+        mutationFn: ({ fonteId, etapa }: { fonteId: number; etapa?: EtapaTesteTelegram }) =>
+            fetch(`${API_BASE_URL}/${fonteId}/testar${etapa ? `?etapa=${etapa}` : ''}`, {
                 method: 'POST',
             }).then(handleResponse),
         onSuccess: () => message.success('Teste concluído'),

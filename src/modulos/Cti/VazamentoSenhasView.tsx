@@ -6,7 +6,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, InfoCircleO
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { FonteVazamento, TipoFonteVazamento, useFontesVazamento } from '@/api/cti/fontesVazamento';
-import { ResultadoTesteTelegram, useBuscaAtivaTelegram } from '@/api/cti/buscaAtivaTelegram';
+import { EtapaTesteTelegram, ResultadoTesteTelegram, useBuscaAtivaTelegram } from '@/api/cti/buscaAtivaTelegram';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -200,6 +200,7 @@ const VazamentoSenhasView = () => {
     const [fonteTeste, setFonteTeste] = useState<FonteVazamento | null>(null);
     const [resultadoTeste, setResultadoTeste] = useState<ResultadoTesteTelegram | null>(null);
     const [carregandoTeste, setCarregandoTeste] = useState(false);
+    const [etapaTeste, setEtapaTeste] = useState<EtapaTesteTelegram | undefined>();
     const [ajudaModal, setAjudaModal] = useState<AjudaCampo | null>(null);
     const [form] = Form.useForm();
     const [formColeta] = Form.useForm();
@@ -314,13 +315,14 @@ const VazamentoSenhasView = () => {
         await executarColeta(fonte.id);
     };
 
-    const abrirTeste = async (fonte: FonteVazamento) => {
+    const abrirTeste = async (fonte: FonteVazamento, etapa?: EtapaTesteTelegram) => {
         setFonteTeste(fonte);
         setModalTesteAberto(true);
         setResultadoTeste(null);
         setCarregandoTeste(true);
+        setEtapaTeste(etapa);
         try {
-            const retorno = await testarFluxo(fonte.id);
+            const retorno = await testarFluxo({ fonteId: fonte.id, etapa });
             const detalhado = (retorno as { resultado?: ResultadoTesteTelegram }).resultado || (retorno as ResultadoTesteTelegram);
             const consolidado =
                 detalhado && typeof detalhado === 'object' && 'passos' in detalhado
@@ -348,6 +350,7 @@ const VazamentoSenhasView = () => {
         setModalTesteAberto(false);
         setResultadoTeste(null);
         setFonteTeste(null);
+        setEtapaTeste(undefined);
     };
 
     const colunas = [
@@ -425,12 +428,18 @@ const VazamentoSenhasView = () => {
             title: 'Ações',
             key: 'acoes',
             render: ({ fonte }: (typeof linhasBuscaTelegram)[number]) => (
-                <Space>
-                    <Button type="primary" onClick={() => abrirModalColeta(fonte)}>
-                        Configurar
-                    </Button>
-                    <Button onClick={() => dispararColeta(fonte)}>Baixar agora</Button>
-                    <Button onClick={() => abrirTeste(fonte)}>Testar fluxo</Button>
+                <Space direction="vertical" size={8}>
+                    <Space>
+                        <Button type="primary" onClick={() => abrirModalColeta(fonte)}>
+                            Configurar
+                        </Button>
+                        <Button onClick={() => dispararColeta(fonte)}>Baixar agora</Button>
+                    </Space>
+                    <Space>
+                        <Button onClick={() => abrirTeste(fonte, 'conexao')}>Testar conexão</Button>
+                        <Button onClick={() => abrirTeste(fonte, 'leitura')}>Testar leitura</Button>
+                        <Button onClick={() => abrirTeste(fonte, 'download')}>Testar download</Button>
+                    </Space>
                 </Space>
             ),
         },
@@ -645,7 +654,7 @@ const VazamentoSenhasView = () => {
                 open={modalTesteAberto}
                 onCancel={fecharTeste}
                 footer={[
-                    <Button key="reexecutar" loading={carregandoTeste} onClick={() => fonteTeste && abrirTeste(fonteTeste)}>
+                    <Button key="reexecutar" loading={carregandoTeste} onClick={() => fonteTeste && abrirTeste(fonteTeste, etapaTeste)}>
                         Reexecutar teste
                     </Button>,
                     <Button key="fechar" type="primary" onClick={fecharTeste}>
@@ -656,7 +665,16 @@ const VazamentoSenhasView = () => {
             >
                 <Space direction="vertical" style={{ width: '100%' }}>
                     <Text strong>{fonteTeste?.nome}</Text>
-                    {carregandoTeste && <Text>Executando validações e leitura de mensagens...</Text>}
+                    {etapaTeste && <Tag color="blue">Etapa: {etapaTeste}</Tag>}
+                    {carregandoTeste && (
+                        <Text>
+                            {etapaTeste === 'conexao'
+                                ? 'Validando autenticação e status do cliente do Telegram...'
+                                : etapaTeste === 'leitura'
+                                  ? 'Conectando e lendo mensagens reais do grupo...'
+                                  : 'Conectando e baixando arquivos reais do grupo...'}
+                        </Text>
+                    )}
                     {resultadoTeste ? (
                         <Space direction="vertical" style={{ width: '100%' }} size={12}>
                             <Tag color={resultadoTeste.sucesso ? 'green' : 'red'}>

@@ -11,6 +11,7 @@ const credenciaisTelegram = () => ({
     numero: process.env.TELEGRAM_NUMERO,
     codigoPais: process.env.TELEGRAM_CODIGO_PAIS,
     senha: process.env.TELEGRAM_SENHA,
+    sessao: process.env.TELEGRAM_SESSAO,
 });
 
 export async function POST(_request: Request, contexto: { params: { fonteId: string } }) {
@@ -38,9 +39,9 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
         const credenciais = credenciaisTelegram();
         if (
             metodoAutenticacao === 'SESSAO' &&
-            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
+            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais || !credenciais.sessao)
         )
-            return NextResponse.json({ error: 'Configure API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
+            return NextResponse.json({ error: 'Configure sessão, API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
         if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
             return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 

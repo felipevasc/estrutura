@@ -11,6 +11,7 @@ const credenciaisTelegram = () => ({
     numero: process.env.TELEGRAM_NUMERO,
     codigoPais: process.env.TELEGRAM_CODIGO_PAIS,
     senha: process.env.TELEGRAM_SENHA,
+    sessao: process.env.TELEGRAM_SESSAO,
 });
 
 const esperarResultado = async (commandId: number) => {
@@ -32,10 +33,13 @@ const esperarResultado = async (commandId: number) => {
     return null;
 };
 
-export async function POST(_request: Request, contexto: { params: { fonteId: string } }) {
+export async function POST(request: Request, contexto: { params: { fonteId: string } }) {
     const { fonteId: parametroFonteId } = contexto.params;
     const fonteId = parseInt(parametroFonteId, 10);
     if (Number.isNaN(fonteId)) return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
+    const url = new URL(request.url);
+    const etapaBruta = url.searchParams.get('etapa');
+    const etapaTeste = etapaBruta === 'conexao' || etapaBruta === 'leitura' || etapaBruta === 'download' ? etapaBruta : undefined;
 
     try {
         const fonte = await prisma.fonteVazamento.findUnique({
@@ -57,9 +61,9 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
         const credenciais = credenciaisTelegram();
         if (
             metodoAutenticacao === 'SESSAO' &&
-            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais)
+            (!credenciais.apiId || !credenciais.apiHash || !credenciais.numero || !credenciais.codigoPais || !credenciais.sessao)
         )
-            return NextResponse.json({ error: 'Configure API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
+            return NextResponse.json({ error: 'Configure sessão, API ID, API Hash, número e código do país do Telegram' }, { status: 400 });
         if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
             return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 
@@ -78,6 +82,7 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
                     tokenBot: fonte.parametros?.tokenBot,
                     nomeSessao: fonte.parametros?.nomeSessao,
                     registroBusca: fonte.buscaAtiva,
+                    etapaTeste,
                 }),
                 projectId: fonte.projetoId,
             },
