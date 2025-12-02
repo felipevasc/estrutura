@@ -20,6 +20,7 @@ import { BaseVazamentosService } from './services/cti/vazamentoSenhas/BaseVazame
 import { ComunicacaoVazamentosService } from './services/cti/vazamentoSenhas/ComunicacaoVazamentosService';
 import { WhatwebService } from './services/tools/WhatwebService';
 import PhishingDnstwistService from './services/cti/PhishingDnstwistService';
+import PhishingCatcherService from './services/cti/PhishingCatcherService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -37,6 +38,7 @@ export const registeredServices: NanoService[] = [
     new DefaceForumZoneXsecService(),
     new DefaceForumHackDbService(),
     new PhishingDnstwistService(),
+    new PhishingCatcherService(),
     new TakedownService(),
     new FontesDadosVazamentoService(),
     new BuscaAtivaVazamentoService(),

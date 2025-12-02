@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton } from 'antd';
+import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -113,6 +113,12 @@ interface RegistroPhishing {
     dominio: { endereco: string };
 }
 
+type PalavraCatcher = { termo: string; peso: number };
+
+type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[] };
+
+const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
+
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
 
 const PhishingView = () => {
@@ -121,18 +127,25 @@ const PhishingView = () => {
     const [dominios, setDominios] = useState<Dominio[]>([]);
     const [dominioSelecionado, setDominioSelecionado] = useState<number | null>(null);
     const [dados, setDados] = useState<RegistroPhishing[]>([]);
-    const [carregando, setCarregando] = useState(false);
-    const [executando, setExecutando] = useState(false);
-    const [modalTermosVisivel, setModalTermosVisivel] = useState(false);
     const [termos, setTermos] = useState<string[]>([]);
     const [entradaTermos, setEntradaTermos] = useState<string[]>([]);
+    const [modalTermosVisivel, setModalTermosVisivel] = useState(false);
+    const [executando, setExecutando] = useState(false);
+    const [carregando, setCarregando] = useState(false);
     const [carregandoTermos, setCarregandoTermos] = useState(false);
     const [salvandoTermos, setSalvandoTermos] = useState(false);
+    const [configuracaoCatcher, setConfiguracaoCatcher] = useState<ConfiguracaoCatcher>(configInicial);
+    const [modalConfiguracaoCatcher, setModalConfiguracaoCatcher] = useState(false);
+    const [carregandoConfiguracao, setCarregandoConfiguracao] = useState(false);
+    const [salvandoConfiguracao, setSalvandoConfiguracao] = useState(false);
+    const [executandoCatcher, setExecutandoCatcher] = useState(false);
+    const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/dominios`);
+            if (!resposta.ok) throw new Error();
             const lista = await resposta.json();
             setDominios(lista);
         } catch {
@@ -173,6 +186,21 @@ const PhishingView = () => {
             message.error('Não foi possível carregar os termos.');
         } finally {
             setCarregandoTermos(false);
+        }
+    }, [projetoId]);
+
+    const carregarConfiguracaoCatcher = useCallback(async (dominioId: number) => {
+        if (!projetoId) return;
+        setCarregandoConfiguracao(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/catcher/configuracao?dominioId=${dominioId}`);
+            if (!resposta.ok) throw new Error();
+            const configuracao = await resposta.json();
+            setConfiguracaoCatcher(configuracao);
+        } catch {
+            message.error('Não foi possível carregar a configuração do phishing_catcher.');
+        } finally {
+            setCarregandoConfiguracao(false);
         }
     }, [projetoId]);
 
@@ -243,6 +271,92 @@ const PhishingView = () => {
         }
     };
 
+    const abrirConfiguracaoCatcher = async () => {
+        if (!dominioSelecionado) {
+            message.warning('Selecione um domínio para configurar.');
+            return;
+        }
+        setModalConfiguracaoCatcher(true);
+        await carregarConfiguracaoCatcher(dominioSelecionado);
+    };
+
+    const salvarConfiguracaoCatcher = async () => {
+        if (!dominioSelecionado || !projetoId) return;
+        setSalvandoConfiguracao(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/catcher/configuracao`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dominioId: dominioSelecionado, ...configuracaoCatcher })
+            });
+            if (!resposta.ok) throw new Error();
+            const configuracao = await resposta.json();
+            setConfiguracaoCatcher(configuracao);
+            setModalConfiguracaoCatcher(false);
+            message.success('Configuração salva.');
+        } catch {
+            message.error('Erro ao salvar a configuração do phishing_catcher.');
+        } finally {
+            setSalvandoConfiguracao(false);
+        }
+    };
+
+    const executarPhishingCatcher = async () => {
+        if (!dominioSelecionado || !projetoId) {
+            message.warning('Escolha um domínio alvo.');
+            return;
+        }
+        if (!configuracaoCatcher.palavras.length || !configuracaoCatcher.tlds.length) {
+            await carregarConfiguracaoCatcher(dominioSelecionado);
+        }
+        setExecutandoCatcher(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/catcher`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dominioId: dominioSelecionado })
+            });
+            if (!resposta.ok) throw new Error();
+            message.success('Consulta enfileirada. Acompanhe os resultados.');
+        } catch {
+            message.error('Não foi possível iniciar o phishing_catcher.');
+        } finally {
+            setExecutandoCatcher(false);
+        }
+    };
+
+    const adicionarPalavra = () => {
+        setConfiguracaoCatcher((atual) => ({ ...atual, palavras: [...atual.palavras, { termo: '', peso: 1 }] }));
+    };
+
+    const atualizarPalavra = (indice: number, chave: keyof PalavraCatcher, valor: string | number | null) => {
+        setConfiguracaoCatcher((atual) => {
+            const palavras = [...atual.palavras];
+            const item = palavras[indice];
+            if (!item) return atual;
+            const novo = { ...item, [chave]: chave === 'peso' ? Math.max(1, Number(valor) || 1) : String(valor ?? '').toLowerCase() } as PalavraCatcher;
+            palavras[indice] = novo;
+            return { ...atual, palavras };
+        });
+    };
+
+    const removerPalavra = (indice: number) => {
+        setConfiguracaoCatcher((atual) => ({ ...atual, palavras: atual.palavras.filter((_, posicao) => posicao !== indice) }));
+    };
+
+    const alterarTlds = (lista: string[]) => {
+        setConfiguracaoCatcher((atual) => ({ ...atual, tlds: lista }));
+    };
+
+    const abrirAjuda = (titulo: string, descricao: React.ReactNode) => setModalAjuda({ titulo, descricao });
+
+    const tituloSecao = (texto: string, onClick: () => void) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Text strong>{texto}</Text>
+            <Button type="link" size="small" icon={<InfoCircleOutlined />} onClick={onClick} />
+        </div>
+    );
+
     const colunas = [
         {
             title: 'Host identificado',
@@ -301,9 +415,11 @@ const PhishingView = () => {
                                 setDominioSelecionado(valor ?? null);
                                 if (valor) {
                                     carregarTermos(valor);
+                                    carregarConfiguracaoCatcher(valor);
                                 } else {
                                     setTermos([]);
                                     setEntradaTermos([]);
+                                    setConfiguracaoCatcher(configInicial);
                                 }
                             }}
                             value={dominioSelecionado ?? undefined}
@@ -362,6 +478,28 @@ const PhishingView = () => {
                             </AcoesFerramenta>
                         </div>
                     </PainelFerramenta>
+                    <PainelFerramenta>
+                        <IconeFerramenta>
+                            <SafetyOutlined />
+                        </IconeFerramenta>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                                <div>
+                                    <Text strong>phishing_catcher</Text>
+                                    <div><Text type="secondary">Prioriza TLDs e pesos por palavra-chave na caça ativa.</Text></div>
+                                </div>
+                                <Tag color="purple">Configuração por domínio</Tag>
+                            </div>
+                            <AcoesFerramenta>
+                                <Button icon={<SettingOutlined />} onClick={abrirConfiguracaoCatcher}>
+                                    Ajustar configuração
+                                </Button>
+                                <Button type="primary" icon={<ThunderboltOutlined />} loading={executandoCatcher} onClick={executarPhishingCatcher}>
+                                    Consultar agora
+                                </Button>
+                            </AcoesFerramenta>
+                        </div>
+                    </PainelFerramenta>
                     <Alert
                         message="Dicas"
                         description="Personalize os termos antes de rodar para cobrir variações de marca, departamentos e iscas comuns."
@@ -402,6 +540,81 @@ const PhishingView = () => {
                         </ListaTermos>
                     )}
                 </Space>
+            </Modal>
+
+            <Modal
+                title="Configuração do phishing_catcher"
+                open={modalConfiguracaoCatcher}
+                onOk={salvarConfiguracaoCatcher}
+                onCancel={() => setModalConfiguracaoCatcher(false)}
+                confirmLoading={salvandoConfiguracao}
+                okText="Salvar configuração"
+            >
+                <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                    {tituloSecao('Palavras-chave monitoradas', () => abrirAjuda('Palavras-chave monitoradas', (
+                        <Space direction="vertical">
+                            <Text>Itens usados para pontuar nomes parecidos; cada palavra aumenta o score conforme o peso definido.</Text>
+                            <Text>Adicionar mais termos amplia a cobertura, enquanto remover reduz alertas para aquela marca.</Text>
+                            <Text>Pesos maiores deixam o alerta mais sensível para aquela palavra específica.</Text>
+                        </Space>
+                    )))}
+                    {carregandoConfiguracao ? <Skeleton active paragraph={{ rows: 3 }} /> : (
+                        <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                            {configuracaoCatcher.palavras.map((palavra, indice) => (
+                                <Row gutter={8} key={`${palavra.termo}-${indice}`} align="middle">
+                                    <Col span={12}>
+                                        <Input
+                                            placeholder="palavra-chave"
+                                            value={palavra.termo}
+                                            onChange={(evento) => atualizarPalavra(indice, 'termo', evento.target.value)}
+                                        />
+                                    </Col>
+                                    <Col span={8}>
+                                        <InputNumber
+                                            min={1}
+                                            value={palavra.peso}
+                                            onChange={(valor) => atualizarPalavra(indice, 'peso', valor)}
+                                            style={{ width: '100%' }}
+                                        />
+                                    </Col>
+                                    <Col span={4}>
+                                        <Button danger icon={<MinusCircleOutlined />} onClick={() => removerPalavra(indice)} block />
+                                    </Col>
+                                </Row>
+                            ))}
+                            <Button icon={<PlusOutlined />} onClick={adicionarPalavra} block>
+                                Adicionar palavra
+                            </Button>
+                        </Space>
+                    )}
+                    <Divider style={{ margin: '8px 0' }} />
+                    {tituloSecao('TLDs priorizados', () => abrirAjuda('TLDs priorizados', (
+                        <Space direction="vertical">
+                            <Text>Define quais terminações de domínio serão acompanhadas de perto.</Text>
+                            <Text>Somente TLDs listados serão considerados na priorização; remover um item reduz alertas nele.</Text>
+                            <Text>Adicionar novas terminações amplia o escopo de caça para aquele domínio.</Text>
+                        </Space>
+                    )))}
+                    {carregandoConfiguracao ? <Skeleton active paragraph={{ rows: 2 }} /> : (
+                        <Select
+                            mode="tags"
+                            style={{ width: '100%' }}
+                            value={configuracaoCatcher.tlds}
+                            onChange={alterarTlds}
+                            tokenSeparators={[',', ' ']}
+                            placeholder="Digite TLDs e pressione enter"
+                        />
+                    )}
+                </Space>
+            </Modal>
+
+            <Modal
+                open={!!modalAjuda}
+                onCancel={() => setModalAjuda(null)}
+                footer={null}
+                title={modalAjuda?.titulo}
+            >
+                {modalAjuda?.descricao}
             </Modal>
         </Container>
     );
