@@ -5,6 +5,7 @@ interface ExecutePayload {
     dominioId: number;
     ferramenta: string;
     grupo: string;
+    paginas?: number;
 }
 
 export async function POST(
@@ -20,7 +21,7 @@ export async function POST(
         }
 
         const body = await request.json() as ExecutePayload;
-        const { dominioId, ferramenta, grupo } = body;
+        const { dominioId, ferramenta, grupo, paginas } = body;
 
         if (!dominioId || !ferramenta || !grupo) {
             return NextResponse.json({ error: "Parâmetros inválidos" }, { status: 400 });
@@ -34,7 +35,8 @@ export async function POST(
 
         if (grupo === 'foruns' && ferramenta === 'zone-xsec') {
             const commandName = 'deface_forum_zone_xsec_check';
-            const args = { dominioId };
+            const totalPaginas = paginas && paginas > 0 ? paginas : 10;
+            const args = { dominioId, paginas: totalPaginas };
             await queueCommand(commandName, args, projetoId);
             return NextResponse.json({ message: `Comando '${commandName}' (Ferramenta: ${ferramenta}) enfileirado com sucesso.` });
         }

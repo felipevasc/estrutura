@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Tag, Button, Select, message, Space, Typography, Popconfirm, Modal, Input, Spin, Tabs, Tooltip } from 'antd';
+import { Table, Alert, Tag, Button, Select, message, Space, Typography, Popconfirm, Modal, Input, Spin, Tabs, Tooltip, InputNumber } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
@@ -226,6 +226,9 @@ const DefaceView = () => {
     const [categoriaAtualConfiguracao, setCategoriaAtualConfiguracao] = useState<string | null>(null);
     const [listaAtualConfiguracao, setListaAtualConfiguracao] = useState<string>("");
     const [salvandoConfiguracao, setSalvandoConfiguracao] = useState(false);
+    const [paginasZoneXsec, setPaginasZoneXsec] = useState(10);
+    const [modalZoneXsecVisivel, setModalZoneXsecVisivel] = useState(false);
+    const [entradaPaginasZoneXsec, setEntradaPaginasZoneXsec] = useState(10);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -272,7 +275,7 @@ const DefaceView = () => {
         buscarConfiguracaoDork();
     }, [buscarDominios, buscarDados, buscarConfiguracaoDork]);
 
-    const executarFerramenta = async (ferramenta: string, grupo: string) => {
+    const executarFerramenta = async (ferramenta: string, grupo: string, parametrosExtras: Record<string, any> = {}) => {
         if (!dominioSelecionado) {
             message.warning('Selecione um domínio alvo para continuar.');
             return;
@@ -284,7 +287,7 @@ const DefaceView = () => {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/executar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: dominioSelecionado, ferramenta, grupo }),
+                body: JSON.stringify({ dominioId: dominioSelecionado, ferramenta, grupo, ...parametrosExtras }),
             });
             if (!resposta.ok) throw new Error('Falha ao enfileirar a tarefa.');
             message.success(`Tarefa '${rotulo}' enfileirada.`);
@@ -353,6 +356,18 @@ const DefaceView = () => {
         } finally {
             setSalvandoConfiguracao(false);
         }
+    };
+
+    const abrirModalZoneXsec = () => {
+        setEntradaPaginasZoneXsec(paginasZoneXsec);
+        setModalZoneXsecVisivel(true);
+    };
+
+    const salvarPaginasZoneXsec = () => {
+        const valor = entradaPaginasZoneXsec && entradaPaginasZoneXsec > 0 ? entradaPaginasZoneXsec : 10;
+        setPaginasZoneXsec(valor);
+        setModalZoneXsecVisivel(false);
+        message.success('Configuração atualizada.');
     };
 
     const colunas = [
@@ -468,13 +483,14 @@ const DefaceView = () => {
                                         </BlocoInfoFerramenta>
                                         <GrupoAcoes>
                                             <TagCategoria color="purple">ZONE-XSEC</TagCategoria>
+                                            <BotaoConfiguracao icon={<SettingOutlined />} onClick={abrirModalZoneXsec} />
                                         </GrupoAcoes>
                                     </CabecalhoFerramenta>
                                     <RodapeFerramenta>
                                         <Acionador
                                             type="primary"
                                             icon={<RadarChartOutlined />}
-                                            onClick={() => executarFerramenta('zone-xsec', 'foruns')}
+                                            onClick={() => executarFerramenta('zone-xsec', 'foruns', { paginas: paginasZoneXsec })}
                                             loading={executando === 'foruns-zone-xsec'}
                                             disabled={!!executando || !dominioSelecionado}
                                         >
@@ -502,6 +518,22 @@ const DefaceView = () => {
                     value={listaAtualConfiguracao}
                     onChange={(evento) => setListaAtualConfiguracao(evento.target.value)}
                 />
+            </Modal>
+            <Modal
+                title="Configurar Zone-Xsec"
+                open={modalZoneXsecVisivel}
+                onOk={salvarPaginasZoneXsec}
+                onCancel={() => setModalZoneXsecVisivel(false)}
+            >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text>Quantidade de páginas a consultar</Text>
+                    <InputNumber
+                        min={1}
+                        value={entradaPaginasZoneXsec}
+                        onChange={(valor) => setEntradaPaginasZoneXsec(valor || 1)}
+                        style={{ width: '100%' }}
+                    />
+                </Space>
             </Modal>
         </Container>
     );

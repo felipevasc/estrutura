@@ -4,6 +4,7 @@ import puppeteer from "puppeteer";
 
 type Payload = {
     dominioId: number;
+    paginas?: number;
 };
 
 type EscutaPayload = {
@@ -30,6 +31,7 @@ class DefaceForumZoneXsecService extends NanoService {
         try {
             const dados = typeof args === "string" ? JSON.parse(args) : args;
             const dominioId = dados?.dominioId;
+            const paginas = dados?.paginas && dados.paginas > 0 ? dados.paginas : 10;
             if (!dominioId) {
                 throw new Error("dominioId é obrigatório");
             }
@@ -37,7 +39,7 @@ class DefaceForumZoneXsecService extends NanoService {
             if (!dominio) {
                 throw new Error(`Domínio com ID ${dominioId} não encontrado.`);
             }
-            const espelhos = await this.buscarEspelhos(dominio.endereco);
+            const espelhos = await this.buscarEspelhos(dominio.endereco, paginas);
             const criados = [] as any[];
             for (const url of espelhos) {
                 const existente = await prisma.deface.findFirst({ where: { url, dominioId } });
@@ -52,13 +54,13 @@ class DefaceForumZoneXsecService extends NanoService {
         }
     }
 
-    private async buscarEspelhos(endereco: string) {
+    private async buscarEspelhos(endereco: string, paginas: number) {
         const alvo = endereco.toLowerCase();
         const espelhos: string[] = [];
         const navegador = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ["--ignore-certificate-errors", "--ignore-certificate-errors-spki-list"] });
         const pagina = await navegador.newPage();
         try {
-            for (let indice = 1; indice <= 10; indice += 1) {
+            for (let indice = 1; indice <= paginas; indice += 1) {
                 await pagina.goto(`https://zone-xsec.com/archive/page=${indice}`, { waitUntil: "domcontentloaded", timeout: 60000 });
                 await pagina.waitForSelector("#page-wrapper", { timeout: 60000 });
                 const urls = await pagina.$$eval("table.mirror-table tbody tr", (linhas, alvoTexto) => {
