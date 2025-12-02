@@ -69,5 +69,6 @@ export const gerarTermosPhishing = (endereco: string) => {
         adicionar(`${parcial}.${tldCurto}`);
     }
 
-    return Array.from(termos).slice(0, 120);
+    const termosOrdenados = [normalizado, ...Array.from(termos).filter(valor => valor !== normalizado)];
+    return termosOrdenados.slice(0, 120);
 };
