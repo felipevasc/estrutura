@@ -43,9 +43,11 @@ const gerarSequencia = (limite: number): number[] => {
 };
 
 const flutuar = keyframes`
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-3px); }
-    100% { transform: translateY(0px); }
+    0% { transform: translateY(0px) translateX(0px); }
+    25% { transform: translateY(-3px) translateX(1px); }
+    50% { transform: translateY(0) translateX(0px); }
+    75% { transform: translateY(3px) translateX(-1px); }
+    100% { transform: translateY(0px)  translateX(0px); }
 `;
 
 const Container = styled.div<{ $size: number; $isIdle: boolean }>`
@@ -53,6 +55,7 @@ const Container = styled.div<{ $size: number; $isIdle: boolean }>`
     height: ${props => props.$size}px;
     position: relative;
     ${props => props.$isIdle && css`animation: ${flutuar} 6s ease-in-out infinite;`}
+    ${props => !props.$isIdle && css`animation: ${flutuar} 12s ease-in-out infinite;`}
     cursor: pointer;
     user-select: none;
     transition: transform 1s ease;
@@ -80,7 +83,7 @@ const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
     border-radius: 100%;
     object-fit: contain;
     z-index: 2;
-    transition: opacity ${props => props.$instant ? '0s' : '0.8s'} ease-in-out;
+    transition: opacity ${props => props.$instant ? '0.5s' : '1.5s'} ease-in-out;
     opacity: ${props => props.$visible ? 1 : 0};
     pointer-events: none;
 `;
@@ -128,7 +131,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo =
         setFrontInstant(false);
         setFrontVisible(true);
 
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 1700));
 
         if (!ativoRef.current) return;
 
@@ -137,7 +140,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo =
         setFrontInstant(true);
         setFrontVisible(false);
 
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 2000));
     }, []);
 
     const reproduzirSequencia = useCallback(async () => {
@@ -145,7 +148,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo =
 
         setIsIdle(false);
 
-        const animacao = 5;
+        const animacao = Math.floor(Math.random() * 5) + 1;
         const quadros = ANIMACOES[animacao];
         const sequencia = gerarSequencia(quadros);
 
@@ -160,7 +163,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo =
         await transicionarParaQuadro('/weaver/animacao1/p1.png');
         setIsIdle(true);
 
-        const atraso = 3000 + Math.random() * 3000;
+        const atraso = 8000 + Math.random() * 8000;
         timerRef.current = setTimeout(reproduzirSequencia, atraso);
     }, [transicionarParaQuadro]);
 
@@ -177,7 +180,7 @@ const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo =
             return;
         }
 
-        timerRef.current = setTimeout(reproduzirSequencia, 1000);
+        timerRef.current = setTimeout(reproduzirSequencia, 20000);
 
         return () => {
             ativoRef.current = false;
