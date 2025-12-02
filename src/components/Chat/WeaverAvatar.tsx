@@ -30,6 +30,8 @@ const BackLayer = styled.img`
     border-radius: 100%;
     z-index: 1;
     opacity: 1;
+    background-color: #DDD;
+    border: #358 solid 2px;
 `;
 
 const FrontLayer = styled.img<{ $visible: boolean }>`
@@ -44,6 +46,9 @@ const FrontLayer = styled.img<{ $visible: boolean }>`
     transition: opacity 1.5s ease-in-out;
     opacity: ${props => props.$visible ? 1 : 0};
     pointer-events: none;
+    background-color: #DDD;
+    border: #358 solid 2px;
+    display: none;
 `;
 
 interface WeaverAvatarProps {

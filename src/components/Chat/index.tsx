@@ -97,6 +97,8 @@ const ChatWidget = () => {
         }
     };
 
+    const FALLBACK_IMAGE = '/weaver/animacao1/p1.png';
+
     return (
         <>
             <ChatButtonContainer onClick={() => setIsOpen(true)} title="Weaver">
@@ -105,7 +107,7 @@ const ChatWidget = () => {
 
             <StyledDrawer
                 title="Weaver"
-                placement="left"
+                placement="right"
                 width={500}
                 onClose={() => setIsOpen(false)}
                 open={isOpen}
@@ -116,9 +118,9 @@ const ChatWidget = () => {
                         {messages.length === 0 && (
                             <div style={{ color: '#666', textAlign: 'center', marginTop: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                                 <div style={{ marginBottom: '20px' }}>
-                                    <WeaverAvatar size={120} ativo={isOpen} />
+                                    <img src={FALLBACK_IMAGE} width={120} />
                                 </div>
-                                <p>Olá! Sou a Weaver. Como posso ajudar com os achados do projeto?</p>
+                                <p>Como posso ajudar com o seu projeto?</p>
                             </div>
                         )}
                         {messages.map((msg, idx) => (

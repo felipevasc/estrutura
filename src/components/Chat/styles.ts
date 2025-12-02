@@ -4,7 +4,7 @@ import { Drawer as AntDrawer } from 'antd';
 export const ChatButtonContainer = styled.div`
     position: fixed;
     bottom: 24px;
-    left: 24px;
+    right: 24px;
     z-index: 1000;
     cursor: pointer;
     transition: transform 0.2s ease-in-out;
