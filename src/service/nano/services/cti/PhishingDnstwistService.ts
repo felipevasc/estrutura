@@ -4,12 +4,13 @@ import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 import { Dominio } from "@prisma/client";
 import { execFile } from "child_process";
 import { promisify } from "util";
+import { queueCommand } from "@/service/nano/commandHelper";
 
 const executar = promisify(execFile);
 
 type Payload = { id: number; args: unknown };
 
-type Resultado = { alvo: string; termo: string };
+type Dados = { dominioId?: number; termo?: string };
 
 class PhishingDnstwistService extends NanoService {
     constructor() {
@@ -18,7 +19,7 @@ class PhishingDnstwistService extends NanoService {
 
     async initialize() {
         this.listen("COMMAND_RECEIVED", (payload) => {
-            if (payload.command === "phishing_dnstwist_check") {
+            if (payload.command === "phishing_dnstwist_check" || payload.command === "phishing_dnstwist_termo") {
                 this.executar(payload as Payload).catch((erro: unknown) => {
                     const mensagem = erro instanceof Error ? erro.message : "Erro não tratado";
                     this.error(`Erro não tratado em executar: ${mensagem}`, erro as Error);
@@ -30,33 +31,53 @@ class PhishingDnstwistService extends NanoService {
     private async executar({ id, args }: Payload) {
         try {
             const dadosBrutos = typeof args === "string" ? JSON.parse(args) : args;
-            const dados = dadosBrutos as { dominioId?: number };
+            const dados = dadosBrutos as Dados;
             const dominioId = dados?.dominioId;
             if (!dominioId) throw new Error("dominioId é obrigatório");
 
-            const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
-            if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
-
-            const termos = await this.obterTermos(dominio);
-            if (!termos.length) throw new Error("Nenhum termo disponível");
-
-            const listaLimitada = termos.slice(0, 60);
-            const encontrados = await this.buscarHosts(listaLimitada);
-            const criados: any[] = [];
-
-            for (const registro of encontrados) {
-                const existente = await prisma.phishing.findFirst({ where: { alvo: registro.alvo, dominioId } });
-                if (!existente) {
-                    const criado = await prisma.phishing.create({ data: { alvo: registro.alvo, termo: registro.termo, fonte: "dnstwist", dominioId } });
-                    criados.push(criado);
-                }
+            if (dados.termo) {
+                await this.executarTermo(id, dominioId, dados.termo);
+                return;
             }
 
-            this.bus.emit("JOB_COMPLETED", { id, result: criados });
+            await this.enfileirarTermos(id, dominioId);
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "Falha desconhecida";
             this.bus.emit("JOB_FAILED", { id, error: mensagem });
         }
+    }
+
+    private async enfileirarTermos(id: number, dominioId: number) {
+        const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
+        if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
+
+        const termos = await this.obterTermos(dominio);
+        if (!termos.length) throw new Error("Nenhum termo disponível");
+
+        for (const termo of termos) {
+            await queueCommand("phishing_dnstwist_termo", { dominioId, termo }, dominio.projetoId);
+        }
+
+        this.bus.emit("JOB_COMPLETED", { id, result: { termosEnfileirados: termos.length } });
+    }
+
+    private async executarTermo(id: number, dominioId: number, termo: string) {
+        const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
+        if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
+
+        const alvos = await this.executarDnstwist(termo);
+        const criados: any[] = [];
+
+        for (const alvoBruto of alvos) {
+            const alvo = alvoBruto.toLowerCase();
+            const existente = await prisma.phishing.findFirst({ where: { alvo, dominioId } });
+            if (!existente) {
+                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "dnstwist", dominioId } });
+                criados.push(criado);
+            }
+        }
+
+        this.bus.emit("JOB_COMPLETED", { id, result: criados });
     }
 
     private async obterTermos(dominio: Dominio) {
@@ -68,21 +89,6 @@ class PhishingDnstwistService extends NanoService {
 
         const criados = await prisma.$transaction(gerados.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } })));
         return criados.map(item => item.termo);
-    }
-
-    private async buscarHosts(termos: string[]) {
-        const coletados: Resultado[] = [];
-        for (const termo of termos) {
-            const alvos = await this.executarDnstwist(termo);
-            alvos.forEach(alvo => coletados.push({ alvo, termo }));
-        }
-        const vistos = new Set<string>();
-        return coletados.filter(({ alvo }) => {
-            const chave = alvo.toLowerCase();
-            if (vistos.has(chave)) return false;
-            vistos.add(chave);
-            return true;
-        });
     }
 
     private async executarDnstwist(termo: string) {
