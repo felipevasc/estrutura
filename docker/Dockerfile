@@ -10,6 +10,8 @@ RUN apt install rustscan -y
 
 RUN apt install gobuster -y
 
+RUN apt install dnstwist -y
+
 WORKDIR /app
 
 # Forçar atualização dessas etapas sempre que houver novo commit

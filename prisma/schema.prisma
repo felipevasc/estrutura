@@ -40,6 +40,8 @@ model Dominio {
   diretorios Diretorio[]
   deface Deface[]
   whatwebResultados WhatwebResultado[]
+  phishing Phishing[]
+  termosPhishing TermoPhishing[]
 
   @@map("dominios")
 }
@@ -155,6 +157,29 @@ model Deface {
   createdAt DateTime @default(now())
 
   @@map("deface")
+}
+
+model Phishing {
+  id        Int      @id @default(autoincrement())
+  alvo      String
+  termo     String
+  fonte     String
+  dominioId Int
+  dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  criadoEm  DateTime @default(now())
+
+  @@map("phishing")
+}
+
+model TermoPhishing {
+  id        Int      @id @default(autoincrement())
+  termo     String
+  dominioId Int
+  dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  criadoEm  DateTime @default(now())
+
+  @@unique([termo, dominioId])
+  @@map("termos_phishing")
 }
 
 model Takedown {

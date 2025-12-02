@@ -4,6 +4,7 @@ import React from 'react';
 import { Tabs } from 'antd';
 import styled from 'styled-components';
 import DefaceView from './DefaceView';
+import PhishingView from './PhishingView';
 import TakedownView from './TakedownView';
 import VazamentoSenhasView from './VazamentoSenhasView';
 
@@ -36,6 +37,9 @@ const CtiModule = () => {
     return (
         <CtiContainer>
             <Tabs defaultActiveKey="deface">
+                <TabPane tab="Phishing" key="phishing">
+                    <PhishingView />
+                </TabPane>
                 <TabPane tab="Deface" key="deface">
                     <DefaceView />
                 </TabPane>
