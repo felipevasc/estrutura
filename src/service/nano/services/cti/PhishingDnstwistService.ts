@@ -101,10 +101,11 @@ class PhishingDnstwistService extends NanoService {
 
             const hosts = resultado.map((entrada: Record<string, unknown>) => {
                 const alvo = String(entrada["domain-name"] || entrada.domain || entrada.host || "").toLowerCase();
+                const coletar = (chaves: string[]) => chaves.flatMap(chave => Array.isArray(entrada[chave]) ? entrada[chave] : []);
                 const registros = [
-                    ...(Array.isArray(entrada["dns-a"]) ? entrada["dns-a"] : []),
-                    ...(Array.isArray(entrada["dns-aaaa"]) ? entrada["dns-aaaa"] : []),
-                    ...(Array.isArray(entrada["dns-mx"]) ? entrada["dns-mx"] : [])
+                    ...coletar(["dns-a", "dns_a"]),
+                    ...coletar(["dns-aaaa", "dns_aaaa"]),
+                    ...coletar(["dns-mx", "dns_mx"])
                 ];
                 return registros.length > 0 ? alvo : "";
             }).filter(Boolean);
