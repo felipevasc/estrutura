@@ -1,0 +1,1 @@
+Coloque seus arquivos .gif aqui. O sistema irá ler automaticamente e exibi-los no avatar.

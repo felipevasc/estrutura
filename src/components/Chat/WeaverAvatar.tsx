@@ -2,46 +2,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { keyframes, css } from 'styled-components';
 
-const ANIMACOES: Record<number, number> = {
-    1: 7,
-    2: 5,
-    3: 5,
-    4: 10,
-    5: 8
-};
-
-const gerarSequencia = (limite: number): number[] => {
-    const sequencia: number[] = [1];
-    let quadroAtual = 1;
-    let passos = 0;
-    const teto = limite * 4;
-
-    while (quadroAtual < limite && passos < teto) {
-        passos++;
-        const sorteio = Math.random();
-
-        if (quadroAtual === 1) {
-            quadroAtual++;
-        } else if (quadroAtual >= limite) {
-            break;
-        } else {
-            if (sorteio > 0.3) {
-                quadroAtual++;
-            } else {
-                quadroAtual--;
-            }
-        }
-        sequencia.push(quadroAtual);
-    }
-
-    while (quadroAtual < limite) {
-        quadroAtual++;
-        sequencia.push(quadroAtual);
-    }
-
-    return sequencia;
-};
-
 const flutuar = keyframes`
     0% { transform: translateY(0px) translateX(0px); }
     25% { transform: translateY(-3px) translateX(1px); }
@@ -50,12 +10,11 @@ const flutuar = keyframes`
     100% { transform: translateY(0px)  translateX(0px); }
 `;
 
-const Container = styled.div<{ $size: number; $isIdle: boolean }>`
+const Container = styled.div<{ $size: number }>`
     width: ${props => props.$size}px;
     height: ${props => props.$size}px;
     position: relative;
-    ${props => props.$isIdle && css`animation: ${flutuar} 6s ease-in-out infinite;`}
-    ${props => !props.$isIdle && css`animation: ${flutuar} 12s ease-in-out infinite;`}
+    animation: ${flutuar} 6s ease-in-out infinite;
     cursor: pointer;
     user-select: none;
     transition: transform 1s ease;
@@ -69,12 +28,11 @@ const BackLayer = styled.img`
     height: 100%;
     object-fit: contain;
     border-radius: 100%;
-    border-color: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     z-index: 1;
     opacity: 1;
 `;
 
-const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
+const FrontLayer = styled.img<{ $visible: boolean }>`
     position: absolute;
     top: 0;
     left: 0;
@@ -83,7 +41,7 @@ const FrontLayer = styled.img<{ $visible: boolean; $instant: boolean }>`
     border-radius: 100%;
     object-fit: contain;
     z-index: 2;
-    transition: opacity ${props => props.$instant ? '0.5s' : '1.5s'} ease-in-out;
+    transition: opacity 1.5s ease-in-out;
     opacity: ${props => props.$visible ? 1 : 0};
     pointer-events: none;
 `;
@@ -94,107 +52,99 @@ interface WeaverAvatarProps {
     ativo?: boolean;
 }
 
-const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo = true }) => {
-    const [currentSrc, setCurrentSrc] = useState('/weaver/animacao1/p1.png');
-    const [nextSrc, setNextSrc] = useState('/weaver/animacao1/p1.png');
-    const [frontVisible, setFrontVisible] = useState(false);
-    const [frontInstant, setFrontInstant] = useState(true);
+const FALLBACK_IMAGE = '/weaver/animacao1/p1.png';
 
-    const [isIdle, setIsIdle] = useState(true);
+const WeaverAvatar: React.FC<WeaverAvatarProps> = ({ size = 60, onClick, ativo = true }) => {
+    const [gifList, setGifList] = useState<string[]>([]);
+    const [currentSrc, setCurrentSrc] = useState(FALLBACK_IMAGE);
+    const [nextSrc, setNextSrc] = useState(FALLBACK_IMAGE);
+    const [frontVisible, setFrontVisible] = useState(false);
+
     const ativoRef = useRef(ativo);
     const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Carregar a lista de GIFs disponíveis
     useEffect(() => {
-        const preload = () => {
-            Object.entries(ANIMACOES).forEach(([animStr, count]) => {
-                const animId = parseInt(animStr);
-                for (let i = 1; i <= count; i++) {
-                    const img = new Image();
-                    img.src = `/weaver/animacao${animId}/p${i}.png`;
+        const fetchGifs = async () => {
+            try {
+                const response = await fetch('/api/weaver/gifs');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.gifs && data.gifs.length > 0) {
+                        setGifList(data.gifs);
+                        // Define o primeiro GIF como inicial se disponível
+                        const first = data.gifs[Math.floor(Math.random() * data.gifs.length)];
+                        setCurrentSrc(first);
+                    }
                 }
-            });
+            } catch (error) {
+                console.error("Failed to load GIFs:", error);
+            }
         };
-        preload();
+        fetchGifs();
     }, []);
 
-    const pararSequencia = useCallback(() => {
+    const pararCiclo = useCallback(() => {
         if (timerRef.current) {
             clearTimeout(timerRef.current);
             timerRef.current = null;
         }
     }, []);
 
-    const transicionarParaQuadro = useCallback(async (src: string) => {
-        if (!ativoRef.current) return;
+    const transicionarGif = useCallback(async () => {
+        if (!ativoRef.current || gifList.length === 0) return;
 
-        setNextSrc(src);
-        setFrontInstant(false);
+        // Escolhe um GIF aleatório diferente do atual (se possível)
+        let proximoIndex = Math.floor(Math.random() * gifList.length);
+        let proximoGif = gifList[proximoIndex];
+
+        // Evita repetir o mesmo GIF se houver mais de um
+        if (gifList.length > 1 && proximoGif === currentSrc) {
+            proximoIndex = (proximoIndex + 1) % gifList.length;
+            proximoGif = gifList[proximoIndex];
+        }
+
+        setNextSrc(proximoGif);
         setFrontVisible(true);
 
+        // Espera a transição visual
         await new Promise(r => setTimeout(r, 1700));
 
         if (!ativoRef.current) return;
 
-        setCurrentSrc(src);
+        // Troca o fundo para o novo GIF e esconde a frente (reset instantâneo)
+        setCurrentSrc(proximoGif);
+        setFrontVisible(false); // Fica transparente, revelando o BackLayer que agora é igual
 
-        setFrontInstant(true);
-        setFrontVisible(false);
+        // Define o tempo para a próxima troca (aleatório entre 10s e 20s)
+        const tempoProximaTroca = 10000 + Math.random() * 10000;
+        timerRef.current = setTimeout(transicionarGif, tempoProximaTroca);
 
-        await new Promise(r => setTimeout(r, 2000));
-    }, []);
-
-    const reproduzirSequencia = useCallback(async () => {
-        if (!ativoRef.current) return;
-
-        setIsIdle(false);
-
-        const animacao = Math.floor(Math.random() * 5) + 1;
-        const quadros = ANIMACOES[animacao];
-        const sequencia = gerarSequencia(quadros);
-
-        for (const quadro of sequencia) {
-            if (!ativoRef.current) return;
-            const src = `/weaver/animacao${animacao}/p${quadro}.png`;
-            await transicionarParaQuadro(src);
-        }
-
-        if (!ativoRef.current) return;
-
-        await transicionarParaQuadro('/weaver/animacao1/p1.png');
-        setIsIdle(true);
-
-        const atraso = 8000 + Math.random() * 8000;
-        timerRef.current = setTimeout(reproduzirSequencia, atraso);
-    }, [transicionarParaQuadro]);
+    }, [gifList, currentSrc]);
 
     useEffect(() => {
         ativoRef.current = ativo;
 
-        if (!ativo) {
-            pararSequencia();
-            setCurrentSrc('/weaver/animacao1/p1.png');
-            setNextSrc('/weaver/animacao1/p1.png');
-            setFrontVisible(false);
-            setFrontInstant(true);
-            setIsIdle(true);
-            return;
+        if (ativo && gifList.length > 0) {
+            // Inicia o ciclo após um tempo inicial
+            const tempoInicial = 5000 + Math.random() * 5000;
+            timerRef.current = setTimeout(transicionarGif, tempoInicial);
+        } else {
+            pararCiclo();
         }
-
-        timerRef.current = setTimeout(reproduzirSequencia, 20000);
 
         return () => {
             ativoRef.current = false;
-            pararSequencia();
+            pararCiclo();
         };
-    }, [ativo, pararSequencia, reproduzirSequencia]);
+    }, [ativo, gifList, transicionarGif, pararCiclo]);
 
     return (
-        <Container $size={size} $isIdle={isIdle} onClick={onClick}>
+        <Container $size={size} onClick={onClick}>
             <BackLayer src={currentSrc} draggable={false} alt="" />
             <FrontLayer
                 src={nextSrc}
                 $visible={frontVisible}
-                $instant={frontInstant}
                 draggable={false}
                 alt=""
             />

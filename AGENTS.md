@@ -73,7 +73,7 @@ O projeto agora possui um módulo de IA para auxílio em operações de Red Team
 *   `src/service/ai/AiService.ts`: Serviço de interação com a OpenAI e recuperação de contexto.
 *   `src/service/ai/CommandInterpreter.ts`: Interpretador de comandos sugeridos pela IA para payloads de NanoServices.
 *   `src/app/api/v1/chat/`: Endpoints para chat e execução de comandos.
-*   `src/components/Chat/`: Interface do usuário (Widget e Drawer).
+*   `src/components/Chat/`: Interface do usuário (Widget e Drawer). O avatar (`WeaverAvatar`) utiliza GIFs localizados em `public/weaver/gifs/` que são listados via API (`/api/weaver/gifs`) e exibidos aleatoriamente com transições fluidas.
 
 ### Protocolo de Comandos
 A IA pode sugerir comandos no formato JSON:
