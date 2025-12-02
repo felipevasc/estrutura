@@ -32,6 +32,8 @@ export const gerarTermosPhishing = (endereco: string) => {
     const termos = new Set<string>();
     const adicionar = (valor: string) => { if (valor) termos.add(valor); };
 
+    adicionar(normalizado);
+
     const variacoesBase = gerarVariacoes(nucleos);
     const variacoesComPrimeiroTld = gerarVariacoes(troncoComTld);
 
