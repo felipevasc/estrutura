@@ -101,8 +101,8 @@ class DefaceForumHackDbService extends NanoService {
         const caminhoVenv = path.join(base, ".venv", "bin", "python3");
         if (!fs.existsSync(caminhoVenv)) {
             await this.executarProcesso("python3", ["-m", "venv", ".venv"], base);
-            await this.executarProcesso(path.join(base, ".venv", "bin", "python3"), ["-m", "pip", "install", "-r", "requirements.txt"], base);
         }
+        await this.executarProcesso(caminhoVenv, ["-m", "pip", "install", "-r", "requirements.txt"], base);
     }
 
     private executarProcesso(comando: string, argumentos: string[], base: string) {

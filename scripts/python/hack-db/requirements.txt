@@ -1,2 +1,4 @@
-cfscrape
+cfscrape==2.1.1
 beautifulsoup4
+urllib3<2
+requests<3
