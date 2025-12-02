@@ -33,6 +33,7 @@
     "next": "15.4.2",
     "node-telegram-bot-api": "^0.66.0",
     "openai": "^6.9.1",
+    "puppeteer": "^23.7.1",
     "react": "19.1.0",
     "react-console-emulator": "^5.0.2",
     "react-dom": "19.1.0",

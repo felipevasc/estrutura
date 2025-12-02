@@ -4,6 +4,7 @@ import { queueCommand } from "@/service/nano/commandHelper";
 interface ExecutePayload {
     dominioId: number;
     ferramenta: string;
+    grupo: string;
 }
 
 export async function POST(
@@ -19,22 +20,26 @@ export async function POST(
         }
 
         const body = await request.json() as ExecutePayload;
-        const { dominioId, ferramenta } = body;
+        const { dominioId, ferramenta, grupo } = body;
 
-        if (!dominioId || !ferramenta) {
+        if (!dominioId || !ferramenta || !grupo) {
             return NextResponse.json({ error: "Parâmetros inválidos" }, { status: 400 });
         }
+        if (grupo === 'dorks') {
+            const commandName = 'deface_dork_check';
+            const args = { dominioId, category: ferramenta };
+            await queueCommand(commandName, args, projetoId);
+            return NextResponse.json({ message: `Comando '${commandName}' (Categoria: ${ferramenta}) enfileirado com sucesso.` });
+        }
 
-        // Antes 'ferramenta' era 'hackedby' ou 'pwnedby'.
-        // Agora 'ferramenta' é a categoria da dork (ex: 'assinaturas', 'apostas').
-        // O comando agora é sempre 'deface_dork_check', mas passamos a categoria nos args.
+        if (grupo === 'foruns' && ferramenta === 'zone-xsec') {
+            const commandName = 'deface_forum_zone_xsec_check';
+            const args = { dominioId };
+            await queueCommand(commandName, args, projetoId);
+            return NextResponse.json({ message: `Comando '${commandName}' (Ferramenta: ${ferramenta}) enfileirado com sucesso.` });
+        }
 
-        const commandName = 'deface_dork_check';
-        const args = { dominioId, category: ferramenta };
-
-        await queueCommand(commandName, args, projetoId);
-
-        return NextResponse.json({ message: `Comando '${commandName}' (Categoria: ${ferramenta}) enfileirado com sucesso.` });
+        return NextResponse.json({ error: "Ferramenta inválida" }, { status: 400 });
 
     } catch (error) {
         console.error("Erro ao enfileirar comando de deface:", error);

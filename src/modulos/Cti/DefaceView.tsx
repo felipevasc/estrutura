@@ -272,18 +272,19 @@ const DefaceView = () => {
         buscarConfiguracaoDork();
     }, [buscarDominios, buscarDados, buscarConfiguracaoDork]);
 
-    const executarCategoria = async (categoria: string) => {
+    const executarFerramenta = async (ferramenta: string, grupo: string) => {
         if (!dominioSelecionado) {
             message.warning('Selecione um domínio alvo para continuar.');
             return;
         }
-        setExecutando(categoria);
-        const rotulo = formatarCategoria(categoria);
+        const chaveExecucao = `${grupo}-${ferramenta}`;
+        setExecutando(chaveExecucao);
+        const rotulo = formatarCategoria(ferramenta);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/executar`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: dominioSelecionado, ferramenta: categoria }),
+                body: JSON.stringify({ dominioId: dominioSelecionado, ferramenta, grupo }),
             });
             if (!resposta.ok) throw new Error('Falha ao enfileirar a tarefa.');
             message.success(`Tarefa '${rotulo}' enfileirada.`);
@@ -441,14 +442,14 @@ const DefaceView = () => {
                                                 </GrupoAcoes>
                                             </CabecalhoFerramenta>
                                             <RodapeFerramenta>
-                                                <Acionador
-                                                    type="primary"
-                                                    icon={<RadarChartOutlined />}
-                                                    onClick={() => executarCategoria(categoria)}
-                                                    loading={executando === categoria}
-                                                    disabled={!!executando || !dominioSelecionado}
-                                                >
-                                                    Executar varredura
+                                                    <Acionador
+                                                        type="primary"
+                                                        icon={<RadarChartOutlined />}
+                                                        onClick={() => executarFerramenta(categoria, 'dorks')}
+                                                        loading={executando === `dorks-${categoria}`}
+                                                        disabled={!!executando || !dominioSelecionado}
+                                                    >
+                                                        Executar varredura
                                                 </Acionador>
                                             </RodapeFerramenta>
                                         </CartaoFerramenta>
@@ -456,7 +457,33 @@ const DefaceView = () => {
                                 })}
                             </ListaFerramentas>
                         </TabPane>
-                        <TabPane tab="Em breve" key="futuro" disabled />
+                        <TabPane tab="Foruns" key="foruns">
+                            <Subtitulo style={{ display: 'block', marginBottom: 8 }}>Coleta em espelhos de deface.</Subtitulo>
+                            <ListaFerramentas>
+                                <CartaoFerramenta>
+                                    <CabecalhoFerramenta>
+                                        <BlocoInfoFerramenta>
+                                            <RotuloFerramenta>Zone-Xsec</RotuloFerramenta>
+                                            <DescricaoFerramenta>Busca registros do Zone-Xsec relacionados ao domínio selecionado.</DescricaoFerramenta>
+                                        </BlocoInfoFerramenta>
+                                        <GrupoAcoes>
+                                            <TagCategoria color="purple">ZONE-XSEC</TagCategoria>
+                                        </GrupoAcoes>
+                                    </CabecalhoFerramenta>
+                                    <RodapeFerramenta>
+                                        <Acionador
+                                            type="primary"
+                                            icon={<RadarChartOutlined />}
+                                            onClick={() => executarFerramenta('zone-xsec', 'foruns')}
+                                            loading={executando === 'foruns-zone-xsec'}
+                                            disabled={!!executando || !dominioSelecionado}
+                                        >
+                                            Executar busca
+                                        </Acionador>
+                                    </RodapeFerramenta>
+                                </CartaoFerramenta>
+                            </ListaFerramentas>
+                        </TabPane>
                     </AbasFerramentas>
                 </PainelFerramentas>
             </Grade>
