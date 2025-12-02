@@ -41,6 +41,14 @@ export async function POST(
             return NextResponse.json({ message: `Comando '${commandName}' (Ferramenta: ${ferramenta}) enfileirado com sucesso.` });
         }
 
+        if (grupo === 'foruns' && ferramenta === 'hack-db') {
+            const commandName = 'deface_forum_hack_db_check';
+            const totalPaginas = paginas && paginas > 0 ? paginas : 10;
+            const args = { dominioId, paginas: totalPaginas };
+            await queueCommand(commandName, args, projetoId);
+            return NextResponse.json({ message: `Comando '${commandName}' (Ferramenta: ${ferramenta}) enfileirado com sucesso.` });
+        }
+
         return NextResponse.json({ error: "Ferramenta inválida" }, { status: 400 });
 
     } catch (error) {

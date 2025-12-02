@@ -229,6 +229,9 @@ const DefaceView = () => {
     const [paginasZoneXsec, setPaginasZoneXsec] = useState(10);
     const [modalZoneXsecVisivel, setModalZoneXsecVisivel] = useState(false);
     const [entradaPaginasZoneXsec, setEntradaPaginasZoneXsec] = useState(10);
+    const [paginasHackDb, setPaginasHackDb] = useState(10);
+    const [modalHackDbVisivel, setModalHackDbVisivel] = useState(false);
+    const [entradaPaginasHackDb, setEntradaPaginasHackDb] = useState(10);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -370,6 +373,18 @@ const DefaceView = () => {
         message.success('Configuração atualizada.');
     };
 
+    const abrirModalHackDb = () => {
+        setEntradaPaginasHackDb(paginasHackDb);
+        setModalHackDbVisivel(true);
+    };
+
+    const salvarPaginasHackDb = () => {
+        const valor = entradaPaginasHackDb && entradaPaginasHackDb > 0 ? entradaPaginasHackDb : 10;
+        setPaginasHackDb(valor);
+        setModalHackDbVisivel(false);
+        message.success('Configuração atualizada.');
+    };
+
     const colunas = [
         { title: 'URL', dataIndex: 'url', key: 'url', render: (texto: string) => <a href={texto} target="_blank" rel="noopener noreferrer">{texto}</a> },
         { title: 'Domínio', dataIndex: ['dominio', 'endereco'], key: 'dominio' },
@@ -498,6 +513,29 @@ const DefaceView = () => {
                                         </Acionador>
                                     </RodapeFerramenta>
                                 </CartaoFerramenta>
+                                <CartaoFerramenta>
+                                    <CabecalhoFerramenta>
+                                        <BlocoInfoFerramenta>
+                                            <RotuloFerramenta>Hack-DB</RotuloFerramenta>
+                                            <DescricaoFerramenta>Busca registros do Hack-DB relacionados ao domínio selecionado.</DescricaoFerramenta>
+                                        </BlocoInfoFerramenta>
+                                        <GrupoAcoes>
+                                            <TagCategoria color="orange">HACK-DB</TagCategoria>
+                                            <BotaoConfiguracao icon={<SettingOutlined />} onClick={abrirModalHackDb} />
+                                        </GrupoAcoes>
+                                    </CabecalhoFerramenta>
+                                    <RodapeFerramenta>
+                                        <Acionador
+                                            type="primary"
+                                            icon={<RadarChartOutlined />}
+                                            onClick={() => executarFerramenta('hack-db', 'foruns', { paginas: paginasHackDb })}
+                                            loading={executando === 'foruns-hack-db'}
+                                            disabled={!!executando || !dominioSelecionado}
+                                        >
+                                            Executar busca
+                                        </Acionador>
+                                    </RodapeFerramenta>
+                                </CartaoFerramenta>
                             </ListaFerramentas>
                         </TabPane>
                     </AbasFerramentas>
@@ -531,6 +569,22 @@ const DefaceView = () => {
                         min={1}
                         value={entradaPaginasZoneXsec}
                         onChange={(valor) => setEntradaPaginasZoneXsec(valor || 1)}
+                        style={{ width: '100%' }}
+                    />
+                </Space>
+            </Modal>
+            <Modal
+                title="Configurar Hack-DB"
+                open={modalHackDbVisivel}
+                onOk={salvarPaginasHackDb}
+                onCancel={() => setModalHackDbVisivel(false)}
+            >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text>Quantidade de páginas a consultar</Text>
+                    <InputNumber
+                        min={1}
+                        value={entradaPaginasHackDb}
+                        onChange={(valor) => setEntradaPaginasHackDb(valor || 1)}
                         style={{ width: '100%' }}
                     />
                 </Space>

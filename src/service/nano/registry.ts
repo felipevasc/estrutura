@@ -12,6 +12,7 @@ import { GobusterService } from './services/tools/GobusterService';
 import DefaceDorkService from './services/cti/DefaceDorkService';
 import { TakedownService } from "./services/cti/TakedownService";
 import DefaceForumZoneXsecService from "./services/cti/DefaceForumZoneXsecService";
+import DefaceForumHackDbService from "./services/cti/DefaceForumHackDbService";
 import { FontesDadosVazamentoService } from './services/cti/vazamentoSenhas/FontesDadosVazamentoService';
 import { BuscaAtivaVazamentoService } from './services/cti/vazamentoSenhas/BuscaAtivaVazamentoService';
 import { TratamentoVazamentoService } from './services/cti/vazamentoSenhas/TratamentoVazamentoService';
@@ -33,6 +34,7 @@ export const registeredServices: NanoService[] = [
     new FfufService(),
     new DefaceDorkService(),
     new DefaceForumZoneXsecService(),
+    new DefaceForumHackDbService(),
     new TakedownService(),
     new FontesDadosVazamentoService(),
     new BuscaAtivaVazamentoService(),
