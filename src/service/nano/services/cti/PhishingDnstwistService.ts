@@ -93,7 +93,9 @@ class PhishingDnstwistService extends NanoService {
 
     private async executarDnstwist(termo: string) {
         try {
-            const { stdout } = await executar("dnstwist", ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
+            const { stdout, stderr } = await executar("dnstwist", ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
+            this.log(`Saida dnstwist para ${termo}: ${stdout}`);
+            if (stderr) this.log(`Saida de erro dnstwist para ${termo}: ${stderr}`);
             const resultado = JSON.parse(stdout || "[]");
             if (!Array.isArray(resultado)) return [] as string[];
 
@@ -110,6 +112,9 @@ class PhishingDnstwistService extends NanoService {
             return Array.from(new Set(hosts));
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "erro inesperado";
+            const detalhes = erro as { stdout?: string; stderr?: string };
+            if (detalhes.stdout) this.error(`Saida dnstwist com falha: ${detalhes.stdout}`);
+            if (detalhes.stderr) this.error(`Erro dnstwist com falha: ${detalhes.stderr}`);
             this.error(`Falha na execução do dnstwist: ${mensagem}`);
             return [] as string[];
         }
