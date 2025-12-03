@@ -395,9 +395,8 @@ const PhishingView = () => {
                 <Cartao>
                     <Cabecalho>
                         <BlocoTitulo>
-                            <Selo color="purple">PHISHING</Selo>
-                            <Title level={4} style={{ margin: 0 }}>Radar anti-phishing</Title>
-                            <Text type="secondary">Visualize hosts suspeitos e acompanhe novas descobertas.</Text>
+                            <Title level={4} style={{ margin: 0 }}>Phishing</Title>
+                            <Text type="secondary">Descoberta de paginas de phishing.</Text>
                         </BlocoTitulo>
                         <Space>
                             <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>Atualizar</Button>
@@ -449,7 +448,6 @@ const PhishingView = () => {
                 <Cartao>
                     <Cabecalho>
                         <BlocoTitulo>
-                            <Selo color="blue">FERRAMENTAS</Selo>
                             <Title level={5} style={{ margin: 0 }}>Detecção ativa</Title>
                         </BlocoTitulo>
                         <Space>
@@ -466,7 +464,6 @@ const PhishingView = () => {
                                     <Text strong>dnstwist</Text>
                                     <div><Text type="secondary">Gera domínios lookalike e valida os ativos.</Text></div>
                                 </div>
-                                <Tag color="geekblue">Dinâmico</Tag>
                             </div>
                             <AcoesFerramenta>
                                 <Button onClick={abrirModalTermos} icon={<SettingOutlined />}>
@@ -488,7 +485,6 @@ const PhishingView = () => {
                                     <Text strong>phishing_catcher</Text>
                                     <div><Text type="secondary">Prioriza TLDs e pesos por palavra-chave na caça ativa.</Text></div>
                                 </div>
-                                <Tag color="purple">Configuração por domínio</Tag>
                             </div>
                             <AcoesFerramenta>
                                 <Button icon={<SettingOutlined />} onClick={abrirConfiguracaoCatcher}>

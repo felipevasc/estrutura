@@ -399,7 +399,7 @@ const DefaceView = () => {
                     <Cabecalho>
                         <BlocoTitulo>
                             <Title level={4} style={{ margin: 0 }}>Deface Scanner</Title>
-                            <Subtitulo>Visual hacker com foco em resposta rápida.</Subtitulo>
+                            <Subtitulo>Descoberta de paginas de deface por dominio.</Subtitulo>
                         </BlocoTitulo>
                         <Space>
                             <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>

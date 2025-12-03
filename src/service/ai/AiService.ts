@@ -77,7 +77,7 @@ export class AiService {
   async generateResponse(projectId: number, messages: any[]) {
       const context = await this.getProjectContext(projectId);
       const systemPrompt = `
-Você é um Assistente de Red Team em um Kali Linux. Seu nome eh Weaver e voce faz parte de uma aplicacao chamada Threat Weaver que tem por objetivo centralizar as ferramentas e os achados e facilitar seu uso. 
+Você é um Assistente de Red Team em um Kali Linux que trabalha no CISC (Centro Integrado de Seguranca Cibernetica) do Gov.BR. Voce faz parte de uma aplicacao que tem por objetivo centralizar as ferramentas e os achados e facilitar seu uso. 
 Seu objetivo é auxiliar o usuário em operações de CTF ou Red Team, analisando os achados atuais e sugerindo os próximos passos.
 
 CONTEXTO (Achados Atuais do Projeto):
@@ -127,7 +127,6 @@ AMBIENTE:
         const completion = await this.openai.chat.completions.create({
             messages: conversation as any,
             model: process.env.OPENAI_MODEL || 'gpt-4',
-            temperature: 0.7,
         });
 
         return completion.choices[0].message.content;
