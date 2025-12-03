@@ -13,6 +13,7 @@ const QueueStatus = () => {
     const [aberto, definirAberto] = useState(false);
     const [comandos, definirComandos] = useState<Command[]>([]);
     const [expandidos, definirExpandidos] = useState<Record<number, boolean>>({});
+    const [limiteHistorico, definirLimiteHistorico] = useState(3);
     const api = useApi();
     const { projeto } = useContext(StoreContext);
     const intervalo = useRef<NodeJS.Timeout>(null);
@@ -24,6 +25,8 @@ const QueueStatus = () => {
         try {
             const dados = await api.queue.getCommands(idProjeto);
             definirComandos(dados);
+            const historicoAtualizado = dados.filter(comando => comando.status === 'COMPLETED' || comando.status === 'FAILED');
+            definirLimiteHistorico(valor => Math.min(Math.max(valor, 3), historicoAtualizado.length || 3));
             intervalo.current && clearTimeout(intervalo.current);
             intervalo.current = setTimeout(carregarComandos, 30000);
         } catch (erro) {
@@ -36,6 +39,10 @@ const QueueStatus = () => {
         return () => {
             intervalo.current && clearTimeout(intervalo.current);
         }
+    }, [idProjeto]);
+
+    useEffect(() => {
+        definirLimiteHistorico(3);
     }, [idProjeto]);
 
     const cancelarComando = async (id: number) => {
@@ -53,6 +60,8 @@ const QueueStatus = () => {
     const comandosExecutando = comandos?.filter(comando => comando.status === 'RUNNING');
     const comandosPendentes = comandos?.filter(comando => comando.status === 'PENDING');
     const comandosHistorico = comandos?.filter(comando => comando.status === 'COMPLETED' || comando.status === 'FAILED');
+    const historicoVisivel = comandosHistorico.slice(-limiteHistorico);
+    const possuiMaisHistorico = comandosHistorico.length > historicoVisivel.length;
 
     const obterEtiquetaStatus = (status: CommandStatus) => {
         switch (status) {
@@ -166,7 +175,18 @@ const QueueStatus = () => {
         {
             key: '3',
             label: 'Histórico',
-            children: renderizarTerminais(comandosHistorico, false),
+            children: (
+                <div className="historico-conteudo">
+                    {renderizarTerminais(historicoVisivel, false)}
+                    {possuiMaisHistorico && (
+                        <div className="historico-acoes">
+                            <Button type="primary" ghost onClick={() => definirLimiteHistorico(valor => Math.min(valor + 3, comandosHistorico.length))}>
+                                Carregar mais
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            ),
         },
     ];
 
