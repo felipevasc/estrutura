@@ -21,6 +21,7 @@ import { ComunicacaoVazamentosService } from './services/cti/vazamentoSenhas/Com
 import { WhatwebService } from './services/tools/WhatwebService';
 import PhishingDnstwistService from './services/cti/PhishingDnstwistService';
 import PhishingCatcherService from './services/cti/PhishingCatcherService';
+import PhishingCrtshService from './services/cti/PhishingCrtshService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -39,6 +40,7 @@ export const registeredServices: NanoService[] = [
     new DefaceForumHackDbService(),
     new PhishingDnstwistService(),
     new PhishingCatcherService(),
+    new PhishingCrtshService(),
     new TakedownService(),
     new FontesDadosVazamentoService(),
     new BuscaAtivaVazamentoService(),
