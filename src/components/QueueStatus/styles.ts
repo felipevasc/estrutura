@@ -16,6 +16,17 @@ export const StyledQueueStatus = styled.div`
         gap: 16px;
     }
 
+    .historico-conteudo {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .historico-acoes {
+        display: flex;
+        justify-content: center;
+    }
+
     .terminal-cartao {
         background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08), transparent 35%), #0a0f1a;
         border: 1px solid #1f2937;
