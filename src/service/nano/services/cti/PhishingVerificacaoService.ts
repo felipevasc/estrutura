@@ -1,0 +1,59 @@
+import { NanoService } from '@/service/nano/NanoService';
+import prisma from '@/database';
+import { PhishingVerificacaoStatus } from '@prisma/client';
+
+export default class PhishingVerificacaoService extends NanoService {
+    constructor() {
+        super('PhishingVerificacaoService');
+        this.initialize();
+    }
+
+    initialize() {
+        this.listen('COMMAND_RECEIVED', async (payload) => {
+            if (payload.command !== 'phishing_verificar') return;
+
+            const { id: jobId, args } = payload;
+            const phishingId = Number(args?.id);
+            if (!phishingId) {
+                this.bus.emit('JOB_FAILED', { id: jobId, error: 'ID do phishing não fornecido' });
+                return;
+            }
+
+            try {
+                const registro = await prisma.phishing.findUnique({ where: { id: phishingId } });
+                if (!registro) {
+                    this.bus.emit('JOB_FAILED', { id: jobId, error: `Phishing ${phishingId} não encontrado` });
+                    return;
+                }
+
+                const urls = this.obterUrls(registro.alvo);
+                let status = PhishingVerificacaoStatus.OFFLINE;
+
+                for (const url of urls) {
+                    try {
+                        const resposta = await fetch(url, { method: 'GET', redirect: 'follow' });
+                        if (resposta.ok || (resposta.status >= 300 && resposta.status < 400)) {
+                            status = PhishingVerificacaoStatus.ONLINE;
+                            break;
+                        }
+                    } catch {}
+                }
+
+                await prisma.phishing.update({
+                    where: { id: phishingId },
+                    data: { ultimaVerificacao: new Date(), statusUltimaVerificacao: status }
+                });
+
+                this.bus.emit('JOB_COMPLETED', { id: jobId, result: status });
+            } catch (erro) {
+                const mensagem = erro instanceof Error ? erro.message : 'Erro ao verificar phishing';
+                this.bus.emit('JOB_FAILED', { id: jobId, error: mensagem });
+            }
+        });
+    }
+
+    private obterUrls(alvo: string) {
+        const host = alvo.replace(/^https?:\/\//, '').split('/')[0];
+        return [`http://${host}`, `https://${host}`];
+    }
+}

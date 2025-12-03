@@ -22,6 +22,7 @@ import { WhatwebService } from './services/tools/WhatwebService';
 import PhishingDnstwistService from './services/cti/PhishingDnstwistService';
 import PhishingCatcherService from './services/cti/PhishingCatcherService';
 import PhishingCrtshService from './services/cti/PhishingCrtshService';
+import PhishingVerificacaoService from './services/cti/PhishingVerificacaoService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -41,6 +42,7 @@ export const registeredServices: NanoService[] = [
     new PhishingDnstwistService(),
     new PhishingCatcherService(),
     new PhishingCrtshService(),
+    new PhishingVerificacaoService(),
     new TakedownService(),
     new FontesDadosVazamentoService(),
     new BuscaAtivaVazamentoService(),

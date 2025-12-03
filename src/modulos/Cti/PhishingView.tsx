@@ -110,6 +110,8 @@ interface RegistroPhishing {
     termo: string;
     fonte: string;
     criadoEm: string;
+    ultimaVerificacao?: string;
+    statusUltimaVerificacao?: 'ONLINE' | 'OFFLINE';
     dominio: { endereco: string };
 }
 
@@ -140,6 +142,8 @@ const PhishingView = () => {
     const [salvandoConfiguracao, setSalvandoConfiguracao] = useState(false);
     const [executandoCatcher, setExecutandoCatcher] = useState(false);
     const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
+    const [verificando, setVerificando] = useState(false);
+    const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
     const buscarDominios = useCallback(async () => {
@@ -272,6 +276,42 @@ const PhishingView = () => {
         }
     };
 
+    const verificarDominios = async (lista?: number[]) => {
+        if (!projetoId) return;
+        setVerificando(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/verificar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: lista })
+            });
+            const corpo = await resposta.json();
+            if (!resposta.ok) throw new Error();
+            message.success(corpo.message || 'Verificação enfileirada.');
+            buscarDados();
+        } catch {
+            message.error('Não foi possível enfileirar a verificação.');
+        } finally {
+            setVerificando(false);
+        }
+    };
+
+    const removerDominiosOffline = async () => {
+        if (!projetoId) return;
+        setRemovendoOffline(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/offline`, { method: 'DELETE' });
+            const corpo = await resposta.json();
+            if (!resposta.ok) throw new Error();
+            message.success(corpo.message || 'Domínios removidos.');
+            buscarDados();
+        } catch {
+            message.error('Não foi possível excluir domínios offline.');
+        } finally {
+            setRemovendoOffline(false);
+        }
+    };
+
     const abrirConfiguracaoCatcher = async () => {
         if (!dominioSelecionado) {
             message.warning('Selecione um domínio para configurar.');
@@ -400,6 +440,19 @@ const PhishingView = () => {
             render: (valor: string) => <Tag color="blue">{valor.toUpperCase()}</Tag>
         },
         {
+            title: 'Status',
+            dataIndex: 'statusUltimaVerificacao',
+            key: 'statusUltimaVerificacao',
+            render: (_: string, registro: RegistroPhishing) => registro.statusUltimaVerificacao ? (
+                <Space direction="vertical" size={2}>
+                    <Tag color={registro.statusUltimaVerificacao === 'ONLINE' ? 'red' : 'green'}>
+                        {registro.statusUltimaVerificacao}
+                    </Tag>
+                    {registro.ultimaVerificacao && <Text type="secondary" style={{ fontSize: 12 }}>{formatarData(registro.ultimaVerificacao)}</Text>}
+                </Space>
+            ) : '-'
+        },
+        {
             title: 'Domínio',
             dataIndex: ['dominio', 'endereco'],
             key: 'dominio',
@@ -423,6 +476,12 @@ const PhishingView = () => {
                         </BlocoTitulo>
                         <Space>
                             <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>Atualizar</Button>
+                            <Button icon={<SecurityScanOutlined />} onClick={() => verificarDominios()} loading={verificando} disabled={!dados.length}>
+                                Verificar todos
+                            </Button>
+                            <Button danger icon={<MinusCircleOutlined />} onClick={removerDominiosOffline} loading={removendoOffline} disabled={!dados.some((item) => item.statusUltimaVerificacao === 'OFFLINE')}>
+                                Excluir offline
+                            </Button>
                             <Button danger onClick={limparDados} disabled={carregando}>Limpar</Button>
                         </Space>
                     </Cabecalho>
