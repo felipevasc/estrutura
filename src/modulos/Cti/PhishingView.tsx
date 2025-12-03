@@ -5,7 +5,7 @@ import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider,
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -139,6 +139,7 @@ const PhishingView = () => {
     const [carregandoConfiguracao, setCarregandoConfiguracao] = useState(false);
     const [salvandoConfiguracao, setSalvandoConfiguracao] = useState(false);
     const [executandoCatcher, setExecutandoCatcher] = useState(false);
+    const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
     const buscarDominios = useCallback(async () => {
@@ -325,6 +326,28 @@ const PhishingView = () => {
         }
     };
 
+    const executarCrtsh = async () => {
+        if (!dominioSelecionado || !projetoId) {
+            message.warning('Escolha um domínio alvo.');
+            return;
+        }
+        if (!termos.length) await carregarTermos(dominioSelecionado);
+        setExecutandoCrtsh(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/crtsh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dominioId: dominioSelecionado })
+            });
+            if (!resposta.ok) throw new Error();
+            message.success('Consulta do crt.sh enfileirada.');
+        } catch {
+            message.error('Não foi possível iniciar o crt.sh.');
+        } finally {
+            setExecutandoCrtsh(false);
+        }
+    };
+
     const adicionarPalavra = () => {
         setConfiguracaoCatcher((atual) => ({ ...atual, palavras: [...atual.palavras, { termo: '', peso: 1 }] }));
     };
@@ -492,6 +515,27 @@ const PhishingView = () => {
                                 </Button>
                                 <Button type="primary" icon={<ThunderboltOutlined />} loading={executandoCatcher} onClick={executarPhishingCatcher}>
                                     Consultar agora
+                                </Button>
+                            </AcoesFerramenta>
+                        </div>
+                    </PainelFerramenta>
+                    <PainelFerramenta>
+                        <IconeFerramenta>
+                            <SecurityScanOutlined />
+                        </IconeFerramenta>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+                                <div>
+                                    <Text strong>crt.sh</Text>
+                                    <div><Text type="secondary">Busca certificados com nomes próximos e adiciona novos alvos.</Text></div>
+                                </div>
+                            </div>
+                            <AcoesFerramenta>
+                                <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>
+                                    Termos ({termos.length || '-'})
+                                </Button>
+                                <Button type="primary" icon={<SecurityScanOutlined />} loading={executandoCrtsh} onClick={executarCrtsh}>
+                                    Consultar certificados
                                 </Button>
                             </AcoesFerramenta>
                         </div>
