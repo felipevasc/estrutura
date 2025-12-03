@@ -25,9 +25,9 @@ export const gerarTermosPhishing = (endereco: string) => {
     const troncoComTld = [...nucleos, tldPartes[0]].filter(Boolean);
 
     const sufixosExtras = [
-        'xyz', 'online', 'store', 'shop', 'mail', 'login', 'secure', 'verify', 'cloud', 'digital', 'app', 'id'
+        'xyz', 'inscricao', 'processo', 'online', 'mail', 'login', 'seguranca', 'verify', 'cloud', 'digital', 'app', 'id'
     ];
-    const prefixosExtras = ['login', 'conta', 'portal', 'secure', 'auth', 'mail', 'pay'];
+    const prefixosExtras = ['login', 'conta', 'portal', 'seguranca', 'auth', 'mail', 'inscricao', 'processo'];
 
     const termos = new Set<string>();
     const adicionar = (valor: string) => { if (valor) termos.add(valor); };
