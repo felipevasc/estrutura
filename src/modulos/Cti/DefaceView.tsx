@@ -536,6 +536,13 @@ const DefaceView = () => {
                                         </Acionador>
                                     </RodapeFerramenta>
                                 </CartaoFerramenta>
+				<CartaoFerramenta>
+                                  <CabecalhoFerramenta>
+                                    <BlocoInfoFerramenta>
+				      <RotuloFerramenta>Zone-H</RotuloFerramenta>
+				    </BlocoInfoFerramenta>
+				  </CabecalhoFerramenta>
+				</CartaoFerramenta>
                             </ListaFerramentas>
                         </TabPane>
                     </AbasFerramentas>
