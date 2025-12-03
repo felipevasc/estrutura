@@ -168,6 +168,8 @@ model Phishing {
   dominioId Int
   dominio   Dominio  @relation(fields: [dominioId], references: [id])
   criadoEm  DateTime @default(now())
+  ultimaVerificacao       DateTime?
+  statusUltimaVerificacao PhishingVerificacaoStatus?
 
   @@map("phishing")
 }
@@ -243,6 +245,11 @@ enum TakedownStatus {
 }
 
 enum TakedownVerificacaoStatus {
+  ONLINE
+  OFFLINE
+}
+
+enum PhishingVerificacaoStatus {
   ONLINE
   OFFLINE
 }
