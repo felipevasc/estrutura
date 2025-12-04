@@ -82,7 +82,7 @@ class PhishingCrtshService extends NanoService {
 
     private async buscarCrtsh(termo: string) {
         try {
-            const url = `https://crt.sh/?q=${encodeURIComponent(`%25${termo}%25`)}&output=json`;
+            const url = `https://crt.sh/?q=%25${encodeURIComponent(termo)}%25&output=json`;
             const resposta = await fetch(url, { headers: { Accept: "application/json" } });
             if (!resposta.ok) {
                 this.error(`Falha ao consultar crt.sh para ${termo}: ${resposta.statusText}`);
