@@ -2,10 +2,11 @@ import { NanoService } from "../../NanoService";
 import prisma from "@/database";
 import { execFile } from "child_process";
 import { promisify } from "util";
-import { writeFile, mkdir } from "fs/promises";
+import { writeFile, mkdir, mkdtemp } from "fs/promises";
 import path from "path";
 import { Dominio } from "@prisma/client";
 import { carregarBasePhishing } from "@/utils/basePhishing";
+import { tmpdir } from "os";
 
 const executar = promisify(execFile);
 
@@ -93,9 +94,19 @@ class PhishingCatcherService extends NanoService {
         }
     }
 
+    private async obterPastaConfiguracao() {
+        const candidatas = [path.join(process.cwd(), "tmp_phishing_catcher"), path.join(process.cwd(), "tmp", "phishing_catcher")];
+        for (const pasta of candidatas) {
+            try {
+                await mkdir(pasta, { recursive: true });
+                return pasta;
+            } catch {}
+        }
+        return mkdtemp(path.join(tmpdir(), "phishing_catcher_"));
+    }
+
     private async gerarArquivoConfiguracao(dominioId: number, configuracao: Configuracao) {
-        const pasta = path.join(process.cwd(), "tmp_phishing_catcher");
-        await mkdir(pasta, { recursive: true });
+        const pasta = await this.obterPastaConfiguracao();
         const arquivo = path.join(pasta, `${dominioId}.json`);
         const conteudo = {
             keywords: configuracao.palavras.map(item => ({ palavra: item.termo, peso: item.peso })),
