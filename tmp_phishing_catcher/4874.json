@@ -1,0 +1,375 @@
+{
+  "keywords": [
+    {
+      "palavra": "auth-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "auth.gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "conta-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "conta.gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "gestao.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.app",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.cloud",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.digital",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.id",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.login",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.mail",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.online",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.secure",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.shop",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.store",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.verify",
+      "peso": 3
+    },
+    {
+      "palavra": "gov-gov.xyz",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.app",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.app",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.cloud",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.digital",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.id",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.login",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.mail",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.online",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.secure",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.shop",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.store",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.verify",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.br.xyz",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.cloud",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.digital",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.app",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.app",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.cloud",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.digital",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.id",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.login",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.mail",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.online",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.secure",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.shop",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.store",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.verify",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.br.xyz",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.cloud",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.digital",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.id",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.login",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.mail",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.online",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.secure",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.shop",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.store",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.verify",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.gov.xyz",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.id",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.login",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.mail",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.online",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.secure",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.shop",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.store",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.verify",
+      "peso": 3
+    },
+    {
+      "palavra": "gov.xyz",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.app",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.cloud",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.digital",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.id",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.login",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.mail",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.online",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.secure",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.shop",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.store",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.verify",
+      "peso": 3
+    },
+    {
+      "palavra": "govgov.xyz",
+      "peso": 3
+    },
+    {
+      "palavra": "login-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "login.gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "mail-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "mail.gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "pay-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "pay.gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "portal-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "portal.gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "secure-gov.gov.br",
+      "peso": 3
+    },
+    {
+      "palavra": "secure.gov.gov.br",
+      "peso": 3
+    }
+  ],
+  "tlds": [
+    "com",
+    "net",
+    "org",
+    "io",
+    "br"
+  ]
+}
