@@ -94,7 +94,7 @@ class PhishingCatcherService extends NanoService {
     }
 
     private async gerarArquivoConfiguracao(dominioId: number, configuracao: Configuracao) {
-        const pasta = path.join(process.cwd(), "tmp", "phishing_catcher");
+        const pasta = path.join(process.cwd(), "tmp_phishing_catcher");
         await mkdir(pasta, { recursive: true });
         const arquivo = path.join(pasta, `${dominioId}.json`);
         const conteudo = {
