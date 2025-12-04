@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/database";
-import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
+import { carregarBasePhishing } from "@/utils/basePhishing";
 
 const responderErro = (mensagem: string, status = 400) => NextResponse.json({ error: mensagem }, { status });
 
@@ -20,12 +20,12 @@ const normalizarTlds = (lista: any[]) => {
     return Array.from(new Set(tlds.map(item => String(item || "").toLowerCase().replace(/^\./, "")).filter(Boolean)));
 };
 
-const gerarPadrao = async (dominioId: number, endereco: string) => {
-    const termos = await prisma.termoPhishing.findMany({ where: { dominioId }, orderBy: { termo: "asc" } });
-    const base = termos.length ? termos.map(item => item.termo) : gerarTermosPhishing(endereco);
-    const palavras = Array.from(new Set(base)).map(termo => ({ termo: termo.toLowerCase(), peso: 3 }));
-    const tlds = ["com", "net", "org", "io", "br"];
-    return { palavras, tlds };
+const gerarPadrao = async (dominioId: number) => {
+    const dominio = await prisma.dominio.findFirst({ where: { id: dominioId } });
+    if (!dominio) return { palavras: [] as { termo: string; peso: number }[], tlds: [] as string[] };
+    const base = await carregarBasePhishing(dominio);
+    const palavras = Array.from(new Set(base.palavras)).map(termo => ({ termo: termo.toLowerCase(), peso: 3 }));
+    return { palavras, tlds: base.tlds };
 };
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 
         const existente = await prisma.configuracaoPhishingCatcher.findUnique({ where: { dominioId } });
         if (!existente) {
-            const padrao = await gerarPadrao(dominio.id, dominio.endereco);
+            const padrao = await gerarPadrao(dominio.id);
             await prisma.configuracaoPhishingCatcher.create({ data: { dominioId, palavras: padrao.palavras, tlds: padrao.tlds } });
             return NextResponse.json(padrao);
         }

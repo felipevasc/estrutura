@@ -1,7 +1,7 @@
 const sanitizar = (texto: string) => texto.toLowerCase().replace(/https?:\/\//g, "").replace(/[^a-z0-9.-]/g, "").replace(/\.{2,}/g, ".").replace(/^-+|-+$/g, "").trim();
 
 const gerarVariacoes = (partes: string[]) => {
-    if (partes.length === 0) return [] as string[];
+    if (!partes.length) return [] as string[];
     const combinacoes = new Set<string>();
     const bases = [partes, partes.length > 1 ? [...partes].reverse() : partes];
     bases.forEach(lista => {
@@ -12,65 +12,41 @@ const gerarVariacoes = (partes: string[]) => {
     return Array.from(combinacoes).filter(Boolean);
 };
 
-export const gerarTermosPhishing = (endereco: string) => {
+const gerarPalavras = (partes: string[]) => {
+    const palavras = new Set<string>();
+    const sufixosExtras = ['xyz', 'inscricao', 'processo', 'online', 'mail', 'login', 'seguranca', 'verify', 'cloud', 'digital', 'app', 'id'];
+    const prefixosExtras = ['login', 'conta', 'portal', 'seguranca', 'auth', 'mail', 'inscricao', 'processo'];
+    const adicionar = (valor: string) => { if (valor) palavras.add(valor.toLowerCase()); };
+    partes.forEach(adicionar);
+    gerarVariacoes(partes).forEach(adicionar);
+    gerarVariacoes(partes).forEach(variacao => {
+        sufixosExtras.forEach(sufixo => {
+            adicionar(`${variacao}${sufixo}`);
+            adicionar(`${variacao}-${sufixo}`);
+            adicionar(`${variacao}.${sufixo}`);
+        });
+        prefixosExtras.forEach(prefixo => {
+            adicionar(`${prefixo}${variacao}`);
+            adicionar(`${prefixo}-${variacao}`);
+            adicionar(`${prefixo}.${variacao}`);
+        });
+    });
+    return Array.from(palavras).slice(0, 120);
+};
+
+export const gerarDadosPhishing = (endereco: string) => {
     const normalizado = sanitizar(endereco);
     const partes = normalizado.split('.').filter(Boolean);
-    if (!partes.length) return [] as string[];
+    if (!partes.length) return { palavras: [] as string[], tlds: [] as string[] };
 
-    const tldPartes = partes.slice(-2);
-    const tldPrincipal = tldPartes.join('.') || partes[partes.length - 1];
-    const tldCurto = partes[partes.length - 1];
     const troncoBase = partes.length > 2 ? partes.slice(0, -2) : partes.slice(0, -1);
     const nucleos = troncoBase.length ? troncoBase : partes.slice(0, 1);
-    const troncoComTld = [...nucleos, tldPartes[0]].filter(Boolean);
+    const palavras = gerarPalavras(nucleos);
+    if (!palavras.length && nucleos.length) palavras.push(nucleos[0]);
 
-    const sufixosExtras = [
-        'xyz', 'inscricao', 'processo', 'online', 'mail', 'login', 'seguranca', 'verify', 'cloud', 'digital', 'app', 'id'
-    ];
-    const prefixosExtras = ['login', 'conta', 'portal', 'seguranca', 'auth', 'mail', 'inscricao', 'processo'];
+    const tldPrincipal = partes.slice(-2).join('.') || partes[partes.length - 1];
+    const tldCurto = partes[partes.length - 1];
+    const tlds = Array.from(new Set([tldPrincipal, tldCurto, "com", "net", "org", "io", "br"].filter(Boolean)));
 
-    const termos = new Set<string>();
-    const adicionar = (valor: string) => { if (valor) termos.add(valor); };
-
-    adicionar(normalizado);
-
-    const variacoesBase = gerarVariacoes(nucleos);
-    const variacoesComPrimeiroTld = gerarVariacoes(troncoComTld);
-
-    const adicionarComTlds = (base: string) => {
-        adicionar(`${base}.${tldPrincipal}`);
-        adicionar(`${base}.${tldCurto}`);
-    };
-
-    [normalizado, partes.join('.')].forEach(adicionar);
-
-    variacoesBase.forEach(variacao => {
-        adicionarComTlds(variacao);
-        sufixosExtras.forEach(sufixo => {
-            adicionar(`${variacao}.${sufixo}`);
-            adicionar(`${variacao}.${tldCurto}.${sufixo}`);
-            adicionar(`${variacao}.${tldPrincipal}.${sufixo}`);
-        });
-    });
-
-    variacoesComPrimeiroTld.forEach(variacao => {
-        adicionar(`${variacao}.${tldCurto}`);
-        sufixosExtras.forEach(sufixo => adicionar(`${variacao}.${sufixo}`));
-    });
-
-    variacoesBase.forEach(variacao => {
-        prefixosExtras.forEach(prefixo => {
-            adicionar(`${prefixo}.${variacao}.${tldPrincipal}`);
-            adicionar(`${prefixo}-${variacao}.${tldPrincipal}`);
-        });
-    });
-
-    if (nucleos.length > 1) {
-        const parcial = nucleos.slice(0, nucleos.length - 1).join('.');
-        adicionar(`${parcial}.${tldPrincipal}`);
-        adicionar(`${parcial}.${tldCurto}`);
-    }
-
-    const termosOrdenados = [normalizado, ...Array.from(termos).filter(valor => valor !== normalizado)];
-    return termosOrdenados.slice(0, 120);
+    return { palavras, tlds };
 };

@@ -1,8 +1,8 @@
 import { NanoService } from "../../NanoService";
 import prisma from "@/database";
 import { Dominio } from "@prisma/client";
-import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 import { queueCommand } from "@/service/nano/commandHelper";
+import { carregarBasePhishing } from "@/utils/basePhishing";
 
 type Payload = { id: number; args: unknown };
 
@@ -48,7 +48,7 @@ class PhishingCrtshService extends NanoService {
         if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
         const termos = await this.obterTermos(dominio);
-        if (!termos.length) throw new Error("Nenhum termo disponível");
+        if (!termos.length) throw new Error("Nenhuma palavra disponível");
 
         for (const termo of termos) {
             await queueCommand("phishing_crtsh_termo", { dominioId, termo }, dominio.projetoId);
@@ -76,14 +76,8 @@ class PhishingCrtshService extends NanoService {
     }
 
     private async obterTermos(dominio: Dominio) {
-        const existentes = await prisma.termoPhishing.findMany({ where: { dominioId: dominio.id }, orderBy: { termo: "asc" } });
-        if (existentes.length) return existentes.map(item => item.termo);
-
-        const gerados = gerarTermosPhishing(dominio.endereco);
-        if (!gerados.length) return [] as string[];
-
-        const criados = await prisma.$transaction(gerados.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } })));
-        return criados.map(item => item.termo);
+        const base = await carregarBasePhishing(dominio);
+        return base.palavras;
     }
 
     private async buscarCrtsh(termo: string) {

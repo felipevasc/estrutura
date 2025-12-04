@@ -42,6 +42,7 @@ model Dominio {
   whatwebResultados WhatwebResultado[]
   phishing Phishing[]
   termosPhishing TermoPhishing[]
+  tldsPhishing TldPhishing[]
   configuracaoPhishingCatcher ConfiguracaoPhishingCatcher?
 
   @@map("dominios")
@@ -183,6 +184,17 @@ model TermoPhishing {
 
   @@unique([termo, dominioId])
   @@map("termos_phishing")
+}
+
+model TldPhishing {
+  id        Int      @id @default(autoincrement())
+  tld       String
+  dominioId Int
+  dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  criadoEm  DateTime @default(now())
+
+  @@unique([tld, dominioId])
+  @@map("tlds_phishing")
 }
 
 model ConfiguracaoPhishingCatcher {

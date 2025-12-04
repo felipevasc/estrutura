@@ -1,10 +1,9 @@
 import { NanoService } from "../../NanoService";
 import prisma from "@/database";
-import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
-import { Dominio } from "@prisma/client";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { queueCommand } from "@/service/nano/commandHelper";
+import { carregarBasePhishing } from "@/utils/basePhishing";
 
 const executar = promisify(execFile);
 
@@ -51,8 +50,9 @@ class PhishingDnstwistService extends NanoService {
         const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
         if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
-        const termos = await this.obterTermos(dominio);
-        if (!termos.length) throw new Error("Nenhum termo disponível");
+        const base = await carregarBasePhishing(dominio);
+        const termos = this.combinar(base.palavras, base.tlds);
+        if (!termos.length) throw new Error("Nenhuma combinação disponível");
 
         for (const termo of termos) {
             await queueCommand("phishing_dnstwist_termo", { dominioId, termo }, dominio.projetoId);
@@ -80,15 +80,17 @@ class PhishingDnstwistService extends NanoService {
         this.bus.emit("JOB_COMPLETED", { id, result: criados });
     }
 
-    private async obterTermos(dominio: Dominio) {
-        const existentes = await prisma.termoPhishing.findMany({ where: { dominioId: dominio.id }, orderBy: { termo: "asc" } });
-        if (existentes.length) return existentes.map(item => item.termo);
-
-        const gerados = gerarTermosPhishing(dominio.endereco);
-        if (!gerados.length) return [] as string[];
-
-        const criados = await prisma.$transaction(gerados.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } })));
-        return criados.map(item => item.termo);
+    private combinar(palavras: string[], tlds: string[]) {
+        const alvos = new Set<string>();
+        for (const palavra of palavras) {
+            const tronco = palavra.toLowerCase().replace(/^\./, "").replace(/\.+$/, "");
+            if (!tronco) continue;
+            for (const tld of tlds) {
+                const final = tld.toLowerCase().replace(/^\./, "");
+                if (final) alvos.add(`${tronco}.${final}`);
+            }
+        }
+        return Array.from(alvos);
     }
 
     private async executarDnstwist(termo: string) {

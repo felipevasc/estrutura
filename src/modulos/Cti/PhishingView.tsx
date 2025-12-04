@@ -120,6 +120,7 @@ type PalavraCatcher = { termo: string; peso: number };
 type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[] };
 
 const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
+const baseInicial = { palavras: [] as string[], tlds: [] as string[] };
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
 
@@ -129,8 +130,9 @@ const PhishingView = () => {
     const [dominios, setDominios] = useState<Dominio[]>([]);
     const [dominioSelecionado, setDominioSelecionado] = useState<number | null>(null);
     const [dados, setDados] = useState<RegistroPhishing[]>([]);
-    const [termos, setTermos] = useState<string[]>([]);
-    const [entradaTermos, setEntradaTermos] = useState<string[]>([]);
+    const [basePhishing, setBasePhishing] = useState<{ palavras: string[]; tlds: string[] }>(baseInicial);
+    const [entradaPalavras, setEntradaPalavras] = useState<string[]>([]);
+    const [entradaTlds, setEntradaTlds] = useState<string[]>([]);
     const [modalTermosVisivel, setModalTermosVisivel] = useState(false);
     const [executando, setExecutando] = useState(false);
     const [carregando, setCarregando] = useState(false);
@@ -178,17 +180,18 @@ const PhishingView = () => {
         buscarDados();
     }, [buscarDominios, buscarDados]);
 
-    const carregarTermos = useCallback(async (dominioId: number) => {
+    const carregarBase = useCallback(async (dominioId: number) => {
         if (!projetoId) return;
         setCarregandoTermos(true);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/termos?dominioId=${dominioId}`);
             if (!resposta.ok) throw new Error();
-            const lista = await resposta.json();
-            setTermos(lista);
-            setEntradaTermos(lista);
+            const base = await resposta.json();
+            setBasePhishing(base);
+            setEntradaPalavras(base.palavras);
+            setEntradaTlds(base.tlds);
         } catch {
-            message.error('Não foi possível carregar os termos.');
+            message.error('Não foi possível carregar as palavras e TLDs.');
         } finally {
             setCarregandoTermos(false);
         }
@@ -215,7 +218,7 @@ const PhishingView = () => {
             return;
         }
         setModalTermosVisivel(true);
-        await carregarTermos(dominioSelecionado);
+        await carregarBase(dominioSelecionado);
     };
 
     const salvarTermos = async () => {
@@ -225,15 +228,17 @@ const PhishingView = () => {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/termos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: dominioSelecionado, termos: entradaTermos }),
+                body: JSON.stringify({ dominioId: dominioSelecionado, palavras: entradaPalavras, tlds: entradaTlds }),
             });
             if (!resposta.ok) throw new Error();
-            const { termos: termosSalvos } = await resposta.json();
-            setTermos(termosSalvos);
+            const { palavras, tlds } = await resposta.json();
+            setBasePhishing({ palavras, tlds });
+            setEntradaPalavras(palavras);
+            setEntradaTlds(tlds);
             setModalTermosVisivel(false);
-            message.success('Termos atualizados.');
+            message.success('Base atualizada.');
         } catch {
-            message.error('Erro ao salvar termos.');
+            message.error('Erro ao salvar base de termos.');
         } finally {
             setSalvandoTermos(false);
         }
@@ -244,7 +249,7 @@ const PhishingView = () => {
             message.warning('Escolha um domínio alvo.');
             return;
         }
-        if (!termos.length) await carregarTermos(dominioSelecionado);
+        if (!basePhishing.palavras.length || !basePhishing.tlds.length) await carregarBase(dominioSelecionado);
         setExecutando(true);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/executar`, {
@@ -371,7 +376,7 @@ const PhishingView = () => {
             message.warning('Escolha um domínio alvo.');
             return;
         }
-        if (!termos.length) await carregarTermos(dominioSelecionado);
+        if (!basePhishing.palavras.length) await carregarBase(dominioSelecionado);
         setExecutandoCrtsh(true);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/crtsh`, {
@@ -495,11 +500,12 @@ const PhishingView = () => {
                             onChange={(valor) => {
                                 setDominioSelecionado(valor ?? null);
                                 if (valor) {
-                                    carregarTermos(valor);
+                                    carregarBase(valor);
                                     carregarConfiguracaoCatcher(valor);
                                 } else {
-                                    setTermos([]);
-                                    setEntradaTermos([]);
+                                    setBasePhishing(baseInicial);
+                                    setEntradaPalavras([]);
+                                    setEntradaTlds([]);
                                     setConfiguracaoCatcher(configInicial);
                                 }
                             }}
@@ -533,7 +539,7 @@ const PhishingView = () => {
                             <Title level={5} style={{ margin: 0 }}>Detecção ativa</Title>
                         </BlocoTitulo>
                         <Space>
-                            <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>Configurar termos</Button>
+                            <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>Configurar base</Button>
                         </Space>
                     </Cabecalho>
                     <PainelFerramenta>
@@ -549,7 +555,7 @@ const PhishingView = () => {
                             </div>
                             <AcoesFerramenta>
                                 <Button onClick={abrirModalTermos} icon={<SettingOutlined />}>
-                                    Termos ({termos.length || '-'})
+                                    Palavras ({basePhishing.palavras.length || '-'}) / TLDs ({basePhishing.tlds.length || '-'})
                                 </Button>
                                 <Button type="primary" icon={<RadarChartOutlined />} loading={executando} onClick={executarDnstwist}>
                                     Varredura completa
@@ -591,7 +597,7 @@ const PhishingView = () => {
                             </div>
                             <AcoesFerramenta>
                                 <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>
-                                    Termos ({termos.length || '-'})
+                                    Palavras ({basePhishing.palavras.length || '-'})
                                 </Button>
                                 <Button type="primary" icon={<SecurityScanOutlined />} loading={executandoCrtsh} onClick={executarCrtsh}>
                                     Consultar certificados
@@ -601,7 +607,7 @@ const PhishingView = () => {
                     </PainelFerramenta>
                     <Alert
                         message="Dicas"
-                        description="Personalize os termos antes de rodar para cobrir variações de marca, departamentos e iscas comuns."
+                        description="Personalize palavras e TLDs antes de rodar para cobrir variações de marca, departamentos e iscas comuns."
                         type="info"
                         showIcon
                     />
@@ -609,33 +615,44 @@ const PhishingView = () => {
             </Grade>
 
             <Modal
-                title="Termos de busca"
+                title="Base de phishing"
                 open={modalTermosVisivel}
                 onOk={salvarTermos}
-                okText="Salvar termos"
+                okText="Salvar base"
                 onCancel={() => setModalTermosVisivel(false)}
                 confirmLoading={salvandoTermos}
             >
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text type="secondary">Edite ou adicione termos utilizados pelo dnstwist.</Text>
+                    <Text type="secondary">Edite ou adicione palavras e TLDs utilizados nas buscas.</Text>
                     {carregandoTermos ? (
                         <Skeleton active paragraph={{ rows: 4 }} />
                     ) : (
-                        <Select
-                            mode="tags"
-                            style={{ width: '100%' }}
-                            value={entradaTermos}
-                            onChange={valor => setEntradaTermos(valor)}
-                            tokenSeparators={[',', ' ']}
-                            placeholder="Insira termos e pressione enter"
-                        />
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                            <Select
+                                mode="tags"
+                                style={{ width: '100%' }}
+                                value={entradaPalavras}
+                                onChange={valor => setEntradaPalavras(valor)}
+                                tokenSeparators={[',', ' ']}
+                                placeholder="Insira palavras e pressione enter"
+                            />
+                            <Select
+                                mode="tags"
+                                style={{ width: '100%' }}
+                                value={entradaTlds}
+                                onChange={valor => setEntradaTlds(valor)}
+                                tokenSeparators={[',', ' ']}
+                                placeholder="Insira TLDs e pressione enter"
+                            />
+                        </Space>
                     )}
                     <Divider style={{ margin: '8px 0' }} />
                     <Text strong>Pré-visualização</Text>
                     {carregandoTermos ? <Skeleton active paragraph={{ rows: 3 }} /> : (
                         <ListaTermos>
-                            {entradaTermos.map((termo) => <Tag key={termo} color="purple">{termo}</Tag>)}
-                            {!entradaTermos.length && <Text type="secondary">Nenhum termo definido.</Text>}
+                            {entradaPalavras.map((termo) => <Tag key={termo} color="purple">{termo}</Tag>)}
+                            {entradaTlds.map((tld) => <Tag key={tld} color="blue">.{tld}</Tag>)}
+                            {!entradaPalavras.length && !entradaTlds.length && <Text type="secondary">Nenhuma base definida.</Text>}
                         </ListaTermos>
                     )}
                 </Space>
@@ -653,7 +670,7 @@ const PhishingView = () => {
                     {tituloSecao('Palavras-chave monitoradas', () => abrirAjuda('Palavras-chave monitoradas', (
                         <Space direction="vertical">
                             <Text>Itens usados para pontuar nomes parecidos; cada palavra aumenta o score conforme o peso definido.</Text>
-                            <Text>Adicionar mais termos amplia a cobertura, enquanto remover reduz alertas para aquela marca.</Text>
+                            <Text>Adicionar mais palavras amplia a cobertura, enquanto remover reduz alertas para aquela marca.</Text>
                             <Text>Pesos maiores deixam o alerta mais sensível para aquela palavra específica.</Text>
                         </Space>
                     )))}

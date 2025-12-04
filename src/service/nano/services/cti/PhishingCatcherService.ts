@@ -4,8 +4,8 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 import { Dominio } from "@prisma/client";
+import { carregarBasePhishing } from "@/utils/basePhishing";
 
 const executar = promisify(execFile);
 
@@ -72,11 +72,9 @@ class PhishingCatcherService extends NanoService {
     }
 
     private async configuracaoPadrao(dominio: Dominio) {
-        const termos = await prisma.termoPhishing.findMany({ where: { dominioId: dominio.id }, orderBy: { termo: "asc" } });
-        const base = termos.length ? termos.map(item => item.termo) : gerarTermosPhishing(dominio.endereco);
-        const palavras = Array.from(new Set(base)).map(termo => ({ termo: termo.toLowerCase(), peso: 3 }));
-        const tlds = ["com", "net", "org", "io", "br"];
-        return { palavras, tlds } as Configuracao;
+        const base = await carregarBasePhishing(dominio);
+        const palavras = Array.from(new Set(base.palavras)).map(termo => ({ termo: termo.toLowerCase(), peso: 3 }));
+        return { palavras, tlds: base.tlds } as Configuracao;
     }
 
     private async executarFerramenta(dominio: Dominio, configuracao: Configuracao) {

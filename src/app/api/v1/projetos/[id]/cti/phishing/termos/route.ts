@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/database";
-import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
+import { carregarBasePhishing } from "@/utils/basePhishing";
 
 const responderErro = (mensagem: string, status = 400) => NextResponse.json({ error: mensagem }, { status });
+
+const normalizarPalavras = (lista: any[]) => Array.from(new Set((lista || []).map((termo: any) => String(termo || "").toLowerCase().trim()).filter(Boolean)));
+const normalizarTlds = (lista: any[]) => Array.from(new Set((lista || []).map((tld: any) => String(tld || "").toLowerCase().replace(/^\./, "")).filter(Boolean))));
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     try {
@@ -13,15 +16,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         const dominio = await prisma.dominio.findFirst({ where: { id: dominioId, projetoId } });
         if (!dominio) return responderErro("Domínio não encontrado", 404);
 
-        let termos = await prisma.termoPhishing.findMany({ where: { dominioId }, orderBy: { termo: "asc" } });
-        if (!termos.length) {
-            const gerados = gerarTermosPhishing(dominio.endereco);
-            if (!gerados.length) return responderErro("Não foi possível gerar termos", 422);
-            const inseridos = await prisma.$transaction(gerados.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId } })));
-            termos = inseridos;
-        }
+        const base = await carregarBasePhishing(dominio);
+        if (!base.palavras.length || !base.tlds.length) return responderErro("Nenhuma base disponível", 422);
 
-        return NextResponse.json(termos.map(item => item.termo));
+        return NextResponse.json(base);
     } catch (erro) {
         console.error("Erro ao carregar termos de phishing:", erro);
         return responderErro("Erro interno ao carregar termos", 500);
@@ -31,22 +29,25 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
     try {
         const projetoId = parseInt((await params).id, 10);
-        const corpo = await request.json() as { dominioId?: number; termos?: string[] };
+        const corpo = await request.json() as { dominioId?: number; palavras?: string[]; tlds?: string[] };
         if (isNaN(projetoId) || !corpo?.dominioId) return responderErro("Parâmetros inválidos");
 
         const dominio = await prisma.dominio.findFirst({ where: { id: corpo.dominioId, projetoId } });
         if (!dominio) return responderErro("Domínio não encontrado", 404);
 
-        const lista = (corpo.termos || []).map(termo => termo.toLowerCase().trim()).filter(Boolean);
-        const termosUnicos = Array.from(new Set(lista));
-        if (!termosUnicos.length) return responderErro("Lista de termos vazia", 422);
+        const palavras = normalizarPalavras(corpo.palavras);
+        if (!palavras.length) return responderErro("Lista de palavras vazia", 422);
+        const tlds = normalizarTlds(corpo.tlds);
+        if (!tlds.length) return responderErro("Lista de TLDs vazia", 422);
 
         await prisma.$transaction([
             prisma.termoPhishing.deleteMany({ where: { dominioId: dominio.id } }),
-            ...termosUnicos.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } }))
+            prisma.tldPhishing.deleteMany({ where: { dominioId: dominio.id } }),
+            ...palavras.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } })),
+            ...tlds.map(tld => prisma.tldPhishing.create({ data: { tld, dominioId: dominio.id } }))
         ]);
 
-        return NextResponse.json({ termos: termosUnicos });
+        return NextResponse.json({ palavras, tlds });
     } catch (erro) {
         console.error("Erro ao salvar termos de phishing:", erro);
         return responderErro("Erro interno ao salvar termos", 500);
