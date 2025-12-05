@@ -2,8 +2,7 @@ FROM kalilinux/kali-rolling
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN printf 'nameserver 8.8.8.8\nnameserver 1.1.1.1\n' > /etc/resolv.conf && \
-    printf 'deb http://http.kali.org/kali kali-rolling main non-free contrib\n' > /etc/apt/sources.list && \
+RUN printf 'deb http://http.kali.org/kali kali-rolling main non-free contrib\n' > /etc/apt/sources.list && \
     apt-get update && \
     apt-get install -y kali-linux-headless nodejs npm git gobuster dnstwist python3-pip wget unzip && \
     wget -q https://github.com/bee-san/RustScan/releases/download/2.4.1/rustscan.deb.zip -O /tmp/rustscan.deb.zip && \
