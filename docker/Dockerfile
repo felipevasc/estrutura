@@ -2,9 +2,9 @@ FROM kalilinux/kali-rolling
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN printf 'deb http://http.kali.org/kali kali-rolling main non-free contrib\n' > /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get install -y kali-linux-headless nodejs npm git gobuster dnstwist python3-pip wget unzip && \
+RUN sed -i 's@http://http.kali.org/kali@https://http.kali.org/kali@g' /etc/apt/sources.list && \
+    apt-get update -o Acquire::Retries=5 && \
+    apt-get install -y --no-install-recommends kali-linux-headless nodejs npm git gobuster dnstwist python3-pip wget unzip && \
     wget -q https://github.com/bee-san/RustScan/releases/download/2.4.1/rustscan.deb.zip -O /tmp/rustscan.deb.zip && \
     unzip /tmp/rustscan.deb.zip -d /tmp && \
     apt-get install -y /tmp/rustscan_2.4.1_amd64.deb && \
