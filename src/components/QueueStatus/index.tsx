@@ -34,23 +34,27 @@ const QueueStatus = () => {
     const api = useApi();
     const { projeto } = useContext(StoreContext);
     const intervalo = useRef<NodeJS.Timeout>(null);
+    const comandosRef = useRef(comandosSecao);
 
     const idProjeto = projeto?.get()?.id;
+
+    useEffect(() => { comandosRef.current = comandosSecao; }, [comandosSecao]);
 
     const limparIntervalo = () => {
         if (intervalo.current) clearTimeout(intervalo.current);
     };
 
     const obterLimiteAtual = (secao: SecaoFila, anexar: boolean) => {
+        const atual = comandosRef.current[secao].length;
         if (anexar) return limitesSecao[secao];
-        return Math.max(limitesSecao[secao], comandosSecao[secao].length || limitesSecao[secao]);
+        return Math.max(limitesSecao[secao], atual || limitesSecao[secao]);
     };
 
     const carregarSecao = useCallback(async (secao: SecaoFila, anexar = false) => {
         if (!idProjeto) return;
         definirCarregandoSecao(valor => ({ ...valor, [secao]: true }));
         try {
-            const inicio = anexar ? comandosSecao[secao].length : 0;
+            const inicio = anexar ? comandosRef.current[secao].length : 0;
             const limite = obterLimiteAtual(secao, anexar);
             const resposta = await api.queue.getCommands({
                 projectId: idProjeto,
@@ -76,7 +80,7 @@ const QueueStatus = () => {
         } finally {
             definirCarregandoSecao(valor => ({ ...valor, [secao]: false }));
         }
-    }, [api.queue, comandosSecao, idProjeto]);
+    }, [api.queue, idProjeto]);
 
     const carregarTodasSecoes = useCallback(() => {
         carregarSecao('executando');
