@@ -4,6 +4,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
+import { alvoAcessivel } from "@/utils/conectividade";
 
 const executar = promisify(execFile);
 
@@ -70,6 +71,8 @@ class PhishingDnstwistService extends NanoService {
 
         for (const alvoBruto of alvos) {
             const alvo = alvoBruto.toLowerCase();
+            const disponivel = await alvoAcessivel(alvo);
+            if (!disponivel) continue;
             const existente = await prisma.phishing.findFirst({ where: { alvo, dominioId } });
             if (!existente) {
                 const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "dnstwist", dominioId } });

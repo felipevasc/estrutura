@@ -145,6 +145,7 @@ const PhishingView = () => {
     const [executandoCatcher, setExecutandoCatcher] = useState(false);
     const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
     const [verificando, setVerificando] = useState(false);
+    const [verificandoIndividuais, setVerificandoIndividuais] = useState<number[]>([]);
     const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
@@ -281,9 +282,8 @@ const PhishingView = () => {
         }
     };
 
-    const verificarDominios = async (lista?: number[]) => {
+    const enfileirarVerificacao = async (lista?: number[]) => {
         if (!projetoId) return;
-        setVerificando(true);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/verificar`, {
                 method: 'POST',
@@ -296,8 +296,24 @@ const PhishingView = () => {
             buscarDados();
         } catch {
             message.error('Não foi possível enfileirar a verificação.');
+        }
+    };
+
+    const verificarDominios = async (lista?: number[]) => {
+        setVerificando(true);
+        try {
+            await enfileirarVerificacao(lista);
         } finally {
             setVerificando(false);
+        }
+    };
+
+    const verificarRegistro = async (id: number) => {
+        setVerificandoIndividuais((atual) => Array.from(new Set([...atual, id])));
+        try {
+            await enfileirarVerificacao([id]);
+        } finally {
+            setVerificandoIndividuais((atual) => atual.filter(item => item !== id));
         }
     };
 
@@ -467,6 +483,20 @@ const PhishingView = () => {
             dataIndex: 'criadoEm',
             key: 'criadoEm',
             render: (valor: string) => formatarData(valor)
+        },
+        {
+            title: 'Ações',
+            key: 'acoes',
+            render: (_: string, registro: RegistroPhishing) => (
+                <Button
+                    size="small"
+                    icon={<SecurityScanOutlined />}
+                    loading={verificando || verificandoIndividuais.includes(registro.id)}
+                    onClick={() => verificarRegistro(registro.id)}
+                >
+                    Verificar
+                </Button>
+            )
         }
     ];
 
