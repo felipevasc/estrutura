@@ -1,4 +1,17 @@
 import { useCallback, useMemo } from 'react';
+import { Command, CommandStatus } from '@prisma/client';
+
+type ConsultaFila = {
+    projectId: number;
+    status?: CommandStatus[];
+    limite?: number;
+    inicio?: number;
+};
+
+type RespostaFila = {
+    total: number;
+    registros: Command[];
+};
 
 const useQueue = () => {
     const addCommand = useCallback(async (command: string, args: any[] | Record<string, unknown>, projectId: number) => {
@@ -17,8 +30,14 @@ const useQueue = () => {
         return data;
     }, []);
 
-    const getCommands = useCallback(async (projectId: number) => {
-        const res = await fetch(`/api/v1/queue?projectId=${projectId}`);
+    const getCommands = useCallback(async ({ projectId, status, limite, inicio }: ConsultaFila): Promise<RespostaFila> => {
+        const parametros = new URLSearchParams();
+        parametros.append('projectId', String(projectId));
+        if (status?.length) parametros.append('status', status.join(','));
+        if (limite) parametros.append('limite', String(limite));
+        if (inicio) parametros.append('inicio', String(inicio));
+
+        const res = await fetch(`/api/v1/queue?${parametros.toString()}`);
         const data = await res.json();
         return data;
     }, []);

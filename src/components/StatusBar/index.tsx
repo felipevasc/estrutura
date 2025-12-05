@@ -6,15 +6,33 @@ import { faCheckCircle, faTerminal, faCircleNotch, faExclamationTriangle, faCog 
 import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import StoreContext from "@/store";
 import useApi from "@/api";
-import { Command } from "@prisma/client";
-import { Drawer, Tabs, Tag, Popconfirm, Button } from "antd";
+import { Command, CommandStatus } from "@prisma/client";
+import { Drawer, Tabs, Tag, Popconfirm, Button, Spin } from "antd";
 import { DeleteOutlined, LoadingOutlined, CheckCircleOutlined, CloseCircleOutlined, UpOutlined, DownOutlined } from '@ant-design/icons';
 import { VscTerminal } from "react-icons/vsc";
 import AnsiToHtml from 'ansi-to-html';
 
+type SecaoFila = 'executando' | 'pendentes' | 'historico';
+
+type MapaSecao<T> = Record<SecaoFila, T>;
+
+const statusSecao: MapaSecao<CommandStatus[]> = {
+    executando: ['RUNNING'],
+    pendentes: ['PENDING'],
+    historico: ['COMPLETED', 'FAILED'],
+};
+
+const limitesSecao: MapaSecao<number> = {
+    executando: 3,
+    pendentes: 3,
+    historico: 4,
+};
+
 const StatusBar = () => {
     const conversorAnsi = new AnsiToHtml();
-    const [comandos, definirComandos] = useState<Command[]>([]);
+    const [comandosSecao, definirComandosSecao] = useState<MapaSecao<Command[]>>({ executando: [], pendentes: [], historico: [] });
+    const [totaisSecao, definirTotaisSecao] = useState<MapaSecao<number>>({ executando: 0, pendentes: 0, historico: 0 });
+    const [carregandoSecao, definirCarregandoSecao] = useState<MapaSecao<boolean>>({ executando: false, pendentes: false, historico: false });
     const [gavetaAberta, definirGavetaAberta] = useState(false);
     const [expandidos, definirExpandidos] = useState<Record<number, boolean>>({});
     const { projeto, isConfiguracoesOpen } = useContext(StoreContext);
@@ -23,31 +41,69 @@ const StatusBar = () => {
 
     const idProjeto = projeto?.get()?.id;
 
-    const carregarComandos = useCallback(async () => {
+    const limparTemporizador = () => {
+        if (temporizador.current) clearTimeout(temporizador.current);
+    };
+
+    const obterLimiteAtual = (secao: SecaoFila, anexar: boolean) => {
+        if (anexar) return limitesSecao[secao];
+        return Math.max(limitesSecao[secao], comandosSecao[secao].length || limitesSecao[secao]);
+    };
+
+    const carregarSecao = useCallback(async (secao: SecaoFila, anexar = false) => {
         if (!idProjeto) return;
+        definirCarregandoSecao(valor => ({ ...valor, [secao]: true }));
         try {
-            const dados = await api.queue.getCommands(idProjeto);
-            definirComandos(dados);
-            if (temporizador.current) clearTimeout(temporizador.current);
-            temporizador.current = setTimeout(carregarComandos, 5000);
+            const inicio = anexar ? comandosSecao[secao].length : 0;
+            const limite = obterLimiteAtual(secao, anexar);
+            const resposta = await api.queue.getCommands({
+                projectId: idProjeto,
+                status: statusSecao[secao],
+                limite,
+                inicio,
+            });
+            const registros = resposta.registros as Command[];
+            definirComandosSecao(valor => ({
+                ...valor,
+                [secao]: anexar ? [...valor[secao], ...registros] : registros,
+            }));
+            definirTotaisSecao(valor => ({ ...valor, [secao]: resposta.total }));
+            definirExpandidos(valor => {
+                const atualizados = { ...valor };
+                registros.forEach(registro => {
+                    if (atualizados[registro.id] === undefined) atualizados[registro.id] = true;
+                });
+                return atualizados;
+            });
         } catch (error) {
             console.error("Falha ao buscar comandos", error);
+        } finally {
+            definirCarregandoSecao(valor => ({ ...valor, [secao]: false }));
         }
-    }, [idProjeto, api.queue]);
+    }, [api.queue, comandosSecao, idProjeto]);
+
+    const carregarComandos = useCallback(() => {
+        carregarSecao('executando');
+        carregarSecao('pendentes');
+        carregarSecao('historico');
+        limparTemporizador();
+        temporizador.current = setTimeout(carregarComandos, 5000);
+    }, [carregarSecao]);
 
     useEffect(() => {
+        definirComandosSecao({ executando: [], pendentes: [], historico: [] });
+        definirTotaisSecao({ executando: 0, pendentes: 0, historico: 0 });
+        definirExpandidos({});
+        limparTemporizador();
         carregarComandos();
-        return () => {
-            if (temporizador.current) clearTimeout(temporizador.current);
-        }
-    }, [carregarComandos]);
+        return () => limparTemporizador();
+    }, [carregarComandos, idProjeto]);
 
-    const comandosExecutando = comandos.filter(c => c.status === 'RUNNING');
-    const comandosFalhos = comandos.filter(c => c.status === 'FAILED');
-    const comandosPendentes = comandos.filter(c => c.status === 'PENDING');
-    const comandosHistorico = comandos.filter(c => c.status === 'COMPLETED' || c.status === 'FAILED');
+    const comandosExecutando = comandosSecao.executando;
+    const comandosHistorico = comandosSecao.historico;
+    const comandosFalhos = comandosHistorico.filter(c => c.status === 'FAILED');
 
-    const executando = comandosExecutando.length > 0;
+    const executando = totaisSecao.executando > 0;
     const falhas = comandosFalhos.length > 0;
 
     let textoStatus = "Pronto";
@@ -55,7 +111,8 @@ const StatusBar = () => {
     let corStatus = "inherit";
 
     if (executando) {
-        textoStatus = `Executando ${comandosExecutando[0].command}... (${comandosExecutando.length} em fila)`;
+        const descricao = comandosExecutando[0]?.command || 'comando';
+        textoStatus = `Executando ${descricao}... (${totaisSecao.executando} em fila)`;
         iconeStatus = faCircleNotch;
     } else if (falhas) {
         textoStatus = "Alguns comandos falharam";
@@ -173,21 +230,40 @@ const StatusBar = () => {
         );
     };
 
+    const montarConteudoSecao = (secao: SecaoFila, permitirCancelar: boolean) => {
+        const dados = comandosSecao[secao];
+        const carregando = carregandoSecao[secao];
+        const possuiMais = dados.length < totaisSecao[secao];
+
+        return (
+            <div className="historico-conteudo">
+                {carregando && !dados.length ? <Spin /> : renderizarTerminais(dados, permitirCancelar)}
+                {possuiMais && (
+                    <div className="historico-acoes">
+                        <Button type="primary" ghost onClick={() => carregarSecao(secao, true)} loading={carregando}>
+                            Carregar mais
+                        </Button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     const itensGaveta = [
         {
             key: '1',
-            label: `Executando (${comandosExecutando.length})`,
-            children: renderizarTerminais(comandosExecutando, false),
+            label: `Executando (${totaisSecao.executando})`,
+            children: montarConteudoSecao('executando', false),
         },
         {
             key: '2',
-            label: `Aguardando (${comandosPendentes.length})`,
-            children: renderizarTerminais(comandosPendentes, true),
+            label: `Aguardando (${totaisSecao.pendentes})`,
+            children: montarConteudoSecao('pendentes', true),
         },
         {
             key: '3',
             label: 'Histórico',
-            children: renderizarTerminais(comandosHistorico, false),
+            children: montarConteudoSecao('historico', false),
         }
     ];
 
