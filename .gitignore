@@ -2,6 +2,8 @@
 
 # database
 /db/store.db
+/db/*.sql
+/db/store-journal
 /prisma/store.db
 *.db
 
