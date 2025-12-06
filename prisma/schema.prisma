@@ -42,6 +42,7 @@ model Dominio {
   whatwebResultados WhatwebResultado[]
   phishing Phishing[]
   termosPhishing TermoPhishing[]
+  auxiliaresPhishing AuxiliarPhishing[]
   tldsPhishing TldPhishing[]
   configuracaoPhishingCatcher ConfiguracaoPhishingCatcher?
 
