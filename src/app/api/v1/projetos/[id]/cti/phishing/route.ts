@@ -47,6 +47,16 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
         const projetoId = parseInt((await params).id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
+        const corpo = await request.json().catch(() => null) as { id?: number } | null;
+        const phishingId = Number(corpo?.id);
+
+        if (phishingId) {
+            const registro = await prisma.phishing.findFirst({ where: { id: phishingId, dominio: { projetoId } } });
+            if (!registro) return NextResponse.json({ error: "Registro não encontrado" }, { status: 404 });
+            await prisma.phishing.delete({ where: { id: registro.id } });
+            return NextResponse.json({ message: "Registro removido." });
+        }
+
         await prisma.phishing.deleteMany({ where: { dominio: { projetoId } } });
         return NextResponse.json({ message: "Dados de phishing removidos." });
     } catch (erro) {

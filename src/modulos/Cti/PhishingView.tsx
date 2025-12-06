@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col } from 'antd';
+import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col, Popconfirm } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio, PhishingStatus } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -156,6 +156,8 @@ const PhishingView = () => {
     const [verificando, setVerificando] = useState(false);
     const [verificandoIndividuais, setVerificandoIndividuais] = useState<number[]>([]);
     const [alterandoStatus, setAlterandoStatus] = useState<number[]>([]);
+    const [modalClassificacao, setModalClassificacao] = useState<{ id: number; status: PhishingStatus } | null>(null);
+    const [removendoRegistros, setRemovendoRegistros] = useState<number[]>([]);
     const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
@@ -235,12 +237,18 @@ const PhishingView = () => {
             if (!resposta.ok) throw new Error();
             const atualizado = await resposta.json();
             setDados((lista) => lista.map((item) => item.id === id ? { ...item, status: atualizado.status } : item));
+            setModalClassificacao((atual) => atual?.id === id ? null : atual);
             message.success('Status atualizado.');
         } catch {
             message.error('Não foi possível atualizar o status.');
         } finally {
             setAlterandoStatus((lista) => lista.filter((item) => item !== id));
         }
+    };
+
+    const abrirClassificacao = (registro: RegistroPhishing) => {
+        const status = registro.status || PhishingStatus.NECESSARIO_ANALISE;
+        setModalClassificacao({ id: registro.id, status });
     };
 
     const abrirModalTermos = async () => {
@@ -363,6 +371,26 @@ const PhishingView = () => {
         }
     };
 
+    const removerRegistro = async (id: number) => {
+        if (!projetoId) return;
+        setRemovendoRegistros((lista) => [...lista, id]);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            const corpo = await resposta.json();
+            if (!resposta.ok) throw new Error();
+            setDados((lista) => lista.filter((item) => item.id !== id));
+            message.success(corpo.message || 'Registro removido.');
+        } catch {
+            message.error('Não foi possível remover o host.');
+        } finally {
+            setRemovendoRegistros((lista) => lista.filter((item) => item !== id));
+        }
+    };
+
     const abrirConfiguracaoCatcher = async () => {
         if (!dominioSelecionado) {
             message.warning('Selecione um domínio para configurar.');
@@ -482,13 +510,13 @@ const PhishingView = () => {
             title: 'Termo',
             dataIndex: 'termo',
             key: 'termo',
-            render: (valor: string) => <Tag color="purple">{valor}</Tag>
+            render: (valor: string) => <Text>{valor}</Text>
         },
         {
             title: 'Fonte',
             dataIndex: 'fonte',
             key: 'fonte',
-            render: (valor: string) => <Tag color="blue">{valor.toUpperCase()}</Tag>
+            render: (valor: string) => <Text strong>{valor.toUpperCase()}</Text>
         },
         {
             title: 'Classificação',
@@ -496,18 +524,8 @@ const PhishingView = () => {
             key: 'status',
             render: (_: string, registro: RegistroPhishing) => {
                 const info = obterInfoStatus(registro.status);
-                const valor = registro.status || PhishingStatus.NECESSARIO_ANALISE;
                 return (
-                    <Space direction="vertical" size={2}>
-                        <Tag color={info.cor}>{info.rotulo}</Tag>
-                        <Select
-                            size="small"
-                            value={valor}
-                            onChange={(novo) => atualizarStatus(registro.id, novo as PhishingStatus)}
-                            options={opcoesStatus.map((item) => ({ value: item.valor, label: item.rotulo }))}
-                            loading={alterandoStatus.includes(registro.id)}
-                        />
-                    </Space>
+                    <Tag color={info.cor}>{info.rotulo}</Tag>
                 );
             }
         },
@@ -539,14 +557,36 @@ const PhishingView = () => {
             title: 'Ações',
             key: 'acoes',
             render: (_: string, registro: RegistroPhishing) => (
-                <Button
-                    size="small"
-                    icon={<SecurityScanOutlined />}
-                    loading={verificando || verificandoIndividuais.includes(registro.id)}
-                    onClick={() => verificarRegistro(registro.id)}
-                >
-                    Verificar
-                </Button>
+                <Space size={6}>
+                    <Tooltip title="Verificar">
+                        <Button
+                            size="small"
+                            icon={<SecurityScanOutlined />}
+                            loading={verificando || verificandoIndividuais.includes(registro.id)}
+                            onClick={() => verificarRegistro(registro.id)}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Alterar classificação">
+                        <Button
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={() => abrirClassificacao(registro)}
+                        />
+                    </Tooltip>
+                    <Popconfirm
+                        title="Remover host?"
+                        okText="Remover"
+                        cancelText="Cancelar"
+                        onConfirm={() => removerRegistro(registro.id)}
+                    >
+                        <Button
+                            size="small"
+                            danger
+                            icon={<DeleteOutlined />}
+                            loading={removendoRegistros.includes(registro.id)}
+                        />
+                    </Popconfirm>
+                </Space>
             )
         }
     ];
@@ -802,6 +842,24 @@ const PhishingView = () => {
                             placeholder="Digite TLDs e pressione enter"
                         />
                     )}
+                </Space>
+            </Modal>
+
+            <Modal
+                title="Alterar classificação"
+                open={!!modalClassificacao}
+                onCancel={() => setModalClassificacao(null)}
+                onOk={() => modalClassificacao && atualizarStatus(modalClassificacao.id, modalClassificacao.status)}
+                confirmLoading={modalClassificacao ? alterandoStatus.includes(modalClassificacao.id) : false}
+                okText="Atualizar"
+            >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                    <Text type="secondary">Selecione a classificação desejada.</Text>
+                    <Select
+                        value={modalClassificacao?.status || PhishingStatus.NECESSARIO_ANALISE}
+                        onChange={(valor) => setModalClassificacao((atual) => atual ? { ...atual, status: valor as PhishingStatus } : atual)}
+                        options={opcoesStatus.map((item) => ({ value: item.valor, label: item.rotulo }))}
+                    />
                 </Space>
             </Modal>
 
