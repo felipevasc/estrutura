@@ -25,6 +25,7 @@ import PhishingCatcherService from './services/cti/PhishingCatcherService';
 import PhishingCrtshService from './services/cti/PhishingCrtshService';
 import PhishingVerificacaoService from './services/cti/PhishingVerificacaoService';
 import PhishingAnaliseService from './services/cti/PhishingAnaliseService';
+import { WgetRecursivoService } from './services/tools/WgetRecursivoService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -35,6 +36,7 @@ export const registeredServices: NanoService[] = [
     new NmapService(),
     new RustscanService(),
     new GobusterService(),
+    new WgetRecursivoService(),
     new WhatwebService(),
     new DnsenumService(),
     new Enum4linuxService(),

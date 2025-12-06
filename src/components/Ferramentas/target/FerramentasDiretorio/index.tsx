@@ -3,7 +3,7 @@ import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import { StyledToolsGrid } from "../styles";
-import { FileSearchOutlined, FolderOpenOutlined, SearchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, SearchOutlined } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
 type EstadoModal = {
@@ -67,6 +67,7 @@ const FerramentasDiretorio = () => {
         userAgent: "",
         autenticacao: "",
     };
+    const valoresWget = { profundidade: 2, limite: 200 };
     const camposWhatweb: CampoConfiguracao[] = [
         {
             chave: "timeout",
@@ -107,6 +108,10 @@ const FerramentasDiretorio = () => {
             detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
         }
     ];
+    const camposWget: CampoConfiguracao[] = [
+        { chave: "profundidade", rotulo: "Profundidade máxima", tipo: "numero", detalhe: "Nível máximo de recursão para seguir links." },
+        { chave: "limite", rotulo: "Limite de caminhos", tipo: "numero", detalhe: "Quantidade máxima de caminhos a registrar." }
+    ];
 
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
@@ -133,6 +138,15 @@ const FerramentasDiretorio = () => {
         argsBase: { idDiretorio: idDiretorio() },
         campos: camposWhatweb,
         valores: valoresWhatweb
+    });
+
+    const modalWgetRecursivo = () => abrirModal({
+        comando: "wgetRecursivo",
+        titulo: "Configurar Wget Recursivo",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDiretorio: idDiretorio() },
+        campos: camposWget,
+        valores: valoresWget
     });
 
     return (
@@ -184,6 +198,16 @@ const FerramentasDiretorio = () => {
                 <Card.Meta
                     title="WhatWeb"
                     description="Fingerprint do caminho."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalWgetRecursivo}>
+                <div className="tool-icon">
+                    <BranchesOutlined />
+                </div>
+                <Card.Meta
+                    title="Wget Recursivo"
+                    description="Rastreamento recursivo de caminhos."
                 />
             </Card>
 

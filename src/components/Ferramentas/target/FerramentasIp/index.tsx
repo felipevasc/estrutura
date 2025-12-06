@@ -9,7 +9,8 @@ import {
     FileSearchOutlined,
     ThunderboltOutlined,
     FolderOpenOutlined,
-    SearchOutlined
+    SearchOutlined,
+    BranchesOutlined
 } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
@@ -71,6 +72,7 @@ const FerramentasIp = () => {
         userAgent: "",
         autenticacao: "",
     };
+    const valoresWget = { profundidade: 2, limite: 200 };
 
     const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
     const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
@@ -138,6 +140,10 @@ const FerramentasIp = () => {
             detalhe: "Flags adicionais passadas direto ao enum4linux; combine-as conforme a enumeração desejada, ex: -U -r.",
         }
     ];
+    const camposWget: CampoConfiguracao[] = [
+        { chave: "profundidade", rotulo: "Profundidade máxima", tipo: "numero", detalhe: "Nível máximo de recursão para seguir links." },
+        { chave: "limite", rotulo: "Limite de caminhos", tipo: "numero", detalhe: "Quantidade máxima de caminhos a registrar." }
+    ];
 
     const modalNmap = () => abrirModal({
         comando: "nmap",
@@ -191,6 +197,15 @@ const FerramentasIp = () => {
         argsBase: tipoFuzz ? { idIp: idIp(), tipoFuzz } : { idIp: idIp() },
         campos: camposWordlist,
         valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
+    });
+
+    const modalWgetRecursivo = () => abrirModal({
+        comando: "wgetRecursivo",
+        titulo: "Configurar Wget Recursivo",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idIp: idIp() },
+        campos: camposWget,
+        valores: valoresWget
     });
 
     return (
@@ -272,6 +287,16 @@ const FerramentasIp = () => {
                 <Card.Meta
                     title="Gobuster Arquivos"
                     description="Descoberta de arquivos."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalWgetRecursivo}>
+                <div className="tool-icon">
+                    <BranchesOutlined />
+                </div>
+                <Card.Meta
+                    title="Wget Recursivo"
+                    description="Rastreamento recursivo de caminhos."
                 />
             </Card>
 

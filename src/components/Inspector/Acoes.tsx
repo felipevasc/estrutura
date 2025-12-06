@@ -1,6 +1,6 @@
 import { ReactNode, useContext, useMemo, useState } from "react";
 import { Empty, notification } from "antd";
-import { BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import { DescricaoGrupo, InspectorBody, ItemAcao, TituloGrupo } from "./styles";
@@ -35,6 +35,7 @@ const tituloModal = (titulo: string) => `Configurar ${titulo}`;
 const valoresWhatweb = { timeout: 60, agressividade: "1", userAgent: "", autenticacao: "" };
 const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
 const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
+const valoresWget = { profundidade: 2, limite: 200 };
 
 export type GrupoAcao = {
     chave: string;
@@ -126,6 +127,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <FolderOpenOutlined />,
         },
         {
+            chave: "wgetRecursivoDominio",
+            titulo: "Wget Recursivo",
+            descricao: "Rastreamento recursivo",
+            comando: "wgetRecursivo",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <BranchesOutlined />,
+        },
+        {
             chave: "ffufIp",
             titulo: "Ffuf",
             descricao: "Fuzzing de diretórios",
@@ -162,6 +172,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <FolderOpenOutlined />,
         },
         {
+            chave: "wgetRecursivoIp",
+            titulo: "Wget Recursivo",
+            descricao: "Rastreamento recursivo",
+            comando: "wgetRecursivo",
+            tiposAlvo: ["ip"],
+            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <BranchesOutlined />,
+        },
+        {
             chave: "ffufDiretorio",
             titulo: "Ffuf",
             descricao: "Fuzzing do caminho selecionado",
@@ -196,6 +215,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             tiposAlvo: ["diretorio"],
             gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString(), tipoFuzz: "arquivo" }),
             icone: <FolderOpenOutlined />,
+        },
+        {
+            chave: "wgetRecursivoDiretorio",
+            titulo: "Wget Recursivo",
+            descricao: "Rastreamento recursivo",
+            comando: "wgetRecursivo",
+            tiposAlvo: ["diretorio"],
+            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
+            icone: <BranchesOutlined />,
         },
         {
             chave: "whatwebDiretorio",
@@ -309,6 +337,10 @@ const camposWordlist: CampoConfiguracao[] = [
         tipo: "texto",
         detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
     },
+];
+const camposWget: CampoConfiguracao[] = [
+    { chave: "profundidade", rotulo: "Profundidade máxima", tipo: "numero", detalhe: "Nível máximo de recursão para seguir links." },
+    { chave: "limite", rotulo: "Limite de caminhos", tipo: "numero", detalhe: "Quantidade máxima de caminhos a registrar." },
 ];
 
 const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModal | null => {
@@ -487,6 +519,36 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             argsBase: { idDiretorio: id, tipoFuzz: "arquivo" },
             campos: camposWordlist,
             valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "wgetRecursivoDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: camposWget,
+            valores: valoresWget,
+        };
+    }
+    if (acao.chave === "wgetRecursivoIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: camposWget,
+            valores: valoresWget,
+        };
+    }
+    if (acao.chave === "wgetRecursivoDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: camposWget,
+            valores: valoresWget,
         };
     }
     if (acao.chave === "whatwebDiretorio") {

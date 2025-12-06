@@ -9,7 +9,8 @@ import {
     SearchOutlined,
     AimOutlined,
     FileSearchOutlined,
-    FolderOpenOutlined
+    FolderOpenOutlined,
+    BranchesOutlined
 } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
@@ -75,6 +76,7 @@ const FerramentasDominio = () => {
     const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
     const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
     const valoresFindomain = { threads: 10, timeout: 60, modoSilencioso: true };
+    const valoresWget = { profundidade: 2, limite: 200 };
     const camposWhatweb: CampoConfiguracao[] = [
         {
             chave: "timeout",
@@ -167,6 +169,18 @@ const FerramentasDominio = () => {
         argsBase: { idDominio: idDominio() },
         campos: [{ chave: "servidorDns", rotulo: "Servidor DNS", tipo: "texto", detalhe: "Servidor que responderá às consultas; use um IP ou hostname como 8.8.8.8." }],
         valores: { servidorDns: "8.8.8.8" }
+    });
+
+    const modalWgetRecursivo = () => abrirModal({
+        comando: "wgetRecursivo",
+        titulo: "Configurar Wget Recursivo",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idDominio: idDominio() },
+        campos: [
+            { chave: "profundidade", rotulo: "Profundidade máxima", tipo: "numero", detalhe: "Nível máximo de recursão para seguir links." },
+            { chave: "limite", rotulo: "Limite de caminhos", tipo: "numero", detalhe: "Quantidade máxima de caminhos a registrar." }
+        ],
+        valores: valoresWget
     });
 
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
@@ -276,6 +290,16 @@ const FerramentasDominio = () => {
                 <Card.Meta
                     title="Gobuster Arquivos"
                     description="Descoberta de arquivos."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalWgetRecursivo}>
+                <div className="tool-icon">
+                    <BranchesOutlined />
+                </div>
+                <Card.Meta
+                    title="Wget Recursivo"
+                    description="Rastreamento recursivo de caminhos."
                 />
             </Card>
 
