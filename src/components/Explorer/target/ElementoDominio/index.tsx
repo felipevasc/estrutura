@@ -8,8 +8,9 @@ import useElementoIp from "../ElementoIp";
 import useElementoDiretorio from "../ElementoDiretorio";
 import { NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
+import { TargetType } from "@/types/TargetType";
 
-const useElementoDominio = () => {
+const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoIp = useElementoIp();
   const elementoDiretorio = useElementoDiretorio();
@@ -17,7 +18,7 @@ const useElementoDominio = () => {
 
   const getDominio = async (dominio: DominioResponse, anteriores: string[] = []): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
-    const checked = selecionado?.tipo === "domain" && selecionado?.id === dominio.id;
+    const checked = selecionado?.tipo === tipoSelecionado && selecionado?.id === dominio.id;
     const possuiSubdominios = (dominio.subDominios?.length ?? 0) > 0;
     const possuiIps = !anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0;
     const possuiDiretorios = !anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0;
@@ -86,7 +87,7 @@ const useElementoDominio = () => {
     return {
       key: `${dominio.endereco}-${dominio.id}`,
       title: <div onClick={() => {
-        selecaoTarget?.set({ tipo: "domain", id: dominio.id });
+        selecaoTarget?.set({ tipo: tipoSelecionado, id: dominio.id });
       }}>
         <GlobalOutlined /> {dominio.endereco}
       </div>,

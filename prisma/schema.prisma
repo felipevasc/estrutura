@@ -27,6 +27,7 @@ model Dominio {
   id       Int     @id @default(autoincrement())
   endereco String
   alias    String?
+  tipo     TipoDominio @default(principal)
 
   projetoId Int
   projeto   Projeto @relation(fields: [projetoId], references: [id])
@@ -47,6 +48,11 @@ model Dominio {
   configuracaoPhishingCatcher ConfiguracaoPhishingCatcher?
 
   @@map("dominios")
+}
+
+enum TipoDominio {
+  principal
+  dns
 }
 
 model Rede {

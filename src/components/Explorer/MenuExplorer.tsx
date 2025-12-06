@@ -1,7 +1,7 @@
 "use client"
 import { StyledMenuExplorer } from "./styles"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faGlobe, faSitemap, faUserFriends, faCogs } from "@fortawesome/free-solid-svg-icons"
+import { faGlobe, faSitemap, faUserFriends, faCogs, faNetworkWired } from "@fortawesome/free-solid-svg-icons"
 import { useContext } from "react"
 import StoreContext from "@/store"
 import { Tooltip } from "antd"
@@ -14,6 +14,11 @@ const MenuExplorer = () => {
         <Tooltip title="Domínios">
             <button className={current === "domain" ? "active" : ""} onClick={() => explorer?.set("domain")}>
                 <FontAwesomeIcon icon={faGlobe} />
+            </button>
+        </Tooltip>
+        <Tooltip title="DNS">
+            <button className={current === "dns" ? "active" : ""} onClick={() => explorer?.set("dns")}>
+                <FontAwesomeIcon icon={faNetworkWired} />
             </button>
         </Tooltip>
         <Tooltip title="Rede">

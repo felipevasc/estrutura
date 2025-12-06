@@ -3,10 +3,12 @@ import ArvoreDominios from "../components/Explorer/arvores/ArvoreDominios";
 import ArvoreUsuarios from "../components/Explorer/arvores/ArvoreUsuarios";
 import ArvoreRedes from "../components/Explorer/arvores/ArvoreRedes";
 import ArvoreServicos from "../components/Explorer/arvores/ArvoreServicos";
+import ArvoreDns from "../components/Explorer/arvores/ArvoreDns";
 
 export const viewRegistry: Record<string, React.ReactNode> = {
     'user': <ArvoreUsuarios />,
     'domain': <ArvoreDominios />,
+    'dns': <ArvoreDns />,
     'network': <ArvoreRedes />,
     'service': <ArvoreServicos />,
 };

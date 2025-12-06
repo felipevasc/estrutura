@@ -1,5 +1,6 @@
 import prisma from "@/database";
 import { NextRequest, NextResponse } from "next/server";
+import { TipoDominio } from "@prisma/client";
 
 const includeIp = {
     include: {
@@ -13,19 +14,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         return NextResponse.json({ error: "Id do dominio é obrigatório" }, { status: 400 })
 
     const ret = await prisma.dominio.findFirst({
-        where: { id: Number(id) },
+        where: { id: Number(id), tipo: TipoDominio.principal },
         include: {
             ips: includeIp,
             subDominios: {
+                where: { tipo: TipoDominio.principal },
                 include: {
                     ips: includeIp,
                     subDominios: {
+                        where: { tipo: TipoDominio.principal },
                         include: {
                             ips: includeIp,
                             subDominios: {
+                                where: { tipo: TipoDominio.principal },
                                 include: {
                                     ips: includeIp,
                                     subDominios: {
+                                        where: { tipo: TipoDominio.principal },
                                         include: {
                                             ips: includeIp,
                                             subDominios: true,

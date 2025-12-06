@@ -8,10 +8,12 @@ import useQueue from "./queue";
 import useUsuarios from "./usuarios";
 import useConfiguracoes from "./configuracoes";
 import useDiretorios from "./diretorios";
+import useDns from "./dns";
 
 const useApi = () => {
     const chat = useChat();
     const dominios = useDominios();
+    const dns = useDns();
     const projetos = useProjetos();
     const ferramentas = useFerramentas();
     const ips = useIps();
@@ -24,13 +26,14 @@ const useApi = () => {
         chat,
         projeto: projetos,
         dominios,
+        dns,
         ferramentas,
         ips,
         diretorios,
         queue,
         usuarios,
         configuracoes,
-    }), [chat, projetos, dominios, ferramentas, ips, diretorios, queue, usuarios, configuracoes]);
+    }), [chat, projetos, dominios, dns, ferramentas, ips, diretorios, queue, usuarios, configuracoes]);
 }
 
 export default useApi;

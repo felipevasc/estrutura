@@ -2,6 +2,7 @@ import prisma from "@/database";
 import { ApiResponse } from "@/types/ApiResponse";
 import { DominioResponse } from "@/types/DominioResponse";
 import { NextRequest, NextResponse } from "next/server";
+import { TipoDominio } from "@prisma/client";
 
 const includeIp = {
     include: {
@@ -20,27 +21,32 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         where: {
             projetoId: Number(p.id),
             pai: null,
+            tipo: TipoDominio.principal,
         },
         include: {
             whatwebResultados: true,
             ips: includeIp,
             diretorios: { include: { whatwebResultados: true } },
             subDominios: {
+                where: { tipo: TipoDominio.principal },
                 include: {
                     whatwebResultados: true,
                     ips: includeIp,
                     diretorios: { include: { whatwebResultados: true } },
                     subDominios: {
+                        where: { tipo: TipoDominio.principal },
                         include: {
                             whatwebResultados: true,
                             ips: includeIp,
                             diretorios: { include: { whatwebResultados: true } },
                             subDominios: {
+                                where: { tipo: TipoDominio.principal },
                                 include: {
                                     whatwebResultados: true,
                                     ips: includeIp,
                                     diretorios: { include: { whatwebResultados: true } },
                                     subDominios: {
+                                        where: { tipo: TipoDominio.principal },
                                         include: {
                                             whatwebResultados: true,
                                             ips: includeIp,

@@ -1,5 +1,6 @@
 import prisma from '@/database';
 import Database from '@/database/Database';
+import { TipoDominio } from '@prisma/client';
 
 export class CommandInterpreter {
 
@@ -31,7 +32,7 @@ export class CommandInterpreter {
       });
 
       if (!dbDomain) {
-          await Database.adicionarSubdominio([domain], projectId);
+          await Database.adicionarSubdominio([domain], projectId, TipoDominio.principal);
           dbDomain = await prisma.dominio.findFirst({
               where: { endereco: domain, projetoId: projectId }
           });
@@ -120,7 +121,7 @@ export class CommandInterpreter {
                   }
               });
           } else {
-              await Database.adicionarSubdominio([normalizado], projectId);
+              await Database.adicionarSubdominio([normalizado], projectId, TipoDominio.principal);
               dominio = await prisma.dominio.findFirst({
                   where: { endereco: normalizado, projetoId: projectId }
               });
@@ -179,7 +180,7 @@ export class CommandInterpreter {
                   }
               });
           } else {
-              await Database.adicionarSubdominio([normalizado], projectId);
+              await Database.adicionarSubdominio([normalizado], projectId, TipoDominio.principal);
               dominio = await prisma.dominio.findFirst({
                   where: { endereco: normalizado, projetoId: projectId }
               });

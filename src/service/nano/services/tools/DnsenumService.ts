@@ -6,6 +6,7 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { NanoEvents } from '../../events';
 import { TipoIp } from '@/database/functions/ip';
+import { TipoDominio } from '@prisma/client';
 import dns from 'node:dns/promises';
 
 const DEFAULT_WORDLIST_URL = 'https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt';
@@ -139,7 +140,7 @@ export class DnsenumService extends NanoService {
         }
         const subdominiosUnicos = Array.from(new Set(subdominios));
         const ipsUnicos = Array.from(new Map(ips.map((ip) => [`${ip.endereco}|${ip.dominio}`, ip])).values());
-        if (subdominiosUnicos.length > 0) await Database.adicionarSubdominio(subdominiosUnicos, projectId);
+        if (subdominiosUnicos.length > 0) await Database.adicionarSubdominio(subdominiosUnicos, projectId, TipoDominio.dns);
         if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projectId);
         this.limparArquivos([outputFile, ...arquivosIps]);
         this.bus.emit(NanoEvents.JOB_COMPLETED, {

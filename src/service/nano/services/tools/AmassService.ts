@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
 import { TipoIp } from '@/database/functions/ip';
+import { TipoDominio } from '@prisma/client';
 import { NanoEvents } from '../../events';
 
 export class AmassService extends NanoService {
@@ -116,7 +117,7 @@ export class AmassService extends NanoService {
       const ipsUnicos = ips.filter((valor, indice, array) => array.findIndex((item) => item.endereco === valor.endereco && item.dominio === valor.dominio) === indice);
 
       if (subdominiosUnicos.length > 0) {
-        await Database.adicionarSubdominio(subdominiosUnicos, op?.projetoId ?? 0);
+        await Database.adicionarSubdominio(subdominiosUnicos, op?.projetoId ?? 0, TipoDominio.dns);
       }
 
       if (ipsUnicos.length > 0) {

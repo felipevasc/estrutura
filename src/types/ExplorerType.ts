@@ -1,6 +1,7 @@
-export type ExplorerType = 
-    | "domain" 
+export type ExplorerType =
+    | "domain"
+    | "dns"
     | "network"
-    | "user" 
+    | "user"
     | "service"
     | "database"

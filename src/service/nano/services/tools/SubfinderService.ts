@@ -1,6 +1,7 @@
 import { NanoService } from '../../NanoService';
 import prisma from '@/database';
 import Database from '@/database/Database';
+import { TipoDominio } from '@prisma/client';
 import path from 'node:path';
 import os from 'node:os';
 import { promises as fs } from 'node:fs';
@@ -73,7 +74,7 @@ export class SubfinderService extends NanoService {
       const fileContent = await fs.readFile(outputFile, 'utf-8');
       await fs.unlink(outputFile);
       const subdominios = fileContent?.split("\n").map((s: string) => s.trim()).filter((s: string) => !!s && s.includes('.')) ?? [];
-      await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0);
+      await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0, TipoDominio.dns);
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
           id: id,
           result: subdominios,
