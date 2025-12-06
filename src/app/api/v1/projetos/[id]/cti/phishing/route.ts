@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/database";
+import { PhishingStatus } from "@prisma/client";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     try {
@@ -16,6 +17,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     } catch (erro) {
         console.error("Erro ao buscar resultados de phishing:", erro);
         return NextResponse.json({ error: "Erro interno ao buscar phishing." }, { status: 500 });
+    }
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+    try {
+        const projetoId = parseInt((await params).id, 10);
+        if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
+
+        const corpo = await request.json() as { id?: number; status?: PhishingStatus };
+        const phishingId = Number(corpo?.id);
+        const status = corpo?.status;
+        if (!phishingId || !status) return NextResponse.json({ error: "Dados obrigatórios" }, { status: 400 });
+        if (!Object.values(PhishingStatus).includes(status)) return NextResponse.json({ error: "Status inválido" }, { status: 400 });
+
+        const registro = await prisma.phishing.findFirst({ where: { id: phishingId, dominio: { projetoId } } });
+        if (!registro) return NextResponse.json({ error: "Registro não encontrado" }, { status: 404 });
+
+        const atualizado = await prisma.phishing.update({ where: { id: registro.id }, data: { status } });
+        return NextResponse.json(atualizado);
+    } catch (erro) {
+        console.error("Erro ao atualizar status de phishing:", erro);
+        return NextResponse.json({ error: "Erro interno ao atualizar status." }, { status: 500 });
     }
 }
 

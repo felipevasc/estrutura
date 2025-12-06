@@ -4,7 +4,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { writeFile, mkdir, mkdtemp } from "fs/promises";
 import path from "path";
-import { Dominio } from "@prisma/client";
+import { Dominio, PhishingStatus } from "@prisma/client";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 import { tmpdir } from "os";
 import { alvoAcessivel } from "@/utils/conectividade";
@@ -149,7 +149,7 @@ class PhishingCatcherService extends NanoService {
             if (!disponivel) continue;
             const existente = await prisma.phishing.findFirst({ where: { alvo, dominioId } });
             if (!existente) {
-                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "phishing_catcher", dominioId } });
+                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "phishing_catcher", dominioId, status: PhishingStatus.NECESSARIO_ANALISE } });
                 criados.push(criado);
             }
         }

@@ -1,5 +1,6 @@
 import { NanoService } from "../../NanoService";
 import prisma from "@/database";
+import { PhishingStatus } from "@prisma/client";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { queueCommand } from "@/service/nano/commandHelper";
@@ -75,7 +76,7 @@ class PhishingDnstwistService extends NanoService {
             if (!disponivel) continue;
             const existente = await prisma.phishing.findFirst({ where: { alvo, dominioId } });
             if (!existente) {
-                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "dnstwist", dominioId } });
+                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "dnstwist", dominioId, status: PhishingStatus.NECESSARIO_ANALISE } });
                 criados.push(criado);
             }
         }

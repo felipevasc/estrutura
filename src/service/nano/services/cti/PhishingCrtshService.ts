@@ -1,5 +1,6 @@
 import { NanoService } from "../../NanoService";
 import prisma from "@/database";
+import { PhishingStatus } from "@prisma/client";
 import { Dominio } from "@prisma/client";
 import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
@@ -70,7 +71,7 @@ class PhishingCrtshService extends NanoService {
             if (!disponivel) continue;
             const existente = await prisma.phishing.findFirst({ where: { alvo, dominioId } });
             if (!existente) {
-                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "crtsh", dominioId } });
+                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "crtsh", dominioId, status: PhishingStatus.NECESSARIO_ANALISE } });
                 criados.push(criado);
             }
         }

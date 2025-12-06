@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
-import { Dominio } from '@prisma/client';
+import { Dominio, PhishingStatus } from '@prisma/client';
 import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -113,6 +113,7 @@ interface RegistroPhishing {
     ultimaVerificacao?: string;
     statusUltimaVerificacao?: 'ONLINE' | 'OFFLINE';
     dominio: { endereco: string };
+    status?: PhishingStatus;
 }
 
 type PalavraCatcher = { termo: string; peso: number };
@@ -121,8 +122,16 @@ type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[] };
 
 const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
 const baseInicial = { palavras: [] as string[], tlds: [] as string[] };
+const opcoesStatus = [
+    { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: '[possivel phishing]', cor: 'orange' },
+    { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: '[necessario analise]', cor: 'blue' },
+    { valor: PhishingStatus.PHISHING_IDENTIFICADO, rotulo: '[phishing identificado]', cor: 'red' },
+    { valor: PhishingStatus.FALSO_POSITIVO, rotulo: '[falso positivo]', cor: 'green' },
+    { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: '[necessario reanalise]', cor: 'gold' },
+];
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
+const obterInfoStatus = (status?: PhishingStatus) => opcoesStatus.find((item) => item.valor === status) || opcoesStatus[1];
 
 const PhishingView = () => {
     const { projeto } = useStore();
@@ -146,6 +155,7 @@ const PhishingView = () => {
     const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
     const [verificando, setVerificando] = useState(false);
     const [verificandoIndividuais, setVerificandoIndividuais] = useState<number[]>([]);
+    const [alterandoStatus, setAlterandoStatus] = useState<number[]>([]);
     const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
@@ -212,6 +222,26 @@ const PhishingView = () => {
             setCarregandoConfiguracao(false);
         }
     }, [projetoId]);
+
+    const atualizarStatus = async (id: number, status: PhishingStatus) => {
+        if (!projetoId) return;
+        setAlterandoStatus((lista) => [...lista, id]);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status })
+            });
+            if (!resposta.ok) throw new Error();
+            const atualizado = await resposta.json();
+            setDados((lista) => lista.map((item) => item.id === id ? { ...item, status: atualizado.status } : item));
+            message.success('Status atualizado.');
+        } catch {
+            message.error('Não foi possível atualizar o status.');
+        } finally {
+            setAlterandoStatus((lista) => lista.filter((item) => item !== id));
+        }
+    };
 
     const abrirModalTermos = async () => {
         if (!dominioSelecionado) {
@@ -459,6 +489,27 @@ const PhishingView = () => {
             dataIndex: 'fonte',
             key: 'fonte',
             render: (valor: string) => <Tag color="blue">{valor.toUpperCase()}</Tag>
+        },
+        {
+            title: 'Classificação',
+            dataIndex: 'status',
+            key: 'status',
+            render: (_: string, registro: RegistroPhishing) => {
+                const info = obterInfoStatus(registro.status);
+                const valor = registro.status || PhishingStatus.NECESSARIO_ANALISE;
+                return (
+                    <Space direction="vertical" size={2}>
+                        <Tag color={info.cor}>{info.rotulo}</Tag>
+                        <Select
+                            size="small"
+                            value={valor}
+                            onChange={(novo) => atualizarStatus(registro.id, novo as PhishingStatus)}
+                            options={opcoesStatus.map((item) => ({ value: item.valor, label: item.rotulo }))}
+                            loading={alterandoStatus.includes(registro.id)}
+                        />
+                    </Space>
+                );
+            }
         },
         {
             title: 'Status',
