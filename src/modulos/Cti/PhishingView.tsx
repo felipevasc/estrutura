@@ -147,10 +147,12 @@ const PhishingView = () => {
     const [carregando, setCarregando] = useState(false);
     const [carregandoTermos, setCarregandoTermos] = useState(false);
     const [salvandoTermos, setSalvandoTermos] = useState(false);
+    const [recalculandoBase, setRecalculandoBase] = useState(false);
     const [configuracaoCatcher, setConfiguracaoCatcher] = useState<ConfiguracaoCatcher>(configInicial);
     const [modalConfiguracaoCatcher, setModalConfiguracaoCatcher] = useState(false);
     const [carregandoConfiguracao, setCarregandoConfiguracao] = useState(false);
     const [salvandoConfiguracao, setSalvandoConfiguracao] = useState(false);
+    const [restaurandoConfiguracao, setRestaurandoConfiguracao] = useState(false);
     const [executandoCatcher, setExecutandoCatcher] = useState(false);
     const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
     const [verificando, setVerificando] = useState(false);
@@ -284,6 +286,28 @@ const PhishingView = () => {
             message.error('Erro ao salvar base de termos.');
         } finally {
             setSalvandoTermos(false);
+        }
+    };
+
+    const recalcularBase = async () => {
+        if (!dominioSelecionado || !projetoId) return;
+        setRecalculandoBase(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/termos`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dominioId: dominioSelecionado })
+            });
+            if (!resposta.ok) throw new Error();
+            const base = await resposta.json();
+            setBasePhishing(base);
+            setEntradaPalavras(base.palavras);
+            setEntradaTlds(base.tlds);
+            message.success('Base recalculada.');
+        } catch {
+            message.error('Não foi possível recalcular a base.');
+        } finally {
+            setRecalculandoBase(false);
         }
     };
 
@@ -422,6 +446,26 @@ const PhishingView = () => {
             message.error('Erro ao salvar a configuração do phishing_catcher.');
         } finally {
             setSalvandoConfiguracao(false);
+        }
+    };
+
+    const restaurarConfiguracao = async () => {
+        if (!dominioSelecionado || !projetoId) return;
+        setRestaurandoConfiguracao(true);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/catcher/configuracao`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ dominioId: dominioSelecionado })
+            });
+            if (!resposta.ok) throw new Error();
+            const configuracao = await resposta.json();
+            setConfiguracaoCatcher(configuracao);
+            message.success('Configuração restaurada.');
+        } catch {
+            message.error('Não foi possível restaurar a configuração do phishing_catcher.');
+        } finally {
+            setRestaurandoConfiguracao(false);
         }
     };
 
@@ -755,7 +799,10 @@ const PhishingView = () => {
                         <Space direction="vertical" style={{ width: '100%' }}>
                             <Space style={{ justifyContent: 'space-between', width: '100%' }}>
                                 <Text strong>Palavras</Text>
-                                <Button danger size="small" onClick={limparPalavras} disabled={!entradaPalavras.length}>Limpar todas</Button>
+                                <Space>
+                                    <Button size="small" icon={<ReloadOutlined />} onClick={recalcularBase} loading={recalculandoBase}>Recalcular</Button>
+                                    <Button danger size="small" onClick={limparPalavras} disabled={!entradaPalavras.length}>Limpar todas</Button>
+                                </Space>
                             </Space>
                             <Select
                                 mode="tags"
@@ -797,6 +844,11 @@ const PhishingView = () => {
                 okText="Salvar configuração"
             >
                 <Space direction="vertical" style={{ width: '100%' }} size={12}>
+                    <Space style={{ justifyContent: 'flex-end', width: '100%' }}>
+                        <Button icon={<ReloadOutlined />} onClick={restaurarConfiguracao} loading={restaurandoConfiguracao}>
+                            Restaurar padrão
+                        </Button>
+                    </Space>
                     {tituloSecao('Palavras-chave monitoradas', () => abrirAjuda('Palavras-chave monitoradas', (
                         <Space direction="vertical">
                             <Text>Itens usados para pontuar nomes parecidos; cada palavra aumenta o score conforme o peso definido.</Text>
