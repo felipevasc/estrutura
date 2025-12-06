@@ -6,6 +6,7 @@ import os from 'node:os';
 import fs from 'node:fs';
 import { NanoEvents } from '../../events';
 import { TipoIp } from '@/database/functions/ip';
+import dns from 'node:dns/promises';
 
 const DEFAULT_WORDLIST_URL = 'https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt';
 
@@ -17,84 +18,36 @@ export class DnsenumService extends NanoService {
   initialize(): void {
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
       if (payload.command === 'dnsenum') {
-        this.processCommand(payload);
+        this.processarComando(payload);
       }
     });
 
-    this.listen(NanoEvents.DNSENUM_TERMINAL_RESULT, (payload) => this.processResult(payload));
-    this.listen(NanoEvents.DNSENUM_TERMINAL_ERROR, (payload) => this.processError(payload));
+    this.listen(NanoEvents.DNSENUM_TERMINAL_RESULT, (payload) => this.processarResultado(payload));
+    this.listen(NanoEvents.DNSENUM_TERMINAL_ERROR, (payload) => this.processarErro(payload));
   }
 
-  private async processCommand(payload: any) {
+  private async processarComando(payload: any) {
     const { id, args, projectId } = payload;
     const { idDominio, threads, wordlist } = args;
-
-    this.log(`Processing Dnsenum for domain ID: ${idDominio}`);
-
+    this.log(`Processando dnsenum para domínio ${idDominio}`);
     try {
-        let finalWordlist = wordlist;
-        if (wordlist) {
-            const defaultPath = path.join(process.cwd(), 'db/wordlists/subdomains.txt');
-            const inputPath = path.isAbsolute(wordlist) ? wordlist : path.join(process.cwd(), wordlist);
-
-            if (inputPath === defaultPath) {
-                if (!fs.existsSync(inputPath)) {
-                    this.log(`Baixando wordlist default para ${inputPath}...`);
-                    const dir = path.dirname(inputPath);
-                    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-                    const response = await fetch(DEFAULT_WORDLIST_URL);
-                    if (!response.ok) throw new Error(`Falha ao baixar wordlist: ${response.statusText}`);
-                    const text = await response.text();
-                    fs.writeFileSync(inputPath, text);
-                    this.log('Wordlist baixada com sucesso.');
-                }
-                finalWordlist = inputPath;
-            } else {
-                if (!fs.existsSync(wordlist)) {
-                    throw new Error(`Wordlist inválida ou não encontrada: ${wordlist}`);
-                }
-            }
-        }
-
-        const op = await prisma.dominio.findFirst({
-            where: { id: Number(idDominio) }
-        });
-        const dominio = op?.endereco ?? "";
-
-        if (!dominio) throw new Error('Domínio não encontrado');
-
+        const registroDominio = await prisma.dominio.findFirst({ where: { id: Number(idDominio) } });
+        const dominioNormalizado = this.normalizarDominio(registroDominio?.endereco ?? '');
+        if (!dominioNormalizado) throw new Error('Domínio não encontrado');
+        await this.validarDominio(dominioNormalizado);
+        const caminhoWordlist = await this.resolverWordlist(wordlist);
         const nomeArquivoSaida = `dnsenum_${projectId}_${id}_${Date.now()}.xml`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
-
-        // dnsenum [options] <domain>
-        // -o <file> Output to XML file.
-        // -f <file> Read subdomains from this file (if provided)
-        // --threads <int>
-        // --noreverse
-
-        const commandArgs = [
-             '--noreverse',
-             '-o', caminhoSaida,
-             '--threads', String(threads || 5)
-        ];
-
-        if (finalWordlist) {
-            commandArgs.push('-f', finalWordlist);
-        }
-
-        commandArgs.push(dominio);
-
+        const argumentos = this.montarArgumentos(dominioNormalizado, threads, caminhoWordlist, caminhoSaida);
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: 'dnsenum',
-            args: commandArgs,
+            args: argumentos,
             outputFile: caminhoSaida,
             replyTo: NanoEvents.DNSENUM_TERMINAL_RESULT,
             errorTo: NanoEvents.DNSENUM_TERMINAL_ERROR,
-            meta: { projectId, dominio, outputFile: caminhoSaida }
+            meta: { projectId, dominio: dominioNormalizado, outputFile: caminhoSaida }
         });
-
     } catch (e: any) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
@@ -103,68 +56,91 @@ export class DnsenumService extends NanoService {
     }
   }
 
-  private async processResult(payload: any) {
+  private normalizarDominio(endereco: string) {
+    if (!endereco) return '';
+    const enderecoLimpo = endereco.trim();
+    if (!enderecoLimpo) return '';
+    try {
+        const url = enderecoLimpo.includes('://') ? new URL(enderecoLimpo) : new URL(`http://${enderecoLimpo}`);
+        return url.hostname.toLowerCase();
+    } catch (e) {
+        return enderecoLimpo.split('/')[0].toLowerCase();
+    }
+  }
+
+  private async validarDominio(dominio: string) {
+    try {
+        await dns.resolveNs(dominio);
+    } catch (erro: any) {
+        const codigo = erro?.code ?? '';
+        if (['ENODATA', 'ENOTFOUND', 'SERVFAIL', 'REFUSED'].includes(codigo)) {
+            throw new Error('Domínio inválido ou sem registros NS');
+        }
+        throw erro;
+    }
+  }
+
+  private async resolverWordlist(caminhoInformado?: string) {
+    const caminhoPadrao = path.join(process.cwd(), 'db/wordlists/subdomains.txt');
+    const caminhoEscolhido = caminhoInformado && caminhoInformado.trim().length > 0 ? caminhoInformado.trim() : caminhoPadrao;
+    const caminhoFinal = path.isAbsolute(caminhoEscolhido) ? caminhoEscolhido : path.join(process.cwd(), caminhoEscolhido);
+    if (fs.existsSync(caminhoFinal)) return caminhoFinal;
+    if (caminhoFinal !== caminhoPadrao) throw new Error(`Wordlist inválida ou não encontrada: ${caminhoInformado}`);
+    const pasta = path.dirname(caminhoFinal);
+    if (!fs.existsSync(pasta)) fs.mkdirSync(pasta, { recursive: true });
+    const resposta = await fetch(DEFAULT_WORDLIST_URL);
+    if (!resposta.ok) throw new Error(`Falha ao baixar wordlist: ${resposta.statusText}`);
+    const conteudo = await resposta.text();
+    fs.writeFileSync(caminhoFinal, conteudo);
+    return caminhoFinal;
+  }
+
+  private montarArgumentos(dominio: string, threads?: number, wordlist?: string, caminhoSaida?: string) {
+    const argumentos = ['--noreverse'];
+    if (caminhoSaida) argumentos.push('-o', caminhoSaida);
+    argumentos.push('--threads', String(threads || 5));
+    if (wordlist) argumentos.push('-f', wordlist);
+    argumentos.push(dominio);
+    return argumentos;
+  }
+
+  private async processarResultado(payload: any) {
       const { id, meta } = payload;
       const { projectId, outputFile } = meta;
-
       try {
         if (!fs.existsSync(outputFile)) {
-             throw new Error('Output file not found');
+             throw new Error('Arquivo de saída não encontrado');
         }
-
-        const xmlContent = fs.readFileSync(outputFile, 'utf-8');
-
-        // Simple Regex Parsing
-        // <host>
-        //   <hostname>xxx</hostname>
-        //   <ip>xxx</ip>
-        // </host>
-
-        const hostRegex = /<host>([\s\S]*?)<\/host>/g;
-        let match;
+        const conteudoXml = fs.readFileSync(outputFile, 'utf-8');
+        const hosts = /<host>([\s\S]*?)<\/host>/g;
+        let grupo;
         const subdominios: string[] = [];
         const ips: TipoIp[] = [];
-
-        while ((match = hostRegex.exec(xmlContent)) !== null) {
-            const content = match[1];
-            const hostnameMatch = /<hostname>(.*?)<\/hostname>/.exec(content);
-
-            if (hostnameMatch) {
-                const host = hostnameMatch[1].trim();
+        while ((grupo = hosts.exec(conteudoXml)) !== null) {
+            const trecho = grupo[1];
+            const hostEncontrado = /<hostname>(.*?)<\/hostname>/.exec(trecho);
+            if (hostEncontrado) {
+                const host = hostEncontrado[1].trim();
                 subdominios.push(host);
-
                 const ipRegex = /<ip>(.*?)<\/ip>/g;
-                let ipM;
-                while ((ipM = ipRegex.exec(content)) !== null) {
-                    const ip = ipM[1].trim();
-                     // Filter valid IPs (IPv4)
+                let captura;
+                while ((captura = ipRegex.exec(trecho)) !== null) {
+                    const ip = captura[1].trim();
                     if (ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
                          ips.push({ endereco: ip, dominio: host });
                     }
                 }
             }
         }
-
-        if (subdominios.length > 0) {
-            await Database.adicionarSubdominio(subdominios, projectId);
-        }
-
-        if (ips.length > 0) {
-             await Database.adicionarIp(ips, projectId);
-        }
-
-        // Cleanup
+        if (subdominios.length > 0) await Database.adicionarSubdominio(subdominios, projectId);
+        if (ips.length > 0) await Database.adicionarIp(ips, projectId);
         try {
             if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-        } catch (e) {
-            console.error('Error deleting temp file:', e);
-        }
-
+        } catch (e) {}
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
             result: { subdominios: subdominios.length, ips: ips.length }
         });
-
       } catch (e: any) {
           this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,
@@ -173,12 +149,20 @@ export class DnsenumService extends NanoService {
       }
   }
 
-  private processError(payload: any) {
+  private processarErro(payload: any) {
       const { id, error, stderr } = payload;
-      const errorMessage = stderr ? `${error} - Detalhes: ${stderr}` : error;
+      const mensagemErro = stderr ? `${error} - Detalhes: ${stderr}` : error;
+      const mensagemNormalizada = mensagemErro?.toUpperCase() ?? '';
+      if (mensagemNormalizada.includes('NXDOMAIN') || mensagemNormalizada.includes('NS RECORD')) {
+        this.bus.emit(NanoEvents.JOB_FAILED, {
+            id: id,
+            error: 'Domínio inválido ou sem resposta DNS para o dnsenum'
+        });
+        return;
+      }
       this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
-          error: errorMessage
+          error: mensagemErro
       });
   }
 }
