@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
-import type { Dominio, PhishingStatus } from '@prisma/client';
+import { PhishingStatus, type Dominio } from '@prisma/client';
 import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
