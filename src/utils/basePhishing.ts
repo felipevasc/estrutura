@@ -7,12 +7,13 @@ export const carregarBasePhishing = async (dominio: Dominio) => {
     const tldsExistentes = await prisma.tldPhishing.findMany({ where: { dominioId: dominio.id }, orderBy: { tld: "asc" } });
     const gerados = gerarDadosPhishing(dominio.endereco);
 
-    const criarPalavras = palavrasExistentes.length ? [] : gerados.palavras.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } }));
+    const criarPalavras = palavrasExistentes.length ? [] : gerados.palavrasChave.map(termo => prisma.termoPhishing.create({ data: { termo, dominioId: dominio.id } }));
     const criarTlds = tldsExistentes.length ? [] : gerados.tlds.map(tld => prisma.tldPhishing.create({ data: { tld, dominioId: dominio.id } }));
     if (criarPalavras.length || criarTlds.length) await prisma.$transaction([...criarPalavras, ...criarTlds]);
 
-    const palavras = palavrasExistentes.length ? palavrasExistentes.map(item => item.termo) : gerados.palavras;
+    const palavrasChave = palavrasExistentes.length ? palavrasExistentes.map(item => item.termo) : gerados.palavrasChave;
+    const palavrasAuxiliares = gerados.palavrasAuxiliares;
     const tlds = tldsExistentes.length ? tldsExistentes.map(item => item.tld) : gerados.tlds;
 
-    return { palavras, tlds };
+    return { palavrasChave, palavrasAuxiliares, tlds };
 };

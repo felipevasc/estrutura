@@ -121,7 +121,7 @@ type PalavraCatcher = { termo: string; peso: number };
 type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[] };
 
 const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
-const baseInicial = { palavras: [] as string[], tlds: [] as string[] };
+const baseInicial = { palavrasChave: [] as string[], palavrasAuxiliares: [] as string[], tlds: [] as string[] };
 const opcoesStatus = [
     { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: '[possivel phishing]', cor: 'orange' },
     { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: '[necessario analise]', cor: 'blue' },
@@ -139,8 +139,9 @@ const PhishingView = () => {
     const [dominios, setDominios] = useState<Dominio[]>([]);
     const [dominioSelecionado, setDominioSelecionado] = useState<number | null>(null);
     const [dados, setDados] = useState<RegistroPhishing[]>([]);
-    const [basePhishing, setBasePhishing] = useState<{ palavras: string[]; tlds: string[] }>(baseInicial);
-    const [entradaPalavras, setEntradaPalavras] = useState<string[]>([]);
+    const [basePhishing, setBasePhishing] = useState<{ palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[] }>(baseInicial);
+    const [entradaPalavrasChave, setEntradaPalavrasChave] = useState<string[]>([]);
+    const [entradaPalavrasAuxiliares, setEntradaPalavrasAuxiliares] = useState<string[]>([]);
     const [entradaTlds, setEntradaTlds] = useState<string[]>([]);
     const [modalTermosVisivel, setModalTermosVisivel] = useState(false);
     const [executando, setExecutando] = useState(false);
@@ -201,8 +202,9 @@ const PhishingView = () => {
             if (!resposta.ok) throw new Error();
             const base = await resposta.json();
             setBasePhishing(base);
-            setEntradaPalavras(base.palavras);
-            setEntradaTlds(base.tlds);
+            setEntradaPalavrasChave(base.palavrasChave || []);
+            setEntradaPalavrasAuxiliares(base.palavrasAuxiliares || []);
+            setEntradaTlds(base.tlds || []);
         } catch {
             message.error('Não foi possível carregar as palavras e TLDs.');
         } finally {
@@ -267,13 +269,14 @@ const PhishingView = () => {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/termos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: dominioSelecionado, palavras: entradaPalavras, tlds: entradaTlds }),
+                body: JSON.stringify({ dominioId: dominioSelecionado, palavrasChave: entradaPalavrasChave, tlds: entradaTlds }),
             });
             if (!resposta.ok) throw new Error();
-            const { palavras, tlds } = await resposta.json();
-            setBasePhishing({ palavras, tlds });
-            setEntradaPalavras(palavras);
-            setEntradaTlds(tlds);
+            const base = await resposta.json();
+            setBasePhishing(base);
+            setEntradaPalavrasChave(base.palavrasChave || []);
+            setEntradaPalavrasAuxiliares(base.palavrasAuxiliares || []);
+            setEntradaTlds(base.tlds || []);
             setModalTermosVisivel(false);
             message.success('Base atualizada.');
         } catch {
@@ -288,7 +291,7 @@ const PhishingView = () => {
             message.warning('Escolha um domínio alvo.');
             return;
         }
-        if (!basePhishing.palavras.length || !basePhishing.tlds.length) await carregarBase(dominioSelecionado);
+        if (!basePhishing.palavrasChave.length || !basePhishing.tlds.length) await carregarBase(dominioSelecionado);
         setExecutando(true);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/executar`, {
@@ -450,7 +453,7 @@ const PhishingView = () => {
             message.warning('Escolha um domínio alvo.');
             return;
         }
-        if (!basePhishing.palavras.length) await carregarBase(dominioSelecionado);
+        if (!basePhishing.palavrasChave.length) await carregarBase(dominioSelecionado);
         setExecutandoCrtsh(true);
         try {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/crtsh`, {
@@ -676,7 +679,7 @@ const PhishingView = () => {
                             </div>
                             <AcoesFerramenta>
                                 <Button onClick={abrirModalTermos} icon={<SettingOutlined />}>
-                                    Palavras ({basePhishing.palavras.length || '-'}) / TLDs ({basePhishing.tlds.length || '-'})
+                                    Chaves ({basePhishing.palavrasChave.length || '-'}) / Auxiliares ({basePhishing.palavrasAuxiliares.length || '-'}) / TLDs ({basePhishing.tlds.length || '-'})
                                 </Button>
                                 <Button type="primary" icon={<RadarChartOutlined />} loading={executando} onClick={executarDnstwist}>
                                     Varredura completa
@@ -718,7 +721,7 @@ const PhishingView = () => {
                             </div>
                             <AcoesFerramenta>
                                 <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>
-                                    Palavras ({basePhishing.palavras.length || '-'})
+                                    Chaves ({basePhishing.palavrasChave.length || '-'})
                                 </Button>
                                 <Button type="primary" icon={<SecurityScanOutlined />} loading={executandoCrtsh} onClick={executarCrtsh}>
                                     Consultar certificados
@@ -744,19 +747,26 @@ const PhishingView = () => {
                 confirmLoading={salvandoTermos}
             >
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text type="secondary">Edite ou adicione palavras e TLDs utilizados nas buscas.</Text>
+                    <Text type="secondary">Edite palavras-chave e visualize auxiliares automáticas antes das buscas.</Text>
                     {carregandoTermos ? (
-                        <Skeleton active paragraph={{ rows: 4 }} />
+                        <Skeleton active paragraph={{ rows: 5 }} />
                     ) : (
                         <Space direction="vertical" style={{ width: '100%' }}>
+                            <Text strong>Palavras-chave</Text>
                             <Select
                                 mode="tags"
                                 style={{ width: '100%' }}
-                                value={entradaPalavras}
-                                onChange={valor => setEntradaPalavras(valor)}
+                                value={entradaPalavrasChave}
+                                onChange={valor => setEntradaPalavrasChave(valor)}
                                 tokenSeparators={[',', ' ']}
-                                placeholder="Insira palavras e pressione enter"
+                                placeholder="Insira palavras-chave e pressione enter"
                             />
+                            <Text strong>Palavras auxiliares</Text>
+                            <ListaTermos>
+                                {entradaPalavrasAuxiliares.map((termo) => <Tag key={termo} color="magenta">{termo}</Tag>)}
+                                {!entradaPalavrasAuxiliares.length && <Text type="secondary">Lista gerada automaticamente.</Text>}
+                            </ListaTermos>
+                            <Text strong>TLDs</Text>
                             <Select
                                 mode="tags"
                                 style={{ width: '100%' }}
@@ -771,9 +781,10 @@ const PhishingView = () => {
                     <Text strong>Pré-visualização</Text>
                     {carregandoTermos ? <Skeleton active paragraph={{ rows: 3 }} /> : (
                         <ListaTermos>
-                            {entradaPalavras.map((termo) => <Tag key={termo} color="purple">{termo}</Tag>)}
+                            {entradaPalavrasChave.map((termo) => <Tag key={termo} color="purple">{termo}</Tag>)}
+                            {entradaPalavrasAuxiliares.map((termo) => <Tag key={`aux-${termo}`} color="magenta">{termo}</Tag>)}
                             {entradaTlds.map((tld) => <Tag key={tld} color="blue">.{tld}</Tag>)}
-                            {!entradaPalavras.length && !entradaTlds.length && <Text type="secondary">Nenhuma base definida.</Text>}
+                            {!entradaPalavrasChave.length && !entradaPalavrasAuxiliares.length && !entradaTlds.length && <Text type="secondary">Nenhuma base definida.</Text>}
                         </ListaTermos>
                     )}
                 </Space>

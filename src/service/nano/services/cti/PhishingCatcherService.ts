@@ -8,6 +8,7 @@ import { Dominio, PhishingStatus } from "@prisma/client";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 import { tmpdir } from "os";
 import { alvoAcessivel } from "@/utils/conectividade";
+import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 
 const executar = promisify(execFile);
 
@@ -45,7 +46,8 @@ class PhishingCatcherService extends NanoService {
             const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
             if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
-            const configuracao = await this.carregarConfiguracao(dominio);
+            const base = await carregarBasePhishing(dominio);
+            const configuracao = await this.carregarConfiguracao(dominio, base);
             const alvos = await this.executarFerramenta(dominio, configuracao);
             await this.registrarResultados(dominio.id, configuracao, alvos);
 
@@ -56,11 +58,12 @@ class PhishingCatcherService extends NanoService {
         }
     }
 
-    private async carregarConfiguracao(dominio: Dominio) {
+    private async carregarConfiguracao(dominio: Dominio, base: { palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[] }) {
         const existente = await prisma.configuracaoPhishingCatcher.findUnique({ where: { dominioId: dominio.id } });
-        if (existente) return this.normalizarConfiguracao(existente.palavras as PalavraChave[], existente.tlds as string[]);
+        const termosBase = gerarTermosPhishing(base.palavrasChave, base.palavrasAuxiliares);
+        if (existente) return this.sincronizarComBase(this.normalizarConfiguracao(existente.palavras as PalavraChave[], existente.tlds as string[]), termosBase, base.tlds);
 
-        const padrao = await this.configuracaoPadrao(dominio);
+        const padrao = await this.configuracaoPadrao(termosBase, base.tlds);
         await prisma.configuracaoPhishingCatcher.create({ data: { dominioId: dominio.id, palavras: padrao.palavras, tlds: padrao.tlds } });
         return padrao;
     }
@@ -73,10 +76,18 @@ class PhishingCatcherService extends NanoService {
         return { palavras: Array.from(unicas.values()), tlds: listaTlds } as Configuracao;
     }
 
-    private async configuracaoPadrao(dominio: Dominio) {
-        const base = await carregarBasePhishing(dominio);
-        const palavras = Array.from(new Set(base.palavras)).map(termo => ({ termo: termo.toLowerCase(), peso: 3 }));
-        return { palavras, tlds: base.tlds } as Configuracao;
+    private async configuracaoPadrao(termos: string[], tlds: string[]) {
+        const palavras = Array.from(new Set(termos)).map(termo => ({ termo: termo.toLowerCase(), peso: 3 }));
+        return { palavras, tlds } as Configuracao;
+    }
+
+    private sincronizarComBase(configuracao: Configuracao, termos: string[], tldsBase: string[]) {
+        const permitidos = new Set(termos.map(item => item.toLowerCase()));
+        const lista = configuracao.palavras.filter(item => permitidos.has(item.termo.toLowerCase()));
+        const existentes = new Set(lista.map(item => item.termo));
+        permitidos.forEach(termo => { if (!existentes.has(termo)) lista.push({ termo, peso: 3 }); });
+        const tlds = configuracao.tlds.length ? configuracao.tlds : tldsBase;
+        return { palavras: lista, tlds } as Configuracao;
     }
 
     private async executarFerramenta(dominio: Dominio, configuracao: Configuracao) {

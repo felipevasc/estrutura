@@ -5,6 +5,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
+import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 import { alvoAcessivel } from "@/utils/conectividade";
 
 const executar = promisify(execFile);
@@ -53,7 +54,7 @@ class PhishingDnstwistService extends NanoService {
         if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
         const base = await carregarBasePhishing(dominio);
-        const termos = this.combinar(base.palavras, base.tlds);
+        const termos = this.combinar(gerarTermosPhishing(base.palavrasChave, base.palavrasAuxiliares), base.tlds);
         if (!termos.length) throw new Error("Nenhuma combinação disponível");
 
         for (const termo of termos) {
