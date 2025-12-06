@@ -7,6 +7,8 @@ import fs from 'node:fs';
 import { NanoEvents } from '../../events';
 import { TipoIp } from '@/database/functions/ip';
 
+const DEFAULT_WORDLIST_URL = 'https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt';
+
 export class DnsenumService extends NanoService {
   constructor() {
     super('DnsenumService');
@@ -30,8 +32,29 @@ export class DnsenumService extends NanoService {
     this.log(`Processing Dnsenum for domain ID: ${idDominio}`);
 
     try {
-        if (wordlist && !fs.existsSync(wordlist)) {
-            throw new Error(`Wordlist inválida ou não encontrada: ${wordlist}`);
+        let finalWordlist = wordlist;
+        if (wordlist) {
+            const defaultPath = path.join(process.cwd(), 'db/wordlists/subdomains.txt');
+            const inputPath = path.isAbsolute(wordlist) ? wordlist : path.join(process.cwd(), wordlist);
+
+            if (inputPath === defaultPath) {
+                if (!fs.existsSync(inputPath)) {
+                    this.log(`Baixando wordlist default para ${inputPath}...`);
+                    const dir = path.dirname(inputPath);
+                    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+                    const response = await fetch(DEFAULT_WORDLIST_URL);
+                    if (!response.ok) throw new Error(`Falha ao baixar wordlist: ${response.statusText}`);
+                    const text = await response.text();
+                    fs.writeFileSync(inputPath, text);
+                    this.log('Wordlist baixada com sucesso.');
+                }
+                finalWordlist = inputPath;
+            } else {
+                if (!fs.existsSync(wordlist)) {
+                    throw new Error(`Wordlist inválida ou não encontrada: ${wordlist}`);
+                }
+            }
         }
 
         const op = await prisma.dominio.findFirst({
@@ -56,8 +79,8 @@ export class DnsenumService extends NanoService {
              '--threads', String(threads || 5)
         ];
 
-        if (wordlist) {
-            commandArgs.push('-f', wordlist);
+        if (finalWordlist) {
+            commandArgs.push('-f', finalWordlist);
         }
 
         commandArgs.push(dominio);
