@@ -79,3 +79,28 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         return responderErro("Erro interno ao salvar configuração", 500);
     }
 }
+
+export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+    try {
+        const projetoId = parseInt((await params).id, 10);
+        const corpo = await request.json() as { dominioId?: number };
+        if (isNaN(projetoId) || !corpo?.dominioId) return responderErro("Parâmetros inválidos");
+
+        const dominio = await prisma.dominio.findFirst({ where: { id: corpo.dominioId, projetoId } });
+        if (!dominio) return responderErro("Domínio não encontrado", 404);
+
+        const padrao = await gerarPadrao(dominio.id);
+        if (!padrao.palavras.length || !padrao.tlds.length) return responderErro("Nenhuma configuração padrão disponível", 422);
+
+        const configuracao = await prisma.configuracaoPhishingCatcher.upsert({
+            where: { dominioId: dominio.id },
+            update: { palavras: padrao.palavras, tlds: padrao.tlds },
+            create: { dominioId: dominio.id, palavras: padrao.palavras, tlds: padrao.tlds }
+        });
+
+        return NextResponse.json({ palavras: configuracao.palavras, tlds: configuracao.tlds });
+    } catch (erro) {
+        console.error("Erro ao restaurar configuração do phishing_catcher:", erro);
+        return responderErro("Erro interno ao restaurar configuração", 500);
+    }
+}

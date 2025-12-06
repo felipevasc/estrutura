@@ -5,7 +5,10 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
+import { gerarCombinacoesPhishing } from "@/utils/geradorTermosPhishing";
 import { alvoAcessivel } from "@/utils/conectividade";
+import { access } from "fs/promises";
+import { constants } from "fs";
 
 const executar = promisify(execFile);
 
@@ -14,6 +17,9 @@ type Payload = { id: number; args: unknown };
 type Dados = { dominioId?: number; termo?: string };
 
 class PhishingDnstwistService extends NanoService {
+    private dnstwistDisponivel: boolean | null = null;
+    private dnstwistBinario = "dnstwist";
+
     constructor() {
         super("PhishingDnstwistService");
     }
@@ -36,6 +42,13 @@ class PhishingDnstwistService extends NanoService {
             const dominioId = dados?.dominioId;
             if (!dominioId) throw new Error("dominioId é obrigatório");
 
+            const pronto = await this.verificarDnstwist();
+            if (!pronto) {
+                this.log("dnstwist não está disponível");
+                this.bus.emit("JOB_COMPLETED", { id, result: { disponivel: false, motivo: "dnstwist não está disponível" } });
+                return;
+            }
+
             if (dados.termo) {
                 await this.executarTermo(id, dominioId, dados.termo);
                 return;
@@ -53,7 +66,8 @@ class PhishingDnstwistService extends NanoService {
         if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
         const base = await carregarBasePhishing(dominio);
-        const termos = this.combinar(base.palavras, base.tlds);
+        const palavras = gerarCombinacoesPhishing(base.palavras);
+        const termos = this.combinar(palavras, base.tlds);
         if (!termos.length) throw new Error("Nenhuma combinação disponível");
 
         for (const termo of termos) {
@@ -99,7 +113,7 @@ class PhishingDnstwistService extends NanoService {
 
     private async executarDnstwist(termo: string) {
         try {
-            const { stdout, stderr } = await executar("dnstwist", ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
+            const { stdout, stderr } = await executar(this.dnstwistBinario, ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
             this.log(`Saida dnstwist para ${termo}: ${stdout}`);
             if (stderr) this.log(`Saida de erro dnstwist para ${termo}: ${stderr}`);
             const resultado = JSON.parse(stdout || "[]");
@@ -125,6 +139,31 @@ class PhishingDnstwistService extends NanoService {
             this.error(`Falha na execução do dnstwist: ${mensagem}`);
             return [] as string[];
         }
+    }
+
+    private async verificarDnstwist() {
+        if (this.dnstwistDisponivel !== null) return this.dnstwistDisponivel;
+        const caminho = await this.localizarDnstwist();
+        if (!caminho) {
+            this.error("dnstwist não encontrado no PATH");
+            this.dnstwistDisponivel = false;
+            return false;
+        }
+        this.dnstwistBinario = caminho;
+        this.dnstwistDisponivel = true;
+        return true;
+    }
+
+    private async localizarDnstwist() {
+        const caminhos = (process.env.PATH || "").split(":").filter(Boolean);
+        for (const base of caminhos) {
+            const candidato = `${base}/dnstwist`;
+            try {
+                await access(candidato, constants.X_OK);
+                return candidato;
+            } catch (_) {}
+        }
+        return "";
     }
 }
 
