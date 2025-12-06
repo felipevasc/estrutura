@@ -120,8 +120,10 @@ type PalavraCatcher = { termo: string; peso: number };
 
 type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[] };
 
+type BasePhishing = { palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[]; padrao?: { palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[] } };
+
 const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
-const baseInicial = { palavrasChave: [] as string[], palavrasAuxiliares: [] as string[], tlds: [] as string[] };
+const baseInicial: BasePhishing = { palavrasChave: [], palavrasAuxiliares: [], tlds: [], padrao: { palavrasChave: [], palavrasAuxiliares: [], tlds: [] } };
 const opcoesStatus = [
     { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: '[possivel phishing]', cor: 'orange' },
     { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: '[necessario analise]', cor: 'blue' },
@@ -139,7 +141,7 @@ const PhishingView = () => {
     const [dominios, setDominios] = useState<Dominio[]>([]);
     const [dominioSelecionado, setDominioSelecionado] = useState<number | null>(null);
     const [dados, setDados] = useState<RegistroPhishing[]>([]);
-    const [basePhishing, setBasePhishing] = useState<{ palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[] }>(baseInicial);
+    const [basePhishing, setBasePhishing] = useState<BasePhishing>(baseInicial);
     const [entradaPalavrasChave, setEntradaPalavrasChave] = useState<string[]>([]);
     const [entradaPalavrasAuxiliares, setEntradaPalavrasAuxiliares] = useState<string[]>([]);
     const [entradaTlds, setEntradaTlds] = useState<string[]>([]);
@@ -269,7 +271,7 @@ const PhishingView = () => {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/termos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: dominioSelecionado, palavrasChave: entradaPalavrasChave, tlds: entradaTlds }),
+                body: JSON.stringify({ dominioId: dominioSelecionado, palavrasChave: entradaPalavrasChave, palavrasAuxiliares: entradaPalavrasAuxiliares, tlds: entradaTlds }),
             });
             if (!resposta.ok) throw new Error();
             const base = await resposta.json();
@@ -284,6 +286,13 @@ const PhishingView = () => {
         } finally {
             setSalvandoTermos(false);
         }
+    };
+
+    const resetarBase = () => {
+        const padrao = basePhishing.padrao || basePhishing;
+        setEntradaPalavrasChave(padrao.palavrasChave || []);
+        setEntradaPalavrasAuxiliares(padrao.palavrasAuxiliares || []);
+        setEntradaTlds(padrao.tlds || []);
     };
 
     const executarDnstwist = async () => {
@@ -628,7 +637,8 @@ const PhishingView = () => {
                                     carregarConfiguracaoCatcher(valor);
                                 } else {
                                     setBasePhishing(baseInicial);
-                                    setEntradaPalavras([]);
+                                    setEntradaPalavrasChave([]);
+                                    setEntradaPalavrasAuxiliares([]);
                                     setEntradaTlds([]);
                                     setConfiguracaoCatcher(configInicial);
                                 }
@@ -741,13 +751,15 @@ const PhishingView = () => {
             <Modal
                 title="Base de phishing"
                 open={modalTermosVisivel}
-                onOk={salvarTermos}
-                okText="Salvar base"
                 onCancel={() => setModalTermosVisivel(false)}
-                confirmLoading={salvandoTermos}
+                footer={[
+                    <Button key="reset" onClick={resetarBase}>Resetar</Button>,
+                    <Button key="cancel" onClick={() => setModalTermosVisivel(false)}>Cancelar</Button>,
+                    <Button key="submit" type="primary" loading={salvandoTermos} onClick={salvarTermos}>Salvar base</Button>
+                ]}
             >
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text type="secondary">Edite palavras-chave e visualize auxiliares automáticas antes das buscas.</Text>
+                    <Text type="secondary">Edite palavras-chave, auxiliares e TLDs usados nas buscas.</Text>
                     {carregandoTermos ? (
                         <Skeleton active paragraph={{ rows: 5 }} />
                     ) : (
@@ -762,10 +774,14 @@ const PhishingView = () => {
                                 placeholder="Insira palavras-chave e pressione enter"
                             />
                             <Text strong>Palavras auxiliares</Text>
-                            <ListaTermos>
-                                {entradaPalavrasAuxiliares.map((termo) => <Tag key={termo} color="magenta">{termo}</Tag>)}
-                                {!entradaPalavrasAuxiliares.length && <Text type="secondary">Lista gerada automaticamente.</Text>}
-                            </ListaTermos>
+                            <Select
+                                mode="tags"
+                                style={{ width: '100%' }}
+                                value={entradaPalavrasAuxiliares}
+                                onChange={valor => setEntradaPalavrasAuxiliares(valor)}
+                                tokenSeparators={[',', ' ']}
+                                placeholder="Insira palavras auxiliares e pressione enter"
+                            />
                             <Text strong>TLDs</Text>
                             <Select
                                 mode="tags"

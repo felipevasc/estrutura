@@ -187,6 +187,17 @@ model TermoPhishing {
   @@map("termos_phishing")
 }
 
+model AuxiliarPhishing {
+  id        Int      @id @default(autoincrement())
+  termo     String
+  dominioId Int
+  dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  criadoEm  DateTime @default(now())
+
+  @@unique([termo, dominioId])
+  @@map("auxiliares_phishing")
+}
+
 model TldPhishing {
   id        Int      @id @default(autoincrement())
   tld       String
