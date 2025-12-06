@@ -23,10 +23,11 @@ const normalizarTlds = (lista: any[]) => {
 
 const gerarBasePermitida = async (dominioId: number) => {
     const dominio = await prisma.dominio.findFirst({ where: { id: dominioId } });
-    if (!dominio) return { palavras: [] as string[], tlds: [] as string[] };
+    if (!dominio) return { palavras: [] as string[], tlds: [] as string[], padrao: { palavras: [] as string[], tlds: [] as string[] } };
     const base = await carregarBasePhishing(dominio);
     const palavras = gerarTermosPhishing(base.palavrasChave, base.palavrasAuxiliares);
-    return { palavras, tlds: base.tlds };
+    const padrao = gerarTermosPhishing(base.padrao.palavrasChave, base.padrao.palavrasAuxiliares);
+    return { palavras, tlds: base.tlds, padrao: { palavras: padrao, tlds: base.padrao.tlds } };
 };
 
 const aplicarBase = (palavras: { termo: string; peso: number }[], permitidos: string[], tldsBase: string[], tldsEntrada: string[]) => {
@@ -37,6 +38,8 @@ const aplicarBase = (palavras: { termo: string; peso: number }[], permitidos: st
     const tlds = tldsEntrada.length ? tldsEntrada : tldsBase;
     return { palavras: filtrados, tlds };
 };
+
+const montarPadrao = (padrao: { palavras: string[]; tlds: string[] }) => ({ palavras: padrao.palavras.map(termo => ({ termo, peso: 3 })), tlds: padrao.tlds });
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     try {
@@ -52,12 +55,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         if (!existente) {
             const padrao = aplicarBase([], base.palavras, base.tlds, []);
             await prisma.configuracaoPhishingCatcher.create({ data: { dominioId, palavras: padrao.palavras, tlds: padrao.tlds } });
-            return NextResponse.json(padrao);
+            return NextResponse.json({ ...padrao, padrao: montarPadrao(base.padrao) });
         }
 
         const palavras = normalizarPalavras(existente.palavras as any[]);
         const tlds = normalizarTlds(existente.tlds as any[]);
-        return NextResponse.json(aplicarBase(palavras, base.palavras, base.tlds, tlds));
+        const ajustada = aplicarBase(palavras, base.palavras, base.tlds, tlds);
+        return NextResponse.json({ ...ajustada, padrao: montarPadrao(base.padrao) });
     } catch (erro) {
         console.error("Erro ao carregar configuração do phishing_catcher:", erro);
         return responderErro("Erro interno ao carregar configuração", 500);
@@ -86,7 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
             create: { dominioId: dominio.id, palavras: sincronizado.palavras, tlds: sincronizado.tlds }
         });
 
-        return NextResponse.json({ palavras: configuracao.palavras, tlds: configuracao.tlds });
+        return NextResponse.json({ palavras: configuracao.palavras, tlds: configuracao.tlds, padrao: montarPadrao(base.padrao) });
     } catch (erro) {
         console.error("Erro ao salvar configuração do phishing_catcher:", erro);
         return responderErro("Erro interno ao salvar configuração", 500);

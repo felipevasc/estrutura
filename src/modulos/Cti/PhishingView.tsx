@@ -118,11 +118,11 @@ interface RegistroPhishing {
 
 type PalavraCatcher = { termo: string; peso: number };
 
-type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[] };
+type ConfiguracaoCatcher = { palavras: PalavraCatcher[]; tlds: string[]; padrao?: { palavras: PalavraCatcher[]; tlds: string[] } };
 
 type BasePhishing = { palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[]; padrao?: { palavrasChave: string[]; palavrasAuxiliares: string[]; tlds: string[] } };
 
-const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
+const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [], padrao: { palavras: [], tlds: [] } };
 const baseInicial: BasePhishing = { palavrasChave: [], palavrasAuxiliares: [], tlds: [], padrao: { palavrasChave: [], palavrasAuxiliares: [], tlds: [] } };
 const opcoesStatus = [
     { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: '[possivel phishing]', cor: 'orange' },
@@ -176,6 +176,13 @@ const PhishingView = () => {
         }
     }, [projetoId]);
 
+    const normalizarPadraoCatcher = useCallback((entrada?: { palavras?: PalavraCatcher[]; tlds?: string[] }) => ({
+        palavras: (entrada?.palavras || [])
+            .map(item => ({ termo: String(item?.termo || '').toLowerCase(), peso: Math.max(1, Number(item?.peso) || 1) }))
+            .filter(item => item.termo),
+        tlds: (entrada?.tlds || []).map(item => String(item || '').toLowerCase()).filter(Boolean)
+    }), []);
+
     const buscarDados = useCallback(async () => {
         if (!projetoId) return;
         setCarregando(true);
@@ -221,13 +228,17 @@ const PhishingView = () => {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/catcher/configuracao?dominioId=${dominioId}`);
             if (!resposta.ok) throw new Error();
             const configuracao = await resposta.json();
-            setConfiguracaoCatcher(configuracao);
+            setConfiguracaoCatcher({
+                palavras: configuracao.palavras || [],
+                tlds: configuracao.tlds || [],
+                padrao: normalizarPadraoCatcher(configuracao.padrao)
+            });
         } catch {
             message.error('Não foi possível carregar a configuração do phishing_catcher.');
         } finally {
             setCarregandoConfiguracao(false);
         }
-    }, [projetoId]);
+    }, [normalizarPadraoCatcher, projetoId]);
 
     const atualizarStatus = async (id: number, status: PhishingStatus) => {
         if (!projetoId) return;
@@ -416,14 +427,19 @@ const PhishingView = () => {
         if (!dominioSelecionado || !projetoId) return;
         setSalvandoConfiguracao(true);
         try {
+            const { palavras, tlds } = configuracaoCatcher;
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/catcher/configuracao`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ dominioId: dominioSelecionado, ...configuracaoCatcher })
+                body: JSON.stringify({ dominioId: dominioSelecionado, palavras, tlds })
             });
             if (!resposta.ok) throw new Error();
             const configuracao = await resposta.json();
-            setConfiguracaoCatcher(configuracao);
+            setConfiguracaoCatcher({
+                palavras: configuracao.palavras || [],
+                tlds: configuracao.tlds || [],
+                padrao: normalizarPadraoCatcher(configuracao.padrao)
+            });
             setModalConfiguracaoCatcher(false);
             message.success('Configuração salva.');
         } catch {
@@ -500,6 +516,11 @@ const PhishingView = () => {
 
     const alterarTlds = (lista: string[]) => {
         setConfiguracaoCatcher((atual) => ({ ...atual, tlds: lista }));
+    };
+
+    const resetarConfiguracaoCatcher = () => {
+        const padrao = normalizarPadraoCatcher(configuracaoCatcher.padrao);
+        setConfiguracaoCatcher((atual) => ({ ...atual, palavras: padrao.palavras, tlds: padrao.tlds }));
     };
 
     const abrirAjuda = (titulo: string, descricao: React.ReactNode) => setModalAjuda({ titulo, descricao });
@@ -809,10 +830,12 @@ const PhishingView = () => {
             <Modal
                 title="Configuração do phishing_catcher"
                 open={modalConfiguracaoCatcher}
-                onOk={salvarConfiguracaoCatcher}
                 onCancel={() => setModalConfiguracaoCatcher(false)}
-                confirmLoading={salvandoConfiguracao}
-                okText="Salvar configuração"
+                footer={[
+                    <Button key="reset" onClick={resetarConfiguracaoCatcher}>Resetar</Button>,
+                    <Button key="cancel" onClick={() => setModalConfiguracaoCatcher(false)}>Cancelar</Button>,
+                    <Button key="save" type="primary" loading={salvandoConfiguracao} onClick={salvarConfiguracaoCatcher}>Salvar configuração</Button>
+                ]}
             >
                 <Space direction="vertical" style={{ width: '100%' }} size={12}>
                     {tituloSecao('Palavras-chave monitoradas', () => abrirAjuda('Palavras-chave monitoradas', (

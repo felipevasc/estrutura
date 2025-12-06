@@ -4,7 +4,6 @@ import { PhishingStatus } from "@prisma/client";
 import { Dominio } from "@prisma/client";
 import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
-import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 import { alvoAcessivel } from "@/utils/conectividade";
 
 type Payload = { id: number; args: unknown };
@@ -82,7 +81,7 @@ class PhishingCrtshService extends NanoService {
 
     private async obterTermos(dominio: Dominio) {
         const base = await carregarBasePhishing(dominio);
-        return gerarTermosPhishing(base.palavrasChave, base.palavrasAuxiliares);
+        return Array.from(new Set(base.palavrasChave.map(item => item.toLowerCase().trim()).filter(Boolean)));
     }
 
     private async buscarCrtsh(termo: string) {
