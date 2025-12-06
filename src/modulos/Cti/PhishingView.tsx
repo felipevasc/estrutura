@@ -5,7 +5,7 @@ import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider,
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, CheckCircleOutlined, StopOutlined, QuestionCircleOutlined, WarningOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -112,6 +112,7 @@ interface RegistroPhishing {
     criadoEm: string;
     ultimaVerificacao?: string;
     statusUltimaVerificacao?: 'ONLINE' | 'OFFLINE';
+    status: 'POSSIVEL_PHISHING' | 'PHISHING_IDENTIFICADO' | 'FALSO_POSITIVO' | 'NECESSARIO_ANALISE' | 'NECESSARIO_REANALISE';
     dominio: { endereco: string };
 }
 
@@ -148,6 +149,9 @@ const PhishingView = () => {
     const [verificandoIndividuais, setVerificandoIndividuais] = useState<number[]>([]);
     const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
+    const [modalStatusVisivel, setModalStatusVisivel] = useState(false);
+    const [statusParaEditar, setStatusParaEditar] = useState<RegistroPhishing | null>(null);
+    const [novoStatus, setNovoStatus] = useState<string | null>(null);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -434,12 +438,46 @@ const PhishingView = () => {
 
     const abrirAjuda = (titulo: string, descricao: React.ReactNode) => setModalAjuda({ titulo, descricao });
 
+    const abrirModalStatus = (registro: RegistroPhishing) => {
+        setStatusParaEditar(registro);
+        setNovoStatus(registro.status);
+        setModalStatusVisivel(true);
+    };
+
+    const salvarStatus = async () => {
+        if (!projetoId || !statusParaEditar || !novoStatus) return;
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/${statusParaEditar.id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: novoStatus })
+            });
+            if (!resposta.ok) throw new Error();
+            message.success('Status atualizado.');
+            setModalStatusVisivel(false);
+            buscarDados();
+        } catch {
+            message.error('Erro ao atualizar status.');
+        }
+    };
+
     const tituloSecao = (texto: string, onClick: () => void) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Text strong>{texto}</Text>
             <Button type="link" size="small" icon={<InfoCircleOutlined />} onClick={onClick} />
         </div>
     );
+
+    const renderStatus = (status: string) => {
+        switch (status) {
+            case 'POSSIVEL_PHISHING': return <Tag icon={<WarningOutlined />} color="orange">Possível Phishing</Tag>;
+            case 'PHISHING_IDENTIFICADO': return <Tag icon={<StopOutlined />} color="red">Confirmado</Tag>;
+            case 'FALSO_POSITIVO': return <Tag icon={<CheckCircleOutlined />} color="green">Falso Positivo</Tag>;
+            case 'NECESSARIO_ANALISE': return <Tag icon={<QuestionCircleOutlined />} color="blue">Em Análise</Tag>;
+            case 'NECESSARIO_REANALISE': return <Tag icon={<ReloadOutlined />} color="purple">Reanálise</Tag>;
+            default: return <Tag>{status}</Tag>;
+        }
+    };
 
     const colunas = [
         {
@@ -455,10 +493,14 @@ const PhishingView = () => {
             render: (valor: string) => <Tag color="purple">{valor}</Tag>
         },
         {
-            title: 'Fonte',
-            dataIndex: 'fonte',
-            key: 'fonte',
-            render: (valor: string) => <Tag color="blue">{valor.toUpperCase()}</Tag>
+            title: 'Classificação',
+            dataIndex: 'status',
+            key: 'status',
+            render: (valor: string, registro: RegistroPhishing) => (
+                <div style={{ cursor: 'pointer' }} onClick={() => abrirModalStatus(registro)}>
+                    {renderStatus(valor)}
+                </div>
+            )
         },
         {
             title: 'Status',
@@ -488,14 +530,19 @@ const PhishingView = () => {
             title: 'Ações',
             key: 'acoes',
             render: (_: string, registro: RegistroPhishing) => (
-                <Button
-                    size="small"
-                    icon={<SecurityScanOutlined />}
-                    loading={verificando || verificandoIndividuais.includes(registro.id)}
-                    onClick={() => verificarRegistro(registro.id)}
-                >
-                    Verificar
-                </Button>
+                <Space>
+                    <Tooltip title="Verificar disponibilidade">
+                        <Button
+                            size="small"
+                            icon={<SecurityScanOutlined />}
+                            loading={verificando || verificandoIndividuais.includes(registro.id)}
+                            onClick={() => verificarRegistro(registro.id)}
+                        />
+                    </Tooltip>
+                    <Tooltip title="Editar status">
+                         <Button size="small" icon={<EditOutlined />} onClick={() => abrirModalStatus(registro)} />
+                    </Tooltip>
+                </Space>
             )
         }
     ];
@@ -738,7 +785,7 @@ const PhishingView = () => {
                         <Space direction="vertical">
                             <Text>Define quais terminações de domínio serão acompanhadas de perto.</Text>
                             <Text>Somente TLDs listados serão considerados na priorização; remover um item reduz alertas nele.</Text>
-                            <Text>Adicionar novas terminações amplia o escopo de caça para aquele domínio.</Text>
+                            <Text>Adicionar novas terminações amplia o escopo de caça para aquela domínio.</Text>
                         </Space>
                     )))}
                     {carregandoConfiguracao ? <Skeleton active paragraph={{ rows: 2 }} /> : (
@@ -751,6 +798,28 @@ const PhishingView = () => {
                             placeholder="Digite TLDs e pressione enter"
                         />
                     )}
+                </Space>
+            </Modal>
+
+            <Modal
+                title="Classificação de Phishing"
+                open={modalStatusVisivel}
+                onOk={salvarStatus}
+                onCancel={() => setModalStatusVisivel(false)}
+            >
+                <Space direction="vertical" style={{ width: '100%' }}>
+                   <Text>Selecione a nova classificação para <Text strong>{statusParaEditar?.alvo}</Text>:</Text>
+                   <Select
+                        style={{ width: '100%' }}
+                        value={novoStatus}
+                        onChange={setNovoStatus}
+                    >
+                        <Option value="POSSIVEL_PHISHING">Possível Phishing</Option>
+                        <Option value="PHISHING_IDENTIFICADO">Phishing Identificado</Option>
+                        <Option value="FALSO_POSITIVO">Falso Positivo</Option>
+                        <Option value="NECESSARIO_ANALISE">Necessário Análise</Option>
+                        <Option value="NECESSARIO_REANALISE">Necessário Reanálise</Option>
+                    </Select>
                 </Space>
             </Modal>
 
