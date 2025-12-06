@@ -44,7 +44,8 @@ class PhishingDnstwistService extends NanoService {
 
             const pronto = await this.verificarDnstwist();
             if (!pronto) {
-                this.bus.emit("JOB_FAILED", { id, error: "dnstwist não está disponível" });
+                this.log("dnstwist não está disponível");
+                this.bus.emit("JOB_COMPLETED", { id, result: { disponivel: false, motivo: "dnstwist não está disponível" } });
                 return;
             }
 
