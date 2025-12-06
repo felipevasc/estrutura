@@ -19,6 +19,7 @@ import { TratamentoVazamentoService } from './services/cti/vazamentoSenhas/Trata
 import { BaseVazamentosService } from './services/cti/vazamentoSenhas/BaseVazamentosService';
 import { ComunicacaoVazamentosService } from './services/cti/vazamentoSenhas/ComunicacaoVazamentosService';
 import { WhatwebService } from './services/tools/WhatwebService';
+import { DnsenumService } from './services/tools/DnsenumService';
 import PhishingDnstwistService from './services/cti/PhishingDnstwistService';
 import PhishingCatcherService from './services/cti/PhishingCatcherService';
 import PhishingCrtshService from './services/cti/PhishingCrtshService';
@@ -35,6 +36,7 @@ export const registeredServices: NanoService[] = [
     new RustscanService(),
     new GobusterService(),
     new WhatwebService(),
+    new DnsenumService(),
     new Enum4linuxService(),
     new FfufService(),
     new DefaceDorkService(),

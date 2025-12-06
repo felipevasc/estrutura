@@ -44,14 +44,22 @@ export type GrupoAcao = {
 
 export const gruposAcoes: GrupoAcao[] = [
     { chave: "dominios", titulo: "Busca de Domínios", icone: <GlobalOutlined /> },
-    { chave: "dns", titulo: "Resolução e DNS", icone: <SearchOutlined /> },
     { chave: "fuzzing", titulo: "Fuzzing", icone: <BugOutlined /> },
-    { chave: "ips", titulo: "Busca por IPs", icone: <RadarChartOutlined /> },
+    { chave: "ips", titulo: "Busca de IPs", icone: <RadarChartOutlined /> },
     { chave: "usuarios", titulo: "Busca de Usuários", icone: <UserSwitchOutlined /> },
 ];
 
 const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
     dominios: [
+        {
+            chave: "dnsenumDominio",
+            titulo: "Dnsenum",
+            descricao: "Enumeração de subdomínios e IPs",
+            comando: "dnsenum",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <DeploymentUnitOutlined />,
+        },
         {
             chave: "amass",
             titulo: "Amass",
@@ -78,17 +86,6 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             tiposAlvo: ["domain"],
             gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
             icone: <NodeIndexOutlined />,
-        },
-    ],
-    dns: [
-        {
-            chave: "nslookup",
-            titulo: "NsLookup",
-            descricao: "Resolução de IPs",
-            comando: "nslookup",
-            tiposAlvo: ["domain"],
-            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
-            icone: <SearchOutlined />,
         },
     ],
     fuzzing: [
@@ -212,6 +209,24 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
     ],
     ips: [
         {
+            chave: "nslookup",
+            titulo: "NsLookup",
+            descricao: "Resolução de IPs",
+            comando: "nslookup",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <SearchOutlined />,
+        },
+        {
+            chave: "dnsenumIp",
+            titulo: "Dnsenum",
+            descricao: "Resolução de IPs",
+            comando: "dnsenum",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <SearchOutlined />,
+        },
+        {
             chave: "nmap",
             titulo: "Nmap",
             descricao: "Scan de portas",
@@ -298,6 +313,19 @@ const camposWordlist: CampoConfiguracao[] = [
 
 const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModal | null => {
     const id = alvo.id.toString();
+    if (acao.chave === "dnsenumDominio" || acao.chave === "dnsenumIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [
+                { chave: "threads", rotulo: "Threads", tipo: "numero", detalhe: "Número de threads para processamento." },
+                { chave: "wordlist", rotulo: "Wordlist", tipo: "texto", detalhe: "Caminho da wordlist para força bruta." },
+            ],
+            valores: { threads: 5, wordlist: "/usr/share/wordlists/dnsenum/dns.txt" },
+        };
+    }
     if (acao.chave === "amass") {
         return {
             comando: acao.comando,

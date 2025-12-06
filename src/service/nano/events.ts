@@ -35,6 +35,9 @@ export const NanoEvents = {
 
   WHATWEB_RESULT: 'WHATWEB_RESULT',
   WHATWEB_ERROR: 'WHATWEB_ERROR',
+
+  DNSENUM_TERMINAL_RESULT: 'DNSENUM_TERMINAL_RESULT',
+  DNSENUM_TERMINAL_ERROR: 'DNSENUM_TERMINAL_ERROR',
 } as const;
 
 export type NanoEventKey = keyof typeof NanoEvents;
