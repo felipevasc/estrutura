@@ -260,6 +260,10 @@ const PhishingView = () => {
         await carregarBase(dominioSelecionado);
     };
 
+    const limparPalavras = () => {
+        setEntradaPalavras([]);
+    };
+
     const salvarTermos = async () => {
         if (!dominioSelecionado || !projetoId) return;
         setSalvandoTermos(true);
@@ -744,19 +748,24 @@ const PhishingView = () => {
                 confirmLoading={salvandoTermos}
             >
                 <Space direction="vertical" style={{ width: '100%' }}>
-                    <Text type="secondary">Edite ou adicione palavras e TLDs utilizados nas buscas.</Text>
+                    <Text type="secondary">Use palavras simples, incluindo partes do domínio e termos básicos, e ajuste os TLDs utilizados nas buscas.</Text>
                     {carregandoTermos ? (
                         <Skeleton active paragraph={{ rows: 4 }} />
                     ) : (
                         <Space direction="vertical" style={{ width: '100%' }}>
+                            <Space style={{ justifyContent: 'space-between', width: '100%' }}>
+                                <Text strong>Palavras</Text>
+                                <Button danger size="small" onClick={limparPalavras} disabled={!entradaPalavras.length}>Limpar todas</Button>
+                            </Space>
                             <Select
                                 mode="tags"
                                 style={{ width: '100%' }}
                                 value={entradaPalavras}
                                 onChange={valor => setEntradaPalavras(valor)}
                                 tokenSeparators={[',', ' ']}
-                                placeholder="Insira palavras e pressione enter"
+                                placeholder="Insira palavras simples e pressione enter"
                             />
+                            <Text strong>TLDs</Text>
                             <Select
                                 mode="tags"
                                 style={{ width: '100%' }}
