@@ -7,6 +7,8 @@ import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 import { gerarCombinacoesPhishing } from "@/utils/geradorTermosPhishing";
 import { alvoAcessivel } from "@/utils/conectividade";
+import { access } from "fs/promises";
+import { constants } from "fs";
 
 const executar = promisify(execFile);
 
@@ -16,6 +18,7 @@ type Dados = { dominioId?: number; termo?: string };
 
 class PhishingDnstwistService extends NanoService {
     private dnstwistDisponivel: boolean | null = null;
+    private dnstwistBinario = "dnstwist";
 
     constructor() {
         super("PhishingDnstwistService");
@@ -109,7 +112,7 @@ class PhishingDnstwistService extends NanoService {
 
     private async executarDnstwist(termo: string) {
         try {
-            const { stdout, stderr } = await executar("dnstwist", ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
+            const { stdout, stderr } = await executar(this.dnstwistBinario, ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
             this.log(`Saida dnstwist para ${termo}: ${stdout}`);
             if (stderr) this.log(`Saida de erro dnstwist para ${termo}: ${stderr}`);
             const resultado = JSON.parse(stdout || "[]");
@@ -139,16 +142,27 @@ class PhishingDnstwistService extends NanoService {
 
     private async verificarDnstwist() {
         if (this.dnstwistDisponivel !== null) return this.dnstwistDisponivel;
-        try {
-            await executar("which", ["dnstwist"]);
-            this.dnstwistDisponivel = true;
-            return true;
-        } catch (erro: unknown) {
-            const mensagem = erro instanceof Error ? erro.message : "dnstwist indisponível";
-            this.error(`Falha ao localizar dnstwist: ${mensagem}`);
+        const caminho = await this.localizarDnstwist();
+        if (!caminho) {
+            this.error("dnstwist não encontrado no PATH");
             this.dnstwistDisponivel = false;
             return false;
         }
+        this.dnstwistBinario = caminho;
+        this.dnstwistDisponivel = true;
+        return true;
+    }
+
+    private async localizarDnstwist() {
+        const caminhos = (process.env.PATH || "").split(":").filter(Boolean);
+        for (const base of caminhos) {
+            const candidato = `${base}/dnstwist`;
+            try {
+                await access(candidato, constants.X_OK);
+                return candidato;
+            } catch (_) {}
+        }
+        return "";
     }
 }
 
