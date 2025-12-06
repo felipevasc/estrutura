@@ -323,7 +323,7 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
                 { chave: "threads", rotulo: "Threads", tipo: "numero", detalhe: "Número de threads para processamento." },
                 { chave: "wordlist", rotulo: "Wordlist", tipo: "texto", detalhe: "Caminho da wordlist para força bruta." },
             ],
-            valores: { threads: 5, wordlist: "/usr/share/wordlists/dnsenum/dns.txt" },
+            valores: { threads: 5, wordlist: "" },
         };
     }
     if (acao.chave === "amass") {

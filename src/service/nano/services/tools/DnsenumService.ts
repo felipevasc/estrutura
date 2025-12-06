@@ -30,12 +30,16 @@ export class DnsenumService extends NanoService {
     this.log(`Processing Dnsenum for domain ID: ${idDominio}`);
 
     try {
+        if (wordlist && !fs.existsSync(wordlist)) {
+            throw new Error(`Wordlist inválida ou não encontrada: ${wordlist}`);
+        }
+
         const op = await prisma.dominio.findFirst({
             where: { id: Number(idDominio) }
         });
         const dominio = op?.endereco ?? "";
 
-        if (!dominio) throw new Error('Domain not found');
+        if (!dominio) throw new Error('Domínio não encontrado');
 
         const nomeArquivoSaida = `dnsenum_${projectId}_${id}_${Date.now()}.xml`;
         const caminhoSaida = path.join(os.tmpdir(), nomeArquivoSaida);
@@ -147,10 +151,11 @@ export class DnsenumService extends NanoService {
   }
 
   private processError(payload: any) {
-      const { id, error } = payload;
+      const { id, error, stderr } = payload;
+      const errorMessage = stderr ? `${error} - Detalhes: ${stderr}` : error;
       this.bus.emit(NanoEvents.JOB_FAILED, {
           id: id,
-          error: error
+          error: errorMessage
       });
   }
 }
