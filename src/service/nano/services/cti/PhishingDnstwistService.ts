@@ -15,6 +15,8 @@ type Payload = { id: number; args: unknown };
 type Dados = { dominioId?: number; termo?: string };
 
 class PhishingDnstwistService extends NanoService {
+    private dnstwistDisponivel: boolean | null = null;
+
     constructor() {
         super("PhishingDnstwistService");
     }
@@ -36,6 +38,12 @@ class PhishingDnstwistService extends NanoService {
             const dados = dadosBrutos as Dados;
             const dominioId = dados?.dominioId;
             if (!dominioId) throw new Error("dominioId é obrigatório");
+
+            const pronto = await this.verificarDnstwist();
+            if (!pronto) {
+                this.bus.emit("JOB_FAILED", { id, error: "dnstwist não está disponível" });
+                return;
+            }
 
             if (dados.termo) {
                 await this.executarTermo(id, dominioId, dados.termo);
@@ -126,6 +134,20 @@ class PhishingDnstwistService extends NanoService {
             if (detalhes.stderr) this.error(`Erro dnstwist com falha: ${detalhes.stderr}`);
             this.error(`Falha na execução do dnstwist: ${mensagem}`);
             return [] as string[];
+        }
+    }
+
+    private async verificarDnstwist() {
+        if (this.dnstwistDisponivel !== null) return this.dnstwistDisponivel;
+        try {
+            await executar("which", ["dnstwist"]);
+            this.dnstwistDisponivel = true;
+            return true;
+        } catch (erro: unknown) {
+            const mensagem = erro instanceof Error ? erro.message : "dnstwist indisponível";
+            this.error(`Falha ao localizar dnstwist: ${mensagem}`);
+            this.dnstwistDisponivel = false;
+            return false;
         }
     }
 }
