@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
-import { Dominio } from '@prisma/client';
+import type { Dominio, PhishingStatus } from '@prisma/client';
 import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -112,6 +112,7 @@ interface RegistroPhishing {
     criadoEm: string;
     ultimaVerificacao?: string;
     statusUltimaVerificacao?: 'ONLINE' | 'OFFLINE';
+    status?: PhishingStatus | null;
     dominio: { endereco: string };
 }
 
@@ -123,6 +124,30 @@ const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [] };
 const baseInicial = { palavras: [] as string[], tlds: [] as string[] };
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
+
+const rotulosStatus: Record<PhishingStatus, string> = {
+    POSSIVEL_PHISHING: '[possivel phishing]',
+    NECESSARIO_ANALISE: '[necessario analise]',
+    PHISHING_IDENTIFICADO: '[phishing identificado]',
+    FALSO_POSITIVO: '[falso positivo]',
+    NECESSARIO_REANALISE: '[necessario reanalise]'
+};
+
+const corStatus = (status: PhishingStatus) => {
+    if (status === 'PHISHING_IDENTIFICADO') return 'red';
+    if (status === 'POSSIVEL_PHISHING') return 'volcano';
+    if (status === 'NECESSARIO_REANALISE') return 'orange';
+    if (status === 'FALSO_POSITIVO') return 'green';
+    return 'blue';
+};
+
+const opcoesStatus: PhishingStatus[] = [
+    'POSSIVEL_PHISHING',
+    'NECESSARIO_ANALISE',
+    'PHISHING_IDENTIFICADO',
+    'FALSO_POSITIVO',
+    'NECESSARIO_REANALISE'
+];
 
 const PhishingView = () => {
     const { projeto } = useStore();
@@ -146,6 +171,7 @@ const PhishingView = () => {
     const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
     const [verificando, setVerificando] = useState(false);
     const [verificandoIndividuais, setVerificandoIndividuais] = useState<number[]>([]);
+    const [alterandoStatus, setAlterandoStatus] = useState<number[]>([]);
     const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
 
@@ -168,11 +194,35 @@ const PhishingView = () => {
             const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing`);
             if (!resposta.ok) throw new Error();
             const resultado = await resposta.json();
-            setDados(resultado);
+            const normalizado = (resultado as RegistroPhishing[]).map((item) => ({
+                ...item,
+                status: item.status ?? PhishingStatus.NECESSARIO_ANALISE
+            }));
+            setDados(normalizado);
         } catch {
             message.error('Erro ao carregar registros de phishing.');
         } finally {
             setCarregando(false);
+        }
+    }, [projetoId]);
+
+    const atualizarStatus = useCallback(async (phishingId: number, status: PhishingStatus) => {
+        if (!projetoId) return;
+        setAlterandoStatus((atual) => [...atual, phishingId]);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: phishingId, status })
+            });
+            if (!resposta.ok) throw new Error();
+            const atualizado = await resposta.json();
+            setDados((lista) => lista.map((item) => item.id === phishingId ? { ...item, status: atualizado.status } : item));
+            message.success('Status atualizado.');
+        } catch {
+            message.error('Não foi possível alterar o status.');
+        } finally {
+            setAlterandoStatus((atual) => atual.filter((entrada) => entrada !== phishingId));
         }
     }, [projetoId]);
 
@@ -459,6 +509,27 @@ const PhishingView = () => {
             dataIndex: 'fonte',
             key: 'fonte',
             render: (valor: string) => <Tag color="blue">{valor.toUpperCase()}</Tag>
+        },
+        {
+            title: 'Classificação',
+            dataIndex: 'status',
+            key: 'status',
+            render: (_: string, registro: RegistroPhishing) => {
+                const valor = registro.status || PhishingStatus.NECESSARIO_ANALISE;
+                return (
+                    <Space direction="vertical" size={4}>
+                        <Tag color={corStatus(valor)}>{rotulosStatus[valor]}</Tag>
+                        <Select
+                            size="small"
+                            value={valor}
+                            onChange={(novo) => atualizarStatus(registro.id, novo)}
+                            loading={alterandoStatus.includes(registro.id)}
+                        >
+                            {opcoesStatus.map((opcao) => <Option key={opcao} value={opcao}>{rotulosStatus[opcao]}</Option>)}
+                        </Select>
+                    </Space>
+                );
+            }
         },
         {
             title: 'Status',
