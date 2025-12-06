@@ -171,6 +171,7 @@ model Phishing {
   criadoEm  DateTime @default(now())
   ultimaVerificacao       DateTime?
   statusUltimaVerificacao PhishingVerificacaoStatus?
+  status    PhishingStatus @default(NECESSARIO_ANALISE)
 
   @@map("phishing")
 }
@@ -264,6 +265,14 @@ enum TakedownVerificacaoStatus {
 enum PhishingVerificacaoStatus {
   ONLINE
   OFFLINE
+}
+
+enum PhishingStatus {
+  POSSIVEL_PHISHING
+  PHISHING_IDENTIFICADO
+  FALSO_POSITIVO
+  NECESSARIO_ANALISE
+  NECESSARIO_REANALISE
 }
 
 enum TipoDiretorio {

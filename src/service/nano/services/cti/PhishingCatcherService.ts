@@ -4,10 +4,12 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { writeFile, mkdir, mkdtemp } from "fs/promises";
 import path from "path";
-import { Dominio } from "@prisma/client";
+import { Dominio, PhishingStatus } from "@prisma/client";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 import { tmpdir } from "os";
 import { alvoAcessivel } from "@/utils/conectividade";
+import { AnalisadorPhishing } from "./analise/AnalisadorPhishing";
+import { DecisaoFiltro } from "./analise/tipos";
 
 const executar = promisify(execFile);
 
@@ -20,8 +22,11 @@ type PalavraChave = { termo: string; peso: number };
 type Configuracao = { palavras: PalavraChave[]; tlds: string[] };
 
 class PhishingCatcherService extends NanoService {
+    private analisador: AnalisadorPhishing;
+
     constructor() {
         super("PhishingCatcherService");
+        this.analisador = new AnalisadorPhishing();
     }
 
     async initialize() {
@@ -145,11 +150,34 @@ class PhishingCatcherService extends NanoService {
         for (const entrada of alvos) {
             const alvo = entrada.alvo;
             const termo = entrada.termo || configuracao.palavras[0]?.termo || "phishing_catcher";
+
             const disponivel = await alvoAcessivel(alvo);
             if (!disponivel) continue;
+
             const existente = await prisma.phishing.findFirst({ where: { alvo, dominioId } });
             if (!existente) {
-                const criado = await prisma.phishing.create({ data: { alvo, termo, fonte: "phishing_catcher", dominioId } });
+                const url = `http://${alvo}`;
+                const resultadoAnalise = await this.analisador.analisarUrl(url);
+
+                if (resultadoAnalise.decisao === DecisaoFiltro.DESCONSIDERAR) {
+                    this.log(`Descartado pela análise: ${alvo} - Motivo: ${resultadoAnalise.erro || 'Filtro'}`);
+                    continue;
+                }
+
+                let status: PhishingStatus = PhishingStatus.NECESSARIO_ANALISE;
+                if (resultadoAnalise.decisao === DecisaoFiltro.POSSIVEL_PHISHING) {
+                    status = PhishingStatus.POSSIVEL_PHISHING;
+                }
+
+                const criado = await prisma.phishing.create({
+                    data: {
+                        alvo,
+                        termo,
+                        fonte: "phishing_catcher",
+                        dominioId,
+                        status
+                    }
+                });
                 criados.push(criado);
             }
         }
