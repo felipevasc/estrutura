@@ -132,16 +132,22 @@ export class DnsenumService extends NanoService {
                 }
             }
         }
-        if (subdominios.length > 0) await Database.adicionarSubdominio(subdominios, projectId);
-        if (ips.length > 0) await Database.adicionarIp(ips, projectId);
-        try {
-            if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-        } catch (e) {}
+        const arquivosIps = this.localizarArquivosIps(meta?.dominio);
+        for (const arquivo of arquivosIps) {
+            const ipsArquivo = this.extrairIpsArquivo(arquivo, meta?.dominio);
+            for (const ip of ipsArquivo) ips.push(ip);
+        }
+        const subdominiosUnicos = Array.from(new Set(subdominios));
+        const ipsUnicos = Array.from(new Map(ips.map((ip) => [`${ip.endereco}|${ip.dominio}`, ip])).values());
+        if (subdominiosUnicos.length > 0) await Database.adicionarSubdominio(subdominiosUnicos, projectId);
+        if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projectId);
+        this.limparArquivos([outputFile, ...arquivosIps]);
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
-            result: { subdominios: subdominios.length, ips: ips.length }
+            result: { subdominios: subdominiosUnicos.length, ips: ipsUnicos.length }
         });
       } catch (e: any) {
+          this.limparArquivos([outputFile, ...this.localizarArquivosIps(meta?.dominio)]);
           this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,
               error: e.message
@@ -150,9 +156,10 @@ export class DnsenumService extends NanoService {
   }
 
   private processarErro(payload: any) {
-      const { id, error, stderr } = payload;
+      const { id, error, stderr, meta } = payload;
       const mensagemErro = stderr ? `${error} - Detalhes: ${stderr}` : error;
       const mensagemNormalizada = mensagemErro?.toUpperCase() ?? '';
+      this.limparArquivos([meta?.outputFile, ...this.localizarArquivosIps(meta?.dominio)]);
       if (mensagemNormalizada.includes('NXDOMAIN') || mensagemNormalizada.includes('NS RECORD')) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
@@ -164,5 +171,25 @@ export class DnsenumService extends NanoService {
           id: id,
           error: mensagemErro
       });
+  }
+
+  private localizarArquivosIps(dominio?: string) {
+    if (!dominio) return [] as string[];
+    const nome = `${dominio}_ips.txt`;
+    const caminho = path.join(process.cwd(), nome);
+    return fs.existsSync(caminho) ? [caminho] : [];
+  }
+
+  private extrairIpsArquivo(caminho: string, dominio?: string) {
+    const conteudo = fs.readFileSync(caminho, 'utf-8');
+    const encontrados = conteudo.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) || [];
+    return encontrados.map((ip) => ({ endereco: ip, dominio: dominio || '' }));
+  }
+
+  private limparArquivos(caminhos: (string | undefined)[]) {
+    for (const caminho of caminhos) {
+        if (!caminho) continue;
+        if (fs.existsSync(caminho)) fs.unlinkSync(caminho);
+    }
   }
 }
