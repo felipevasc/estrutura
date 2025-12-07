@@ -14,6 +14,8 @@ type Args = { projetoId?: number; ids?: number[]; dominioId?: number };
 type Registro = { id: number; alvo: string };
 
 class PhishingCapturaService extends NanoService {
+    private ferramenta = process.env.GOWITNESS_BIN || "gowitness";
+
     constructor() {
         super("PhishingCapturaService");
     }
@@ -35,6 +37,9 @@ class PhishingCapturaService extends NanoService {
             const dados = dadosBrutos as Args;
             const projetoId = Number(dados?.projetoId);
             if (!projetoId) throw new Error("Projeto inválido");
+
+            const disponivel = await this.validarFerramenta();
+            if (!disponivel) throw new Error("Ferramenta gowitness indisponível");
 
             const ids = Array.isArray(dados?.ids) ? dados.ids.map((item) => Number(item)).filter((item) => !isNaN(item)) : [];
             const dominioId = Number(dados?.dominioId) || null;
@@ -76,10 +81,12 @@ class PhishingCapturaService extends NanoService {
     private async capturar(url: string, destino: string) {
         try {
             await rm(destino, { force: true });
-            await executar("gowitness", ["single", "--url", url, "--screenshot-path", destino], { maxBuffer: 20 * 1024 * 1024 });
+            await executar(this.ferramenta, ["single", "--url", url, "--screenshot-path", destino], { maxBuffer: 20 * 1024 * 1024 });
             return true;
         } catch (erro: unknown) {
-            this.error(`Erro ao capturar ${url}`, erro as Error);
+            const codigo = (erro as NodeJS.ErrnoException).code;
+            const mensagem = codigo === "ENOENT" ? "Ferramenta gowitness não encontrada" : `Erro ao capturar ${url}`;
+            this.error(mensagem, erro as Error);
             return false;
         }
     }
@@ -92,6 +99,18 @@ class PhishingCapturaService extends NanoService {
 
     private caminhoRelativo(id: number) {
         return `/phishing/capturas/${id}.png`;
+    }
+
+    private async validarFerramenta() {
+        try {
+            await executar(this.ferramenta, ["--version"], { timeout: 5000 });
+            return true;
+        } catch (erro: unknown) {
+            const codigo = (erro as NodeJS.ErrnoException).code;
+            const mensagem = codigo === "ENOENT" ? "Ferramenta gowitness não encontrada" : "Falha ao executar gowitness";
+            this.error(mensagem, erro as Error);
+            return false;
+        }
     }
 }
 
