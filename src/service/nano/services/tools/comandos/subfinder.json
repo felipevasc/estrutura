@@ -1,1 +1,13 @@
-{}
+{
+  "8393": {
+    "comando": "subfinder",
+    "argumentos": [
+      "-d",
+      "www.consultacpnu.com.br",
+      "-o",
+      "/tmp/subfinder_resultado_8_5590_www.consultacpnu.com.br_1765115517680.txt",
+      "--all",
+      "-silent"
+    ]
+  }
+}

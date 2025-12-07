@@ -19,5 +19,12 @@
       "www.gov.br",
       "8.8.8.8"
     ]
+  },
+  "8394": {
+    "comando": "nslookup",
+    "argumentos": [
+      "www.consultacpnu.com.br",
+      "8.8.8.8"
+    ]
   }
 }

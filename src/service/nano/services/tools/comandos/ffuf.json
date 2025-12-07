@@ -1,1 +1,32 @@
-{}
+{
+  "8399": {
+    "comando": "ffuf",
+    "argumentos": [
+      "-u",
+      "https://www.consultacpnu.com.br/FUZZ",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/ffuf_results_8399_1765115709202.json",
+      "-of",
+      "json",
+      "-k"
+    ]
+  },
+  "8400": {
+    "comando": "ffuf",
+    "argumentos": [
+      "-u",
+      "https://www.consultacpnu.com.br/FUZZ",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/ffuf_results_8400_1765115810461.json",
+      "-of",
+      "json",
+      "-k",
+      "-e",
+      ".php,.html,.txt,.js,.bak,.zip,.conf"
+    ]
+  }
+}
