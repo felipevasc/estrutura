@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import { TipoIp } from '@/database/functions/ip';
 import { TipoDominio } from '@prisma/client';
 import { NanoEvents } from '../../events';
+import { lerLogExecucao, obterCaminhoLogExecucao, obterComandoRegistrado, registrarComandoFerramenta } from './armazenamentoExecucao';
 
 export class AmassService extends NanoService {
   constructor() {
@@ -49,18 +50,19 @@ export class AmassService extends NanoService {
       }
 
       const arquivoJson = path.join(os.tmpdir(), `amass_${op?.projetoId}_${id}_${Date.now()}.json`);
-      const arquivoLog = path.join(os.tmpdir(), `amass_log_${op?.projetoId}_${id}_${Date.now()}.txt`);
 
       const argumentos = ['enum', '-d', dominio, '-timeout', `${timeout > 0 ? timeout : 5}m`, '-json', arquivoJson];
+      const linhaComando = registrarComandoFerramenta('amass', id, 'amass', argumentos);
+      const caminhoLog = obterCaminhoLogExecucao(id);
 
       this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
         id,
         command: 'amass',
         args: argumentos,
-        outputFile: arquivoLog,
+        outputFile: caminhoLog,
         replyTo: NanoEvents.AMASS_TERMINAL_RESULT,
         errorTo: NanoEvents.AMASS_TERMINAL_ERROR,
-        meta: { projectId, dominio, op, jsonOutputFile: arquivoJson, logOutputFile: arquivoLog }
+        meta: { projectId, dominio, op, jsonOutputFile: arquivoJson, linhaComando }
       });
     } catch (e: any) {
       this.bus.emit(NanoEvents.JOB_FAILED, {
@@ -73,7 +75,7 @@ export class AmassService extends NanoService {
   private async processarResultado(payload: any) {
     const { executionId, id, output, meta, command, args } = payload;
     const jobId = id ?? executionId;
-    const { op, jsonOutputFile, logOutputFile } = meta;
+    const { op, jsonOutputFile, linhaComando } = meta;
 
     this.log(`Processando resultado ${jobId}`);
 
@@ -109,10 +111,6 @@ export class AmassService extends NanoService {
         fs.unlinkSync(jsonOutputFile);
       }
 
-      if (fs.existsSync(logOutputFile)) {
-        fs.unlinkSync(logOutputFile);
-      }
-
       const subdominiosUnicos = [...new Set(subdominios)];
       const ipsUnicos = ips.filter((valor, indice, array) => array.findIndex((item) => item.endereco === valor.endereco && item.dominio === valor.dominio) === indice);
 
@@ -127,12 +125,11 @@ export class AmassService extends NanoService {
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
         id: jobId,
         result: { subdominios: subdominiosUnicos, ips: ipsUnicos },
-        rawOutput: output,
-        executedCommand: `${command} ${args.join(' ')}`
+        rawOutput: lerLogExecucao(jobId) || output,
+        executedCommand: linhaComando || obterComandoRegistrado('amass', jobId) || `${command} ${args.join(' ')}`
       });
     } catch (e: any) {
       if (jsonOutputFile && fs.existsSync(jsonOutputFile)) fs.unlinkSync(jsonOutputFile);
-      if (logOutputFile && fs.existsSync(logOutputFile)) fs.unlinkSync(logOutputFile);
 
       this.bus.emit(NanoEvents.JOB_FAILED, {
         id: jobId,
@@ -143,10 +140,9 @@ export class AmassService extends NanoService {
 
   private processarErro(payload: any) {
     const { executionId, id, error, meta } = payload;
-    const { jsonOutputFile, logOutputFile } = meta || {};
+    const { jsonOutputFile } = meta || {};
 
     if (jsonOutputFile && fs.existsSync(jsonOutputFile)) fs.unlinkSync(jsonOutputFile);
-    if (logOutputFile && fs.existsSync(logOutputFile)) fs.unlinkSync(logOutputFile);
 
     this.bus.emit(NanoEvents.JOB_FAILED, {
       id: id ?? executionId,

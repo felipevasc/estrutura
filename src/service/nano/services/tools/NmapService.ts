@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import { TipoPorta } from '@/database/functions/ip';
 import { NanoEvents } from '../../events';
 import { extrairPortasGrep } from './parserPortas';
+import { lerLogExecucao, obterCaminhoLogExecucao, obterComandoRegistrado, registrarComandoFerramenta } from './armazenamentoExecucao';
 
 export class NmapService extends NanoService {
   constructor() {
@@ -40,19 +41,20 @@ export class NmapService extends NanoService {
         if (!enderecoIp) throw new Error('IP not found');
         const outputPrefix = path.join(os.tmpdir(), `nmap_${op?.projetoId}_${id}_${Date.now()}`);
         const grepOutput = `${outputPrefix}.gnmap`;
-        const stdoutFile = `${outputPrefix}.stdout`;
 
         const comando = 'nmap';
         const argumentos = ['-Pn', enderecoIp, "-p", `${faixaPortas}`, "-oG", grepOutput];
+        const linhaComando = registrarComandoFerramenta('nmap', id, comando, argumentos);
+        const caminhoLog = obterCaminhoLogExecucao(id);
 
         this.bus.emit(NanoEvents.EXECUTE_TERMINAL, {
             id: id,
             command: comando,
             args: argumentos,
-            outputFile: stdoutFile,
+            outputFile: caminhoLog,
             replyTo: NanoEvents.NMAP_TERMINAL_RESULT,
             errorTo: NanoEvents.NMAP_TERMINAL_ERROR,
-            meta: { projectId, enderecoIp, op, idIp, grepOutput, stdoutFile }
+            meta: { projectId, enderecoIp, op, idIp, grepOutput, linhaComando }
         });
 
     } catch (e: any) {
@@ -65,7 +67,7 @@ export class NmapService extends NanoService {
 
   private async processResult(payload: any) {
       const { id, meta, command, args } = payload;
-      const { idIp, grepOutput, stdoutFile } = meta;
+      const { idIp, grepOutput, linhaComando } = meta;
 
       this.log(`Processing result for ${id}`);
 
@@ -81,22 +83,17 @@ export class NmapService extends NanoService {
             this.log("Warning: Nmap grepable output missing.");
         }
 
-        if (fs.existsSync(stdoutFile)) {
-             fs.unlinkSync(stdoutFile);
-        }
-
         await Database.adicionarPortas(portas, Number(idIp));
 
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id,
             result: portas,
-            rawOutput: "Output stored in DB",
-            executedCommand: `${command} ${args.join(' ')}`
+            rawOutput: lerLogExecucao(id) || payload.output,
+            executedCommand: linhaComando || obterComandoRegistrado('nmap', id) || `${command} ${args.join(' ')}`
         });
 
       } catch (e: any) {
           if (grepOutput && fs.existsSync(grepOutput)) fs.unlinkSync(grepOutput);
-          if (stdoutFile && fs.existsSync(stdoutFile)) fs.unlinkSync(stdoutFile);
 
           this.bus.emit(NanoEvents.JOB_FAILED, {
               id: id,

@@ -2,6 +2,7 @@ import { NanoService } from '../NanoService';
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { NanoEvents } from '../events';
+import { obterCaminhoLogExecucao, registrarComandoFerramenta } from './tools/armazenamentoExecucao';
 
 export class TerminalService extends NanoService {
   constructor() {
@@ -13,8 +14,12 @@ export class TerminalService extends NanoService {
   }
 
   private execute(payload: any) {
-    const { id, command, args, outputFile, replyTo, errorTo, meta } = payload;
+    const { id, command, args, replyTo, errorTo, meta, outputFile } = payload;
     const executionId = id ?? payload.executionId;
+    const caminhoSaida = obterCaminhoLogExecucao(executionId);
+    const linhaComando = registrarComandoFerramenta(command, executionId, command, args);
+    const caminhosSaida = [caminhoSaida, outputFile].filter(Boolean) as string[];
+    const arquivoDestino = outputFile ?? caminhoSaida;
     this.log(`Executing: ${command} ${args.join(' ')}`);
 
     const processo = spawn(command, args);
@@ -23,76 +28,72 @@ export class TerminalService extends NanoService {
     let combinedOutput = "";
     let processError = "";
 
-    // Only write to file if outputFile is provided
-    let streamArquivo: any = null;
-    if (outputFile) {
-        streamArquivo = createWriteStream(outputFile, { flags: 'a' });
-    }
+    const fluxos = caminhosSaida.map((caminho) => createWriteStream(caminho, { flags: 'a' }));
 
     processo.stderr.on('data', (dados: Buffer) => {
       const texto = dados.toString();
       stderrOutput += texto;
       combinedOutput += texto;
-      if (streamArquivo) streamArquivo.write(texto);
+      fluxos.forEach((fluxo) => fluxo.write(texto));
     });
 
     processo.stdout.on('data', (dados: Buffer) => {
       const texto = dados.toString();
       stdoutOutput += texto;
       combinedOutput += texto;
-      if (streamArquivo) streamArquivo.write(texto);
+      fluxos.forEach((fluxo) => fluxo.write(texto));
     });
 
     processo.on('error', (erro) => {
       this.error("Erro recebido", erro);
       processError += erro.toString();
-      if (streamArquivo) streamArquivo.close();
+      fluxos.forEach((fluxo) => fluxo.close());
 
       const errorEvent = errorTo || NanoEvents.TERMINAL_ERROR;
       this.bus.emit(errorEvent, {
-          id: executionId, // Standardized on id
-          executionId,     // Kept for backward compatibility
-          error: processError || erro.message,
-          output: combinedOutput, // Backward compatibility
-          stdout: stdoutOutput,
-          stderr: stderrOutput,
-          outputFile,
-          meta,
-          command,
-          args
+        id: executionId,
+        executionId,
+        error: processError || erro.message,
+        output: combinedOutput,
+        stdout: stdoutOutput,
+        stderr: stderrOutput,
+        outputFile: arquivoDestino,
+        meta: { ...meta, linhaComando, caminhoLog: caminhoSaida },
+        command,
+        args
       });
     });
 
     processo.on('close', (codigo) => {
-      if (streamArquivo) streamArquivo.close();
+      fluxos.forEach((fluxo) => fluxo.close());
 
       if (codigo === 0) {
         const successEvent = replyTo || NanoEvents.TERMINAL_RESULT;
         this.bus.emit(successEvent, {
-            id: executionId,
-            executionId,
-            output: combinedOutput,
-            stdout: stdoutOutput,
-            stderr: stderrOutput,
-            error: processError,
-            outputFile,
-            meta,
-            command,
-            args
+          id: executionId,
+          executionId,
+          output: combinedOutput,
+          stdout: stdoutOutput,
+          stderr: stderrOutput,
+          error: processError,
+          outputFile: arquivoDestino,
+          meta: { ...meta, linhaComando, caminhoLog: caminhoSaida },
+          command,
+          args
         });
       } else {
         const errorEvent = errorTo || NanoEvents.TERMINAL_ERROR;
         this.bus.emit(errorEvent, {
-            id: executionId,
-            executionId,
-            error: processError || `Comando '${command}' terminou com o código de erro: ${codigo}`,
-            output: combinedOutput,
-            stdout: stdoutOutput,
-            stderr: stderrOutput,
-            outputFile,
-            meta,
-            command,
-            args
+          id: executionId,
+          executionId,
+          error: processError || `Comando '${command}' terminou com o código de erro: ${codigo}`,
+          output: combinedOutput,
+          stdout: stdoutOutput,
+          stderr: stderrOutput,
+          outputFile: arquivoDestino,
+          meta: { ...meta, linhaComando, caminhoLog: caminhoSaida },
+          command,
+          args
         });
       }
     });

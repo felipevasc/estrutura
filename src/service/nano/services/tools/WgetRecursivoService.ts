@@ -2,6 +2,8 @@ import { NanoService } from '../../NanoService';
 import prisma from '@/database';
 import { NanoEvents } from '../../events';
 import { AlvoResolvido, resolverAlvo } from './resolvedorAlvo';
+import fs from 'node:fs';
+import { lerLogExecucao, obterCaminhoLogExecucao, registrarComandoFerramenta } from './armazenamentoExecucao';
 
 type PayloadComando = {
   id: number;
@@ -42,6 +44,9 @@ export class WgetRecursivoService extends NanoService {
 
   private async processarComando(payload: PayloadComando) {
     const { id, args, projectId } = payload;
+    const argumentosRegistrados = [JSON.stringify(args ?? {})];
+    const comandoRegistrado = registrarComandoFerramenta('wgetRecursivo', id, 'wgetRecursivo', argumentosRegistrados);
+    const caminhoLog = obterCaminhoLogExecucao(id);
 
     this.log(`Iniciando wget recursivo para projeto ${projectId}`);
 
@@ -56,13 +61,14 @@ export class WgetRecursivoService extends NanoService {
 
       const registros = await this.rastrear(meta);
       await this.salvar(registros, alvo);
+      fs.writeFileSync(caminhoLog, JSON.stringify(registros, null, 2));
 
-      this.bus.emit(NanoEvents.JOB_COMPLETED, {
-        id,
-        result: registros,
-        rawOutput: JSON.stringify(registros),
-        executedCommand: 'wgetRecursivo'
-      });
+        this.bus.emit(NanoEvents.JOB_COMPLETED, {
+          id,
+          result: registros,
+        rawOutput: lerLogExecucao(id) || JSON.stringify(registros),
+        executedCommand: comandoRegistrado
+        });
     } catch (e: unknown) {
       const erro = e instanceof Error ? e.message : 'Erro desconhecido';
       this.bus.emit(NanoEvents.JOB_FAILED, { id, error: erro });

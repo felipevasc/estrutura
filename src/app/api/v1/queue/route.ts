@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/database';
 import { CommandStatus } from '@prisma/client';
+import { lerLogExecucao, obterComandoRegistrado } from '@/service/nano/services/tools/armazenamentoExecucao';
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -18,13 +19,19 @@ export async function GET(request: Request) {
     try {
         const total = await prisma.command.count({ where: filtro });
 
-        const registros = await prisma.command.findMany({
+        const registrosBase = await prisma.command.findMany({
             where: filtro,
             orderBy: {
                 createdAt: 'desc',
             },
             skip: inicio,
             take: limite,
+        });
+
+        const registros = registrosBase.map((registro) => {
+            const comandoRegistrado = obterComandoRegistrado(registro.command, registro.id) || registro.executedCommand || registro.command;
+            const logRegistrado = lerLogExecucao(registro.id) || registro.rawOutput || registro.output;
+            return { ...registro, executedCommand: comandoRegistrado, rawOutput: logRegistrado };
         });
 
         return NextResponse.json({ total, registros }, { status: 200 });
