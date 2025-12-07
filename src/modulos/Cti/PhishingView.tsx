@@ -998,7 +998,7 @@ const PhishingView = () => {
 
                                                         <TechLabel>
                                                             <TagOutlined />
-                                                            {registro.fonte.toUpperCase()}
+                                                            {status.rotulo}
                                                         </TechLabel>
 
                                                         <StatusBadge $color={status.cor}>
