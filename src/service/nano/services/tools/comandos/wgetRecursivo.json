@@ -1,1 +1,8 @@
-{}
+{
+  "8385": {
+    "comando": "wgetRecursivo",
+    "argumentos": [
+      "{\"idPorta\":\"6\",\"profundidade\":20,\"limite\":200}"
+    ]
+  }
+}
