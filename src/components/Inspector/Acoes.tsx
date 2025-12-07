@@ -90,150 +90,27 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
         },
     ],
     fuzzing: [
-        {
-            chave: "ffufDominio",
-            titulo: "Ffuf",
-            descricao: "Fuzzing de diretórios",
-            comando: "ffuf",
-            tiposAlvo: ["domain"],
-            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
-            icone: <FileSearchOutlined />,
-        },
-        {
-            chave: "ffufArquivosDominio",
-            titulo: "Ffuf Arquivos",
-            descricao: "Fuzzing de arquivos",
-            comando: "ffuf",
-            tiposAlvo: ["domain"],
-            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString(), tipoFuzz: "arquivo" }),
-            icone: <FileSearchOutlined />,
-        },
-        {
-            chave: "gobusterDominio",
-            titulo: "Gobuster",
-            descricao: "Descoberta de diretórios",
-            comando: "gobuster",
-            tiposAlvo: ["domain"],
-            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
-            icone: <FolderOpenOutlined />,
-        },
-        {
-            chave: "gobusterArquivosDominio",
-            titulo: "Gobuster Arquivos",
-            descricao: "Descoberta de arquivos",
-            comando: "gobuster",
-            tiposAlvo: ["domain"],
-            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString(), tipoFuzz: "arquivo" }),
-            icone: <FolderOpenOutlined />,
-        },
-        {
-            chave: "wgetRecursivoDominio",
-            titulo: "Wget Recursivo",
-            descricao: "Rastreamento recursivo",
-            comando: "wgetRecursivo",
-            tiposAlvo: ["domain"],
-            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
-            icone: <BranchesOutlined />,
-        },
-        {
-            chave: "ffufIp",
-            titulo: "Ffuf",
-            descricao: "Fuzzing de diretórios",
-            comando: "ffuf",
-            tiposAlvo: ["ip"],
-            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
-            icone: <FileSearchOutlined />,
-        },
-        {
-            chave: "ffufArquivosIp",
-            titulo: "Ffuf Arquivos",
-            descricao: "Fuzzing de arquivos",
-            comando: "ffuf",
-            tiposAlvo: ["ip"],
-            gerarParametros: (alvo) => ({ idIp: alvo.id.toString(), tipoFuzz: "arquivo" }),
-            icone: <FileSearchOutlined />,
-        },
-        {
-            chave: "gobusterIp",
-            titulo: "Gobuster",
-            descricao: "Descoberta de diretórios",
-            comando: "gobuster",
-            tiposAlvo: ["ip"],
-            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
-            icone: <FolderOpenOutlined />,
-        },
-        {
-            chave: "gobusterArquivosIp",
-            titulo: "Gobuster Arquivos",
-            descricao: "Descoberta de arquivos",
-            comando: "gobuster",
-            tiposAlvo: ["ip"],
-            gerarParametros: (alvo) => ({ idIp: alvo.id.toString(), tipoFuzz: "arquivo" }),
-            icone: <FolderOpenOutlined />,
-        },
-        {
-            chave: "wgetRecursivoIp",
-            titulo: "Wget Recursivo",
-            descricao: "Rastreamento recursivo",
-            comando: "wgetRecursivo",
-            tiposAlvo: ["ip"],
-            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
-            icone: <BranchesOutlined />,
-        },
-        {
-            chave: "ffufDiretorio",
-            titulo: "Ffuf",
-            descricao: "Fuzzing do caminho selecionado",
-            comando: "ffuf",
-            tiposAlvo: ["diretorio"],
-            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
-            icone: <FileSearchOutlined />,
-        },
-        {
-            chave: "ffufArquivosDiretorio",
-            titulo: "Ffuf Arquivos",
-            descricao: "Fuzzing de arquivos no caminho",
-            comando: "ffuf",
-            tiposAlvo: ["diretorio"],
-            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString(), tipoFuzz: "arquivo" }),
-            icone: <FileSearchOutlined />,
-        },
-        {
-            chave: "gobusterDiretorio",
-            titulo: "Gobuster",
-            descricao: "Descoberta no caminho selecionado",
-            comando: "gobuster",
-            tiposAlvo: ["diretorio"],
-            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
-            icone: <FolderOpenOutlined />,
-        },
-        {
-            chave: "gobusterArquivosDiretorio",
-            titulo: "Gobuster Arquivos",
-            descricao: "Descoberta de arquivos no caminho",
-            comando: "gobuster",
-            tiposAlvo: ["diretorio"],
-            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString(), tipoFuzz: "arquivo" }),
-            icone: <FolderOpenOutlined />,
-        },
-        {
-            chave: "wgetRecursivoDiretorio",
-            titulo: "Wget Recursivo",
-            descricao: "Rastreamento recursivo",
-            comando: "wgetRecursivo",
-            tiposAlvo: ["diretorio"],
-            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
-            icone: <BranchesOutlined />,
-        },
-        {
-            chave: "whatwebDiretorio",
-            titulo: "WhatWeb",
-            descricao: "Fingerprint do caminho",
-            comando: "whatweb",
-            tiposAlvo: ["diretorio"],
-            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
-            icone: <SearchOutlined />,
-        },
+        { chave: "ffufDominio", titulo: "Ffuf", descricao: "Fuzzing de diretórios", comando: "ffuf", tiposAlvo: ["domain"], gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }), icone: <FileSearchOutlined /> },
+        { chave: "ffufArquivosDominio", titulo: "Ffuf Arquivos", descricao: "Fuzzing de arquivos", comando: "ffuf", tiposAlvo: ["domain"], gerarParametros: (alvo) => ({ idDominio: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FileSearchOutlined /> },
+        { chave: "gobusterDominio", titulo: "Gobuster", descricao: "Descoberta de diretórios", comando: "gobuster", tiposAlvo: ["domain"], gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }), icone: <FolderOpenOutlined /> },
+        { chave: "gobusterArquivosDominio", titulo: "Gobuster Arquivos", descricao: "Descoberta de arquivos", comando: "gobuster", tiposAlvo: ["domain"], gerarParametros: (alvo) => ({ idDominio: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FolderOpenOutlined /> },
+        { chave: "wgetRecursivoDominio", titulo: "Wget Recursivo", descricao: "Rastreamento recursivo", comando: "wgetRecursivo", tiposAlvo: ["domain"], gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }), icone: <BranchesOutlined /> },
+        { chave: "ffufIp", titulo: "Ffuf", descricao: "Fuzzing de diretórios", comando: "ffuf", tiposAlvo: ["ip"], gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }), icone: <FileSearchOutlined /> },
+        { chave: "ffufArquivosIp", titulo: "Ffuf Arquivos", descricao: "Fuzzing de arquivos", comando: "ffuf", tiposAlvo: ["ip"], gerarParametros: (alvo) => ({ idIp: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FileSearchOutlined /> },
+        { chave: "gobusterIp", titulo: "Gobuster", descricao: "Descoberta de diretórios", comando: "gobuster", tiposAlvo: ["ip"], gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }), icone: <FolderOpenOutlined /> },
+        { chave: "gobusterArquivosIp", titulo: "Gobuster Arquivos", descricao: "Descoberta de arquivos", comando: "gobuster", tiposAlvo: ["ip"], gerarParametros: (alvo) => ({ idIp: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FolderOpenOutlined /> },
+        { chave: "wgetRecursivoIp", titulo: "Wget Recursivo", descricao: "Rastreamento recursivo", comando: "wgetRecursivo", tiposAlvo: ["ip"], gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }), icone: <BranchesOutlined /> },
+        { chave: "ffufPorta", titulo: "Ffuf", descricao: "Fuzzing de diretórios", comando: "ffuf", tiposAlvo: ["porta"], gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }), icone: <FileSearchOutlined /> },
+        { chave: "ffufArquivosPorta", titulo: "Ffuf Arquivos", descricao: "Fuzzing de arquivos", comando: "ffuf", tiposAlvo: ["porta"], gerarParametros: (alvo) => ({ idPorta: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FileSearchOutlined /> },
+        { chave: "gobusterPorta", titulo: "Gobuster", descricao: "Descoberta de diretórios", comando: "gobuster", tiposAlvo: ["porta"], gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }), icone: <FolderOpenOutlined /> },
+        { chave: "gobusterArquivosPorta", titulo: "Gobuster Arquivos", descricao: "Descoberta de arquivos", comando: "gobuster", tiposAlvo: ["porta"], gerarParametros: (alvo) => ({ idPorta: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FolderOpenOutlined /> },
+        { chave: "wgetRecursivoPorta", titulo: "Wget Recursivo", descricao: "Rastreamento recursivo", comando: "wgetRecursivo", tiposAlvo: ["porta"], gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }), icone: <BranchesOutlined /> },
+        { chave: "ffufDiretorio", titulo: "Ffuf", descricao: "Fuzzing do caminho selecionado", comando: "ffuf", tiposAlvo: ["diretorio"], gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }), icone: <FileSearchOutlined /> },
+        { chave: "ffufArquivosDiretorio", titulo: "Ffuf Arquivos", descricao: "Fuzzing de arquivos no caminho", comando: "ffuf", tiposAlvo: ["diretorio"], gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FileSearchOutlined /> },
+        { chave: "gobusterDiretorio", titulo: "Gobuster", descricao: "Descoberta no caminho selecionado", comando: "gobuster", tiposAlvo: ["diretorio"], gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }), icone: <FolderOpenOutlined /> },
+        { chave: "gobusterArquivosDiretorio", titulo: "Gobuster Arquivos", descricao: "Descoberta de arquivos no caminho", comando: "gobuster", tiposAlvo: ["diretorio"], gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString(), tipoFuzz: "arquivo" }), icone: <FolderOpenOutlined /> },
+        { chave: "wgetRecursivoDiretorio", titulo: "Wget Recursivo", descricao: "Rastreamento recursivo", comando: "wgetRecursivo", tiposAlvo: ["diretorio"], gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }), icone: <BranchesOutlined /> },
+        { chave: "whatwebDiretorio", titulo: "WhatWeb", descricao: "Fingerprint do caminho", comando: "whatweb", tiposAlvo: ["diretorio"], gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }), icone: <SearchOutlined /> },
     ],
     ips: [
         {
@@ -279,6 +156,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             comando: "whatweb",
             tiposAlvo: ["ip"],
             gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <SearchOutlined />,
+        },
+        {
+            chave: "whatwebPorta",
+            titulo: "WhatWeb",
+            descricao: "Fingerprint do serviço",
+            comando: "whatweb",
+            tiposAlvo: ["porta"],
+            gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }),
             icone: <SearchOutlined />,
         },
     ],
@@ -481,6 +367,46 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
         };
     }
+    if (acao.chave === "ffufPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "ffufArquivosPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
+    if (acao.chave === "gobusterArquivosPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id, tipoFuzz: "arquivo" },
+            campos: camposWordlist,
+            valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes },
+        };
+    }
     if (acao.chave === "ffufDiretorio") {
         return {
             comando: acao.comando,
@@ -541,6 +467,16 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             valores: valoresWget,
         };
     }
+    if (acao.chave === "wgetRecursivoPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
+            campos: camposWget,
+            valores: valoresWget,
+        };
+    }
     if (acao.chave === "wgetRecursivoDiretorio") {
         return {
             comando: acao.comando,
@@ -587,6 +523,16 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             titulo: tituloModal(acao.titulo),
             descricao: descricaoModal,
             argsBase: { idIp: id },
+            campos: camposWhatweb,
+            valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "whatwebPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
             campos: camposWhatweb,
             valores: { ...valoresWhatweb },
         };

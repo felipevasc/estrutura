@@ -3,7 +3,7 @@ import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import { StyledToolsGrid } from "../styles";
-import { SearchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, SearchOutlined } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
 type EstadoModal = {
@@ -84,6 +84,27 @@ const FerramentasPorta = () => {
             detalhe: "Credencial ou token para acessar conteúdo protegido; aceite formatos como user:senha ou Bearer token.",
         }
     ];
+    const camposWordlist: CampoConfiguracao[] = [
+        {
+            chave: "wordlist",
+            rotulo: "Wordlist",
+            tipo: "texto",
+            detalhe: "Caminho absoluto ou relativo da lista de palavras usada durante o fuzzing.",
+        },
+        {
+            chave: "extensoes",
+            rotulo: "Extensões",
+            tipo: "texto",
+            detalhe: "Extensões separadas por vírgula que serão adicionadas aos caminhos testados (ex: .php,.html).",
+        }
+    ];
+    const camposWget: CampoConfiguracao[] = [
+        { chave: "profundidade", rotulo: "Profundidade máxima", tipo: "numero", detalhe: "Nível máximo de recursão para seguir links." },
+        { chave: "limite", rotulo: "Limite de caminhos", tipo: "numero", detalhe: "Quantidade máxima de caminhos a registrar." }
+    ];
+    const valoresExtensoes = ".php,.html,.txt,.js,.bak,.zip,.conf";
+    const wordlistPadrao = "/usr/share/wordlists/dirb/common.txt";
+    const valoresWget = { profundidade: 2, limite: 200 };
 
     const modalWhatweb = () => abrirModal({
         comando: "whatweb",
@@ -94,8 +115,85 @@ const FerramentasPorta = () => {
         valores: { timeout: 60, agressividade: "1", userAgent: "", autenticacao: "" }
     });
 
+    const modalFfuf = (tipoFuzz?: string) => abrirModal({
+        comando: "ffuf",
+        titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: tipoFuzz ? { idPorta: idPorta(), tipoFuzz } : { idPorta: idPorta() },
+        campos: camposWordlist,
+        valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
+    });
+
+    const modalGobuster = (tipoFuzz?: string) => abrirModal({
+        comando: "gobuster",
+        titulo: tipoFuzz === "arquivo" ? "Configurar Gobuster Arquivos" : "Configurar Gobuster",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: tipoFuzz ? { idPorta: idPorta(), tipoFuzz } : { idPorta: idPorta() },
+        campos: camposWordlist,
+        valores: { wordlist: wordlistPadrao, extensoes: valoresExtensoes }
+    });
+
+    const modalWgetRecursivo = () => abrirModal({
+        comando: "wgetRecursivo",
+        titulo: "Configurar Wget Recursivo",
+        descricao: "Confirme a execução e ajuste os parâmetros conforme necessário.",
+        argsBase: { idPorta: idPorta() },
+        campos: camposWget,
+        valores: valoresWget
+    });
+
     return (
         <StyledToolsGrid>
+            <Card className="interactive" onClick={() => modalFfuf()}>
+                <div className="tool-icon">
+                    <FileSearchOutlined />
+                </div>
+                <Card.Meta
+                    title="Ffuf"
+                    description="Fuzzing de diretórios."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={() => modalFfuf("arquivo")}>
+                <div className="tool-icon">
+                    <FileSearchOutlined />
+                </div>
+                <Card.Meta
+                    title="Ffuf Arquivos"
+                    description="Fuzzing de arquivos."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={() => modalGobuster()}>
+                <div className="tool-icon">
+                    <FolderOpenOutlined />
+                </div>
+                <Card.Meta
+                    title="Gobuster"
+                    description="Descoberta de diretórios."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={() => modalGobuster("arquivo")}>
+                <div className="tool-icon">
+                    <FolderOpenOutlined />
+                </div>
+                <Card.Meta
+                    title="Gobuster Arquivos"
+                    description="Descoberta de arquivos."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalWgetRecursivo}>
+                <div className="tool-icon">
+                    <BranchesOutlined />
+                </div>
+                <Card.Meta
+                    title="Wget Recursivo"
+                    description="Rastreamento recursivo de caminhos."
+                />
+            </Card>
+
             <Card
                 className="interactive"
                 onClick={modalWhatweb}
