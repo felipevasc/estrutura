@@ -87,21 +87,23 @@ const StatusBar = () => {
     }, [api.queue, idProjeto]);
 
     const carregarComandos = useCallback(() => {
+        if (!gavetaAberta) return;
         carregarSecao('executando');
         carregarSecao('pendentes');
         carregarSecao('historico');
         limparTemporizador();
         temporizador.current = setTimeout(carregarComandos, 5000);
-    }, [carregarSecao]);
+    }, [carregarSecao, gavetaAberta]);
 
     useEffect(() => {
         definirComandosSecao({ executando: [], pendentes: [], historico: [] });
         definirTotaisSecao({ executando: 0, pendentes: 0, historico: 0 });
         definirExpandidos({});
         limparTemporizador();
+        if (!gavetaAberta) return;
         carregarComandos();
         return () => limparTemporizador();
-    }, [carregarComandos, idProjeto]);
+    }, [carregarComandos, gavetaAberta, idProjeto]);
 
     const comandosExecutando = comandosSecao.executando;
     const comandosHistorico = comandosSecao.historico;
