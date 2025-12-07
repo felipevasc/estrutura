@@ -33,7 +33,7 @@ const QueueStatus = () => {
     const [carregandoSecao, definirCarregandoSecao] = useState<MapaSecao<boolean>>({ executando: false, pendentes: false, historico: false });
     const api = useApi();
     const { projeto } = useContext(StoreContext);
-    const intervalo = useRef<NodeJS.Timeout>(null);
+    const intervalo = useRef<NodeJS.Timeout | null>(null);
     const comandosRef = useRef(comandosSecao);
 
     const idProjeto = projeto?.get()?.id;
@@ -41,7 +41,10 @@ const QueueStatus = () => {
     useEffect(() => { comandosRef.current = comandosSecao; }, [comandosSecao]);
 
     const limparIntervalo = () => {
-        if (intervalo.current) clearTimeout(intervalo.current);
+        if (intervalo.current) {
+            clearTimeout(intervalo.current);
+            intervalo.current = null;
+        }
     };
 
     const obterLimiteAtual = (secao: SecaoFila, anexar: boolean) => {
@@ -83,21 +86,26 @@ const QueueStatus = () => {
     }, [api.queue, idProjeto]);
 
     const carregarTodasSecoes = useCallback(() => {
+        if (!idProjeto || !aberto) return;
         carregarSecao('executando');
         carregarSecao('pendentes');
         carregarSecao('historico');
         limparIntervalo();
         intervalo.current = setTimeout(carregarTodasSecoes, 30000);
-    }, [carregarSecao]);
+    }, [aberto, carregarSecao, idProjeto]);
 
     useEffect(() => {
         definirComandosSecao({ executando: [], pendentes: [], historico: [] });
         definirTotaisSecao({ executando: 0, pendentes: 0, historico: 0 });
         definirExpandidos({});
+    }, [idProjeto]);
+
+    useEffect(() => {
         limparIntervalo();
+        if (!aberto) return;
         carregarTodasSecoes();
         return () => limparIntervalo();
-    }, [carregarTodasSecoes, idProjeto]);
+    }, [aberto, carregarTodasSecoes]);
 
     const cancelarComando = async (id: number) => {
         try {
@@ -109,7 +117,10 @@ const QueueStatus = () => {
     };
 
     const abrirPainel = () => definirAberto(true);
-    const fecharPainel = () => definirAberto(false);
+    const fecharPainel = () => {
+        definirAberto(false);
+        limparIntervalo();
+    };
 
     const comandosExecutando = comandosSecao.executando;
     const comandosPendentes = comandosSecao.pendentes;
