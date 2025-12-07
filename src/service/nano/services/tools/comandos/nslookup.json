@@ -1,1 +1,23 @@
-{}
+{
+  "8380": {
+    "comando": "nslookup",
+    "argumentos": [
+      "gov.br",
+      "8.8.8.8"
+    ]
+  },
+  "8381": {
+    "comando": "nslookup",
+    "argumentos": [
+      "so.gov.br",
+      "8.8.8.8"
+    ]
+  },
+  "8382": {
+    "comando": "nslookup",
+    "argumentos": [
+      "www.gov.br",
+      "8.8.8.8"
+    ]
+  }
+}
