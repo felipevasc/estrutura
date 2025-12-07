@@ -4,12 +4,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN printf 'deb http://http.kali.org/kali kali-rolling main non-free contrib\ndeb http://archive.kali.org/kali kali-rolling main non-free contrib\n' | tee /etc/apt/sources.list >/dev/null && \
     apt-get update -o Acquire::Retries=5 -o Acquire::ForceIPv4=true && \
-    apt-get install -y --no-install-recommends kali-linux-headless nodejs npm git gobuster dnstwist python3-pip wget unzip build-essential python3-dev && \
+    apt-get install -y --no-install-recommends kali-linux-headless nodejs npm git gobuster dnstwist python3-pip wget unzip build-essential python3-dev golang && \
     wget -q https://github.com/bee-san/RustScan/releases/download/2.4.1/rustscan.deb.zip -O /tmp/rustscan.deb.zip && \
     unzip /tmp/rustscan.deb.zip -d /tmp && \
     apt-get install -y /tmp/rustscan*.deb && \
     rm /tmp/rustscan.deb.zip /tmp/rustscan*.deb && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN GOBIN=/usr/local/bin go install github.com/sensepost/gowitness@latest
 
 RUN git clone https://github.com/x0rz/phishing_catcher.git /opt/phishing_catcher && \
     sed -i 's/python_Levenshtein==0.12.0/Levenshtein/' /opt/phishing_catcher/requirements.txt && \
