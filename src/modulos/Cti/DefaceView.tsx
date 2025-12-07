@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Table, Alert, Tag, Button, Select, message, Space, Typography, Popconfirm, Modal, Input, Spin, Tabs, Tooltip, InputNumber } from 'antd';
+import { Table, Alert, Tag, Button, Select, message, Space, Typography, Popconfirm, Modal, Input, Spin, Tabs, Tooltip, InputNumber, Segmented, Image, Empty } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
-import { SettingOutlined, ReloadOutlined, RadarChartOutlined } from '@ant-design/icons';
+import { SettingOutlined, ReloadOutlined, RadarChartOutlined, AppstoreOutlined, TableOutlined, PictureOutlined, EyeOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -199,11 +199,72 @@ const Acionador = styled(Button)`
   font-weight: 700;
 `;
 
+const GradeCapturas = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+`;
+
+const CartaoCaptura = styled.div`
+  position: relative;
+  aspect-ratio: 16 / 10;
+  border-radius: ${({ theme }) => theme.borders.radius};
+  overflow: hidden;
+  background: ${({ theme }) => theme.glass.card};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  box-shadow: ${({ theme }) => theme.shadows.soft};
+`;
+
+const ImagemCaptura = styled.div<{ $url: string }>`
+  position: absolute;
+  inset: 0;
+  background: ${({ $url }) => $url ? `url(${$url}) center / cover no-repeat` : '#0b0b0b'};
+  filter: ${({ $url }) => $url ? 'none' : 'grayscale(1)'};
+`;
+
+const RodapeCaptura = styled.div`
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.65) 100%);
+  color: #fff;
+`;
+
+const TituloCaptura = styled.span`
+  font-weight: 700;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+`;
+
+const AcoesCaptura = styled.div`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+
+  ${CartaoCaptura}:hover & {
+    opacity: 1;
+  }
+`;
+
 interface DefaceRecord {
     id: number;
     url: string;
     fonte: string;
     createdAt: string;
+    captura?: string | null;
+    capturadoEm?: string | null;
+    dominioId: number;
     dominio: {
         endereco: string;
     };
@@ -232,6 +293,18 @@ const DefaceView = () => {
     const [paginasHackDb, setPaginasHackDb] = useState(10);
     const [modalHackDbVisivel, setModalHackDbVisivel] = useState(false);
     const [entradaPaginasHackDb, setEntradaPaginasHackDb] = useState(10);
+    const [visualizacao, setVisualizacao] = useState<'tabela' | 'capturas'>('tabela');
+    const [capturando, setCapturando] = useState(false);
+    const [capturandoIndividuais, setCapturandoIndividuais] = useState<number[]>([]);
+    const [capturaSelecionada, setCapturaSelecionada] = useState<string | null>(null);
+
+    const resolverUrlCaptura = useCallback((caminho?: string | null) => {
+        if (!caminho) return '';
+        if (caminho.startsWith('http')) return caminho;
+        if (typeof window === 'undefined') return caminho;
+        const caminhoNormalizado = caminho.startsWith('/') ? caminho : `/${caminho}`;
+        return `${window.location.origin}${caminhoNormalizado}`;
+    }, []);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -277,6 +350,8 @@ const DefaceView = () => {
         buscarDados();
         buscarConfiguracaoDork();
     }, [buscarDominios, buscarDados, buscarConfiguracaoDork]);
+
+    const dadosFiltrados = dominioSelecionado ? dados.filter((item) => item.dominioId === dominioSelecionado) : dados;
 
     const executarFerramenta = async (ferramenta: string, grupo: string, parametrosExtras: Record<string, any> = {}) => {
         if (!dominioSelecionado) {
@@ -385,11 +460,79 @@ const DefaceView = () => {
         message.success('Configuração atualizada.');
     };
 
+    const capturarPrints = async () => {
+        if (!projetoId) return;
+        setCapturando(true);
+        try {
+            const corpo = dominioSelecionado ? { dominioId: dominioSelecionado } : {};
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/capturas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            });
+            if (!resposta.ok) throw new Error();
+            message.success('Capturas enfileiradas.');
+        } catch {
+            message.error('Não foi possível enfileirar as capturas.');
+        } finally {
+            setCapturando(false);
+        }
+    };
+
+    const capturarRegistro = async (registro: DefaceRecord) => {
+        if (!projetoId) return;
+        setCapturandoIndividuais((lista) => [...lista, registro.id]);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/deface/capturas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [registro.id], dominioId: registro.dominioId })
+            });
+            if (!resposta.ok) throw new Error();
+            message.success('Captura enfileirada.');
+        } catch {
+            message.error('Não foi possível enfileirar a captura.');
+        } finally {
+            setCapturandoIndividuais((lista) => lista.filter((item) => item !== registro.id));
+        }
+    };
+
+    const abrirModalCaptura = (caminho: string) => setCapturaSelecionada(caminho);
+    const fecharModalCaptura = () => setCapturaSelecionada(null);
+
     const colunas = [
         { title: 'URL', dataIndex: 'url', key: 'url', render: (texto: string) => <a href={texto} target="_blank" rel="noopener noreferrer">{texto}</a> },
         { title: 'Domínio', dataIndex: ['dominio', 'endereco'], key: 'dominio' },
         { title: 'Fonte', dataIndex: 'fonte', key: 'fonte', render: (fonte: string) => <Tag color="blue">{fonte}</Tag> },
         { title: 'Data da Descoberta', dataIndex: 'createdAt', key: 'createdAt', render: (texto: string) => new Date(texto).toLocaleString() },
+        { title: 'Capturado em', dataIndex: 'capturadoEm', key: 'capturadoEm', render: (texto?: string | null) => texto ? new Date(texto).toLocaleString() : '-' },
+        {
+            title: 'Ações',
+            key: 'acoes',
+            render: (_: string, registro: DefaceRecord) => {
+                const urlCaptura = resolverUrlCaptura(registro.captura);
+                const carregando = capturandoIndividuais.includes(registro.id);
+                return (
+                    <Space>
+                        <Tooltip title="Capturar agora">
+                            <Button
+                                icon={<PictureOutlined />}
+                                loading={carregando}
+                                onClick={() => capturarRegistro(registro)}
+                                disabled={carregando}
+                            />
+                        </Tooltip>
+                        <Tooltip title="Visualizar captura">
+                            <Button
+                                icon={<EyeOutlined />}
+                                disabled={!registro.captura}
+                                onClick={() => urlCaptura && abrirModalCaptura(urlCaptura)}
+                            />
+                        </Tooltip>
+                    </Space>
+                );
+            }
+        }
     ];
 
     return (
@@ -402,6 +545,17 @@ const DefaceView = () => {
                             <Subtitulo>Descoberta de paginas de deface por dominio.</Subtitulo>
                         </BlocoTitulo>
                         <Space>
+                            <Segmented
+                                value={visualizacao}
+                                onChange={(valor) => setVisualizacao(valor as 'tabela' | 'capturas')}
+                                options={[
+                                    { value: 'tabela', icon: <TableOutlined /> },
+                                    { value: 'capturas', icon: <AppstoreOutlined /> }
+                                ]}
+                            />
+                            <Tooltip title="Capturar prints">
+                                <Button icon={<PictureOutlined />} onClick={capturarPrints} loading={capturando} disabled={!dadosFiltrados.length} />
+                            </Tooltip>
                             <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>
                                 Atualizar
                             </Button>
@@ -435,15 +589,60 @@ const DefaceView = () => {
                         </Tooltip>
                     </SeletorAlvo>
                     <AreaTabela>
-                        <Table
-                            dataSource={dados}
-                            columns={colunas}
-                            rowKey="id"
-                            bordered={false}
-                            loading={carregando}
-                            pagination={{ pageSize: 8 }}
-                            scroll={{ x: true }}
-                        />
+                        {visualizacao === 'tabela' ? (
+                            <Table
+                                dataSource={dadosFiltrados}
+                                columns={colunas}
+                                rowKey="id"
+                                bordered={false}
+                                loading={carregando}
+                                pagination={{ pageSize: 8 }}
+                                scroll={{ x: true }}
+                            />
+                        ) : (
+                            dadosFiltrados.length ? (
+                                <GradeCapturas>
+                                    {dadosFiltrados.map((registro) => {
+                                        const urlCaptura = resolverUrlCaptura(registro.captura);
+                                        const carregando = capturandoIndividuais.includes(registro.id);
+                                        const possuiCaptura = Boolean(registro.captura);
+                                        return (
+                                            <CartaoCaptura key={registro.id}>
+                                                <ImagemCaptura $url={urlCaptura} />
+                                                <AcoesCaptura>
+                                                    <Tooltip title="Visualizar">
+                                                        <Button
+                                                            shape="circle"
+                                                            icon={<EyeOutlined />}
+                                                            disabled={!possuiCaptura}
+                                                            onClick={() => urlCaptura && abrirModalCaptura(urlCaptura)}
+                                                        />
+                                                    </Tooltip>
+                                                    <Tooltip title="Capturar novamente">
+                                                        <Button
+                                                            shape="circle"
+                                                            icon={<PictureOutlined />}
+                                                            loading={carregando}
+                                                            onClick={() => capturarRegistro(registro)}
+                                                        />
+                                                    </Tooltip>
+                                                </AcoesCaptura>
+                                                <RodapeCaptura>
+                                                    <TituloCaptura>{registro.url}</TituloCaptura>
+                                                    <Space size={4} wrap>
+                                                        <Tag color="geekblue">{registro.dominio.endereco}</Tag>
+                                                        <Tag color="blue">{registro.fonte}</Tag>
+                                                        <Text style={{ color: '#fff' }}>{new Date(registro.createdAt).toLocaleString()}</Text>
+                                                    </Space>
+                                                </RodapeCaptura>
+                                            </CartaoCaptura>
+                                        );
+                                    })}
+                                </GradeCapturas>
+                            ) : (
+                                <Empty description="Nenhuma captura disponível" />
+                            )
+                        )}
                     </AreaTabela>
                 </PainelVidro>
                 <PainelFerramentas>
@@ -549,6 +748,17 @@ const DefaceView = () => {
                 </PainelFerramentas>
             </Grade>
             {erro && <Alert message="Erro" description={erro} type="error" showIcon />}
+
+            <Modal
+                open={Boolean(capturaSelecionada)}
+                onCancel={fecharModalCaptura}
+                footer={null}
+                centered
+                width={900}
+                bodyStyle={{ padding: 0, background: '#000' }}
+            >
+                {capturaSelecionada && <Image src={capturaSelecionada} alt="Captura de deface" preview={false} style={{ width: '100%' }} />}
+            </Modal>
 
             <Modal
                 title={`Configurar Dorks: ${categoriaAtualConfiguracao}`}

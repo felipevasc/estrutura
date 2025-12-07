@@ -163,6 +163,8 @@ model Deface {
   fonte     String
   dominioId Int
   dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  captura   String?
+  capturadoEm DateTime?
   createdAt DateTime @default(now())
 
   @@map("deface")
