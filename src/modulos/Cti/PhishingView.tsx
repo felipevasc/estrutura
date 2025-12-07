@@ -977,6 +977,7 @@ const PhishingView = () => {
                                         <GradeCapturas>
                                             {registrosPaginados.map((registro) => {
                                                 const statusVerificacao = obterInfoStatusVerificacao(registro.statusUltimaVerificacao);
+                                                const infoStatus = obterInfoStatus(registro.status);
                                                 const urlCaptura = resolverUrlCaptura(registro.captura);
 
                                                 return (
@@ -1006,8 +1007,8 @@ const PhishingView = () => {
                                                             {statusVerificacao.rotulo}
                                                         </TechLabel>
 
-                                                        <StatusBadge $color={statusVerificacao.cor}>
-                                                            {statusVerificacao.rotulo}
+                                                        <StatusBadge $color={infoStatus.cor}>
+                                                            {infoStatus.rotulo}
                                                         </StatusBadge>
 
                                                         <InfoOverlay className="overlay-info">
