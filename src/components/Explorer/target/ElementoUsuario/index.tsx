@@ -1,24 +1,27 @@
 import StoreContext from "@/store";
+import { IpResponse } from "@/types/IpResponse";
 import { UsuarioResponse } from "@/types/UsuarioResponse";
 import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
 import { NoCarregavel } from "../tipos";
-import useElementoIp from "../ElementoIp";
+type OpcoesElementoUsuario = {
+  obterIp?: (ip: IpResponse, anteriores?: string[]) => Promise<NoCarregavel>;
+};
 
-const useElementoUsuario = () => {
+const useElementoUsuario = (opcoes?: OpcoesElementoUsuario) => {
   const { selecaoTarget } = useContext(StoreContext);
-  const elementoIp = useElementoIp();
+  const { obterIp } = opcoes ?? {};
 
   const getUsuario = async (usuario: UsuarioResponse): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
     const checked = selecionado?.tipo === "user" && selecionado?.id === usuario.id;
-    const possuiIp = !!usuario.ip;
+    const possuiIp = !!usuario.ip && !!obterIp;
 
     const carregar = async () => {
       const filhos: NoCarregavel[] = [];
-      if (usuario.ip) {
-        const ip = await elementoIp.getIp(usuario.ip, ["usuario"]);
+      if (usuario.ip && obterIp) {
+        const ip = await obterIp(usuario.ip, ["usuario"]);
         filhos.push(ip);
       }
 
