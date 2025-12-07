@@ -3,7 +3,7 @@ import prisma from "@/database";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
-import { mkdir, readdir, rename, rm } from "fs/promises";
+import { mkdir, readdir, rename, rm, writeFile, access, copyFile } from "fs/promises";
 
 const executar = promisify(execFile);
 
@@ -78,8 +78,9 @@ class PhishingCapturaService extends NanoService {
     }
 
     private async capturar(id: number, url: string, pasta: string) {
+        const modeloVazio = await this.obterCapturaVazia(pasta);
+        const destinoCaptura = path.join(pasta, `${id}`);
         try {
-            const destinoCaptura = path.join(pasta, `${id}`);
             await rm(destinoCaptura, { recursive: true, force: true });
             await mkdir(destinoCaptura, { recursive: true });
             await executar(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destinoCaptura], { maxBuffer: 20 * 1024 * 1024 });
@@ -89,7 +90,7 @@ class PhishingCapturaService extends NanoService {
                 return [".png", ".jpg", ".jpeg", ".webp"].includes(extensao);
             });
             const arquivo = candidatos[0] || arquivos[0];
-            if (!arquivo) throw new Error("Captura não gerada");
+            if (!arquivo) return await this.aplicarCapturaVazia(id, pasta, modeloVazio, destinoCaptura);
             const extensao = path.extname(arquivo) || ".png";
             const destinoFinal = path.join(pasta, `${id}${extensao}`);
             await rm(destinoFinal, { force: true });
@@ -100,14 +101,34 @@ class PhishingCapturaService extends NanoService {
             const codigo = (erro as NodeJS.ErrnoException).code;
             const mensagem = codigo === "ENOENT" ? "Ferramenta gowitness não encontrada" : `Erro ao capturar ${url}`;
             this.error(mensagem, erro as Error);
-            return null;
+            await rm(destinoCaptura, { recursive: true, force: true });
+            return await this.aplicarCapturaVazia(id, pasta, modeloVazio, destinoCaptura);
         }
+    }
+
+    private async aplicarCapturaVazia(id: number, pasta: string, modelo: string, temporario: string) {
+        await rm(temporario, { recursive: true, force: true });
+        const destinoFinal = path.join(pasta, `${id}.png`);
+        await rm(destinoFinal, { force: true });
+        await copyFile(modelo, destinoFinal);
+        return this.caminhoRelativo(id, ".png");
     }
 
     private async obterPastaCapturas() {
         const pasta = path.join(process.cwd(), "public", "phishing", "capturas");
         await mkdir(pasta, { recursive: true });
         return pasta;
+    }
+
+    private async obterCapturaVazia(pasta: string) {
+        const destino = path.join(pasta, "vazio.png");
+        try {
+            await access(destino);
+            return destino;
+        } catch {}
+        const conteudo = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAGgwJ/lN9T4QAAAABJRU5ErkJggg==", "base64");
+        await writeFile(destino, conteudo);
+        return destino;
     }
 
     private caminhoRelativo(id: number, extensao: string) {

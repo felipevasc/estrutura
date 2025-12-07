@@ -192,6 +192,7 @@ const PhishingView = () => {
     const [executandoCrtsh, setExecutandoCrtsh] = useState(false);
     const [verificando, setVerificando] = useState(false);
     const [verificandoIndividuais, setVerificandoIndividuais] = useState<number[]>([]);
+    const [capturandoIndividuais, setCapturandoIndividuais] = useState<number[]>([]);
     const [alterandoStatus, setAlterandoStatus] = useState<number[]>([]);
     const [modalClassificacao, setModalClassificacao] = useState<{ id: number; status: PhishingStatus } | null>(null);
     const [removendoRegistros, setRemovendoRegistros] = useState<number[]>([]);
@@ -439,6 +440,25 @@ const PhishingView = () => {
         }
     };
 
+    const capturarRegistro = async (id: number) => {
+        if (!projetoId) return;
+        setCapturandoIndividuais((lista) => [...lista, id]);
+        try {
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/capturas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: [id] })
+            });
+            const corpo = await resposta.json();
+            if (!resposta.ok) throw new Error();
+            message.success(corpo.message || 'Captura enfileirada.');
+        } catch {
+            message.error('Não foi possível enfileirar a captura.');
+        } finally {
+            setCapturandoIndividuais((lista) => lista.filter((item) => item !== id));
+        }
+    };
+
     const removerDominiosOffline = async () => {
         if (!projetoId) return;
         setRemovendoOffline(true);
@@ -656,6 +676,14 @@ const PhishingView = () => {
             key: 'acoes',
             render: (_: string, registro: RegistroPhishing) => (
                 <Space size={6}>
+                    <Tooltip title="Capturar imagem">
+                        <Button
+                            size="small"
+                            icon={<PictureOutlined />}
+                            loading={capturandoIndividuais.includes(registro.id)}
+                            onClick={() => capturarRegistro(registro.id)}
+                        />
+                    </Tooltip>
                     <Tooltip title="Verificar">
                         <Button
                             size="small"
