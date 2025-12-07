@@ -3,64 +3,28 @@ import { ApiResponse } from "@/types/ApiResponse";
 import { DominioResponse } from "@/types/DominioResponse";
 import { NextRequest, NextResponse } from "next/server";
 import { TipoDominio } from "@prisma/client";
+import { montarIncludeDominio } from "../../../dominios/includes";
 
-const includeIp = {
-    include: {
-        portas: { include: { whatwebResultados: true } },
-        dominios: true,
-        redes: true,
-        usuarios: true,
-        diretorios: { include: { whatwebResultados: true } },
-        whatwebResultados: true,
-    }
+const obterLimite = (req: NextRequest) => {
+    const limite = Number(req.nextUrl.searchParams.get("limiteFilhos") ?? 0);
+    if (Number.isNaN(limite)) return 0;
+    return limite;
 };
 
+const obterLimitarDiretos = (req: NextRequest) => req.nextUrl.searchParams.get("limitarDiretos") !== "false";
+
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }): ApiResponse<DominioResponse[]> {
-    const p = await params
+    const p = await params;
+    const limiteFilhos = obterLimite(req);
+    const limitarDiretos = obterLimitarDiretos(req);
+
     const ret = await prisma.dominio.findMany({
         where: {
             projetoId: Number(p.id),
             pai: null,
             tipo: TipoDominio.principal,
         },
-        include: {
-            whatwebResultados: true,
-            ips: includeIp,
-            diretorios: { include: { whatwebResultados: true } },
-            subDominios: {
-                where: { tipo: TipoDominio.principal },
-                include: {
-                    whatwebResultados: true,
-                    ips: includeIp,
-                    diretorios: { include: { whatwebResultados: true } },
-                    subDominios: {
-                        where: { tipo: TipoDominio.principal },
-                        include: {
-                            whatwebResultados: true,
-                            ips: includeIp,
-                            diretorios: { include: { whatwebResultados: true } },
-                            subDominios: {
-                                where: { tipo: TipoDominio.principal },
-                                include: {
-                                    whatwebResultados: true,
-                                    ips: includeIp,
-                                    diretorios: { include: { whatwebResultados: true } },
-                                    subDominios: {
-                                        where: { tipo: TipoDominio.principal },
-                                        include: {
-                                            whatwebResultados: true,
-                                            ips: includeIp,
-                                            diretorios: { include: { whatwebResultados: true } },
-                                            subDominios: true,
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        include: montarIncludeDominio(limiteFilhos, limitarDiretos),
     });
     return NextResponse.json(ret);
 }
