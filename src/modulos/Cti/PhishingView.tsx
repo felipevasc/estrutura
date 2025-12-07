@@ -5,7 +5,7 @@ import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider,
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio, PhishingStatus } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined, RightOutlined, LeftOutlined, FilterOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined, RightOutlined, LeftOutlined, FilterOutlined, EyeOutlined, GlobalOutlined, ClockCircleOutlined, TagOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -141,7 +141,7 @@ const CarrosselContainer = styled.div`
 
 const BotaoNavegacao = styled(Button)`
   height: 100%;
-  min-height: 200px;
+  min-height: 240px;
   width: 48px;
   display: flex;
   align-items: center;
@@ -159,23 +159,147 @@ const BotaoNavegacao = styled(Button)`
   }
 `;
 
-const LugarImagem = styled.div`
-  height: 200px;
-  border: 1px dashed ${({ theme }) => theme.colors.borderColor};
+const CartaoCaptura = styled.div`
+  position: relative;
+  height: 240px;
+  width: 100%;
   border-radius: ${({ theme }) => theme.borders.radius};
-  display: grid;
-  place-items: center;
-  background: ${({ theme }) => theme.glass.default};
-  color: #8c8c8c;
-  font-weight: 600;
+  overflow: hidden;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  background: #000;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 10px 30px -10px ${({ theme }) => theme.colors.primary}44;
+
+    .overlay-info {
+      transform: translateY(0);
+    }
+
+    .overlay-actions {
+      opacity: 1;
+    }
+  }
 `;
 
-const RodapeCartao = styled.div`
+const ImagemFundo = styled.div<{ $url?: string | null }>`
+  width: 100%;
+  height: 100%;
+  background-image: url(${props => props.$url || ''});
+  background-size: cover;
+  background-position: center;
+  opacity: ${props => props.$url ? 0.8 : 0.4};
+  transition: opacity 0.3s;
+`;
+
+const StatusBadge = styled.div<{ $color: string }>`
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.glass.heavy};
+  backdrop-filter: blur(8px);
+  border: 1px solid ${({ $color }) => $color}44;
+  color: ${({ $color }) => $color};
+  font-size: 11px;
+  font-weight: 700;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 6px;
+  z-index: 2;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: ${({ $color }) => $color};
+    box-shadow: 0 0 8px ${({ $color }) => $color};
+  }
+`;
+
+const TechLabel = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const InfoOverlay = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 60%, transparent 100%);
+  color: white;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* transform: translateY(6px); */
+  transition: transform 0.3s;
+`;
+
+const OverlayActions = styled.div`
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  z-index: 1;
+`;
+
+const TituloCard = styled.div`
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const SubtituloCard = styled.div`
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const LugarSemImagem = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: ${({ theme }) => theme.glass.heavy};
+  color: ${({ theme }) => theme.colors.textSecondary};
   gap: 8px;
-  margin-top: 8px;
+  font-size: 13px;
 `;
 
 interface RegistroPhishing {
@@ -201,11 +325,11 @@ type BasePhishing = { palavrasChave: string[]; palavrasAuxiliares: string[]; tld
 const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [], padrao: { palavras: [], tlds: [] } };
 const baseInicial: BasePhishing = { palavrasChave: [], palavrasAuxiliares: [], tlds: [], padrao: { palavrasChave: [], palavrasAuxiliares: [], tlds: [] } };
 const opcoesStatus = [
-    { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: 'Possível Phishing', cor: 'orange' },
-    { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: 'Análise Necessária', cor: 'blue' },
-    { valor: PhishingStatus.PHISHING_IDENTIFICADO, rotulo: 'Phishing Confirmado', cor: 'red' },
-    { valor: PhishingStatus.FALSO_POSITIVO, rotulo: 'Falso Positivo', cor: 'green' },
-    { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: 'Reanálise', cor: 'gold' },
+    { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: 'Possível', cor: '#faad14' }, // Orange
+    { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: 'Análise', cor: '#1890ff' }, // Blue
+    { valor: PhishingStatus.PHISHING_IDENTIFICADO, rotulo: 'Phishing', cor: '#f5222d' }, // Red
+    { valor: PhishingStatus.FALSO_POSITIVO, rotulo: 'Seguro', cor: '#52c41a' }, // Green
+    { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: 'Reanálise', cor: '#faad14' }, // Gold
 ];
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
@@ -840,43 +964,49 @@ const PhishingView = () => {
                                         <GradeCapturas>
                                             {registrosPaginados.map((registro) => {
                                                 const status = obterInfoStatus(registro.status);
-                                                const imagem = registro.captura ? (
-                                                    <Image
-                                                        src={registro.captura}
-                                                        alt={registro.alvo}
-                                                        style={{ height: 200, objectFit: 'cover' }}
-                                                        preview={false}
-                                                    />
-                                                ) : <LugarImagem>Sem captura</LugarImagem>;
 
                                                 return (
-                                                    <Card
-                                                        key={registro.id}
-                                                        cover={imagem}
-                                                        title={registro.alvo}
-                                                        extra={<Tag color={status.cor}>{status.rotulo}</Tag>}
-                                                        size="small"
-                                                        bodyStyle={{ padding: 12 }}
-                                                    >
-                                                        <Space direction="vertical" style={{ width: '100%' }} size={4}>
-                                                            <Space size={4} wrap>
-                                                                <Tag color="purple">{registro.termo}</Tag>
-                                                                <Tag>{registro.fonte.toUpperCase()}</Tag>
-                                                            </Space>
-                                                            <Space size={4} wrap>
-                                                                {registro.statusUltimaVerificacao && (
-                                                                    <Tag color={registro.statusUltimaVerificacao === 'ONLINE' ? 'red' : 'green'}>
-                                                                        {registro.statusUltimaVerificacao}
-                                                                    </Tag>
-                                                                )}
-                                                                <Tag color="blue">{registro.dominio.endereco}</Tag>
-                                                            </Space>
-                                                            <RodapeCartao>
-                                                                <Text type="secondary" style={{ fontSize: 10 }}>Detectado {formatarData(registro.criadoEm)}</Text>
-                                                                {registro.captura && <a href={registro.captura} target="_blank" rel="noreferrer">Abrir</a>}
-                                                            </RodapeCartao>
-                                                        </Space>
-                                                    </Card>
+                                                    <CartaoCaptura key={registro.id} onClick={() => registro.captura && window.open(registro.captura, '_blank')}>
+                                                        <ImagemFundo $url={registro.captura} />
+
+                                                        {registro.captura ? (
+                                                            <OverlayActions className="overlay-actions">
+                                                                <Button
+                                                                    shape="circle"
+                                                                    icon={<EyeOutlined />}
+                                                                    size="large"
+                                                                    type="primary"
+                                                                    ghost
+                                                                    style={{ backdropFilter: 'blur(4px)' }}
+                                                                />
+                                                            </OverlayActions>
+                                                        ) : (
+                                                            <LugarSemImagem className="overlay-actions" style={{ opacity: 1, background: 'rgba(0,0,0,0.8)' }}>
+                                                                <PictureOutlined style={{ fontSize: 24 }} />
+                                                                <span>Sem captura</span>
+                                                            </LugarSemImagem>
+                                                        )}
+
+                                                        <TechLabel>
+                                                            <TagOutlined />
+                                                            {registro.fonte.toUpperCase()}
+                                                        </TechLabel>
+
+                                                        <StatusBadge $color={status.cor}>
+                                                            {status.rotulo}
+                                                        </StatusBadge>
+
+                                                        <InfoOverlay className="overlay-info">
+                                                            <TituloCard>
+                                                                <GlobalOutlined />
+                                                                {registro.alvo}
+                                                            </TituloCard>
+                                                            <SubtituloCard>
+                                                                <ClockCircleOutlined />
+                                                                {formatarData(registro.criadoEm)}
+                                                            </SubtituloCard>
+                                                        </InfoOverlay>
+                                                    </CartaoCaptura>
                                                 );
                                             })}
                                         </GradeCapturas>
