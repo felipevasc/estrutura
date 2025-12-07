@@ -6,6 +6,7 @@ import { StyledArvoreUsuario, StyledTitleUsuario } from "./styles";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import useElementoUsuario from "../../target/ElementoUsuario";
+import useElementoIp from "../../target/ElementoIp";
 import { NoCarregavel } from "../../target/tipos";
 import { atualizarFilhos } from "../../target/atualizarArvore";
 
@@ -14,7 +15,8 @@ const ArvoreUsuarios = () => {
   const { projeto } = useContext(StoreContext);
   const { data: usuariosProjeto, refetch: recarregarUsuarios } = api.usuarios.getUsuariosProjeto(projeto?.get()?.id);
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
-  const elementoUsuario = useElementoUsuario();
+  const elementoIp = useElementoIp();
+  const elementoUsuario = useElementoUsuario({ obterIp: elementoIp.getIp });
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [chavesCarregadas, setChavesCarregadas] = useState<React.Key[]>([]);
   const [carregando, setCarregando] = useState(false);
