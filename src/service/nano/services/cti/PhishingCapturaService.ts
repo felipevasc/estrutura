@@ -103,7 +103,7 @@ class PhishingCapturaService extends NanoService {
 
     private async validarFerramenta() {
         try {
-            await executar(this.ferramenta, ["--version"], { timeout: 5000 });
+            await executar(this.ferramenta, ["version"], { timeout: 5000 });
             return true;
         } catch (erro: unknown) {
             const codigo = (erro as NodeJS.ErrnoException).code;
