@@ -3,7 +3,7 @@ import prisma from "@/database";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
-import { mkdir, rm } from "fs/promises";
+import { mkdir, readdir, rename, rm } from "fs/promises";
 
 const executar = promisify(execFile);
 
@@ -53,8 +53,8 @@ class PhishingCapturaService extends NanoService {
             const pasta = await this.obterPastaCapturas();
             let capturados = 0;
             for (const registro of registros) {
-                const sucesso = await this.processarRegistro(registro, pasta);
-                if (sucesso) capturados += 1;
+                const caminho = await this.processarRegistro(registro, pasta);
+                if (caminho) capturados += 1;
             }
 
             this.bus.emit("JOB_COMPLETED", { id, result: { capturados, total: registros.length } });
@@ -65,12 +65,11 @@ class PhishingCapturaService extends NanoService {
     }
 
     private async processarRegistro(registro: Registro, pasta: string) {
-        const destino = path.join(pasta, `${registro.id}.png`);
         const url = this.normalizarUrl(registro.alvo);
-        const sucesso = await this.capturar(url, destino);
-        if (!sucesso) return false;
-        await prisma.phishing.update({ where: { id: registro.id }, data: { captura: this.caminhoRelativo(registro.id), capturadoEm: new Date() } });
-        return true;
+        const caminho = await this.capturar(registro.id, url, pasta);
+        if (!caminho) return null;
+        await prisma.phishing.update({ where: { id: registro.id }, data: { captura: caminho, capturadoEm: new Date() } });
+        return caminho;
     }
 
     private normalizarUrl(alvo: string) {
@@ -78,16 +77,30 @@ class PhishingCapturaService extends NanoService {
         return `http://${host}`;
     }
 
-    private async capturar(url: string, destino: string) {
+    private async capturar(id: number, url: string, pasta: string) {
         try {
-            await rm(destino, { force: true });
-            await executar(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destino], { maxBuffer: 20 * 1024 * 1024 });
-            return true;
+            const destinoCaptura = path.join(pasta, `${id}`);
+            await rm(destinoCaptura, { recursive: true, force: true });
+            await mkdir(destinoCaptura, { recursive: true });
+            await executar(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destinoCaptura], { maxBuffer: 20 * 1024 * 1024 });
+            const arquivos = await readdir(destinoCaptura);
+            const candidatos = arquivos.filter((item) => {
+                const extensao = path.extname(item).toLowerCase();
+                return [".png", ".jpg", ".jpeg", ".webp"].includes(extensao);
+            });
+            const arquivo = candidatos[0] || arquivos[0];
+            if (!arquivo) throw new Error("Captura não gerada");
+            const extensao = path.extname(arquivo) || ".png";
+            const destinoFinal = path.join(pasta, `${id}${extensao}`);
+            await rm(destinoFinal, { force: true });
+            await rename(path.join(destinoCaptura, arquivo), destinoFinal);
+            await rm(destinoCaptura, { recursive: true, force: true });
+            return this.caminhoRelativo(id, extensao);
         } catch (erro: unknown) {
             const codigo = (erro as NodeJS.ErrnoException).code;
             const mensagem = codigo === "ENOENT" ? "Ferramenta gowitness não encontrada" : `Erro ao capturar ${url}`;
             this.error(mensagem, erro as Error);
-            return false;
+            return null;
         }
     }
 
@@ -97,8 +110,8 @@ class PhishingCapturaService extends NanoService {
         return pasta;
     }
 
-    private caminhoRelativo(id: number) {
-        return `/phishing/capturas/${id}.png`;
+    private caminhoRelativo(id: number, extensao: string) {
+        return `/phishing/capturas/${id}${extensao}`;
     }
 
     private async validarFerramenta() {
