@@ -81,7 +81,7 @@ class PhishingCapturaService extends NanoService {
     private async capturar(url: string, destino: string) {
         try {
             await rm(destino, { force: true });
-            await executar(this.ferramenta, ["single", "--url", url, "--screenshot-path", destino], { maxBuffer: 20 * 1024 * 1024 });
+            await executar(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destino], { maxBuffer: 20 * 1024 * 1024 });
             return true;
         } catch (erro: unknown) {
             const codigo = (erro as NodeJS.ErrnoException).code;
