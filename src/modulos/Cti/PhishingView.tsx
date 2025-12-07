@@ -188,7 +188,7 @@ const CartaoCaptura = styled.div`
 const ImagemFundo = styled.div<{ $url?: string | null }>`
   width: 100%;
   height: 100%;
-  background-image: url(${props => props.$url || ''});
+  background-image: ${props => props.$url ? `url(${props.$url})` : 'none'};
   background-size: cover;
   background-position: center;
   opacity: ${props => props.$url ? 0.8 : 0.4};
@@ -367,6 +367,13 @@ const PhishingView = () => {
     const [visualizacao, setVisualizacao] = useState<'tabela' | 'capturas'>('tabela');
     const [paginaCapturas, setPaginaCapturas] = useState(1);
     const [capturando, setCapturando] = useState(false);
+
+    const resolverUrlCaptura = useCallback((caminho?: string | null) => {
+        if (!caminho) return '';
+        if (caminho.startsWith('http')) return caminho;
+        if (typeof window === 'undefined') return caminho;
+        return `${window.location.origin}${caminho}`;
+    }, []);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -964,10 +971,11 @@ const PhishingView = () => {
                                         <GradeCapturas>
                                             {registrosPaginados.map((registro) => {
                                                 const status = obterInfoStatus(registro.status);
+                                                const urlCaptura = resolverUrlCaptura(registro.captura);
 
                                                 return (
-                                                    <CartaoCaptura key={registro.id} onClick={() => registro.captura && window.open(registro.captura, '_blank')}>
-                                                        <ImagemFundo $url={registro.captura} />
+                                                    <CartaoCaptura key={registro.id} onClick={() => urlCaptura && window.open(urlCaptura, '_blank')}>
+                                                        <ImagemFundo $url={urlCaptura} />
 
                                                         {registro.captura ? (
                                                             <OverlayActions className="overlay-actions">
