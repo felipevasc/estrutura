@@ -4,6 +4,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import { mkdir, readdir, rename, rm, writeFile, access, copyFile } from "fs/promises";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 const executar = promisify(execFile);
 
@@ -52,12 +53,18 @@ class PhishingCapturaService extends NanoService {
 
             const pasta = await this.obterPastaCapturas();
             let capturados = 0;
+            const comandos: string[] = [];
+            const saidas: string[] = [];
             for (const registro of registros) {
-                const caminho = await this.processarRegistro(registro, pasta);
-                if (caminho) capturados += 1;
+                const resultado = await this.processarRegistro(registro, pasta);
+                if (resultado?.comando) comandos.push(resultado.comando);
+                if (resultado?.saida) saidas.push(resultado.saida);
+                if (resultado?.caminho) capturados += 1;
             }
 
-            this.bus.emit("JOB_COMPLETED", { id, result: { capturados, total: registros.length } });
+            const executedCommand = comandos.length ? comandos.join(" | ") : linhaComandoCti(this.ferramenta);
+            const rawOutput = saidaBrutaCti(saidas.join("\n"));
+            this.bus.emit("JOB_COMPLETED", { id, result: { capturados, total: registros.length }, executedCommand, rawOutput });
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "Falha na captura";
             this.bus.emit("JOB_FAILED", { id, error: mensagem });
@@ -66,10 +73,10 @@ class PhishingCapturaService extends NanoService {
 
     private async processarRegistro(registro: Registro, pasta: string) {
         const url = this.normalizarUrl(registro.alvo);
-        const caminho = await this.capturar(registro.id, url, pasta);
-        if (!caminho) return null;
-        await prisma.phishing.update({ where: { id: registro.id }, data: { captura: caminho, capturadoEm: new Date() } });
-        return caminho;
+        const resultado = await this.capturar(registro.id, url, pasta);
+        if (!resultado.caminho) return null;
+        await prisma.phishing.update({ where: { id: registro.id }, data: { captura: resultado.caminho, capturadoEm: new Date() } });
+        return resultado;
     }
 
     private normalizarUrl(alvo: string) {
@@ -80,29 +87,33 @@ class PhishingCapturaService extends NanoService {
     private async capturar(id: number, url: string, pasta: string) {
         const modeloVazio = await this.obterCapturaVazia(pasta);
         const destinoCaptura = path.join(pasta, `${id}`);
+        const comando = linhaComandoCti(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destinoCaptura]);
         try {
             await rm(destinoCaptura, { recursive: true, force: true });
             await mkdir(destinoCaptura, { recursive: true });
-            await executar(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destinoCaptura], { maxBuffer: 20 * 1024 * 1024 });
+            const { stdout, stderr } = await executar(this.ferramenta, ["scan", "single", "--url", url, "--screenshot-path", destinoCaptura], { maxBuffer: 20 * 1024 * 1024 });
             const arquivos = await readdir(destinoCaptura);
             const candidatos = arquivos.filter((item) => {
                 const extensao = path.extname(item).toLowerCase();
                 return [".png", ".jpg", ".jpeg", ".webp"].includes(extensao);
             });
             const arquivo = candidatos[0] || arquivos[0];
-            if (!arquivo) return await this.aplicarCapturaVazia(id, pasta, modeloVazio, destinoCaptura);
+            const saida = saidaBrutaCti([stdout, stderr].filter(Boolean).join("\n"));
+            if (!arquivo) return { caminho: await this.aplicarCapturaVazia(id, pasta, modeloVazio, destinoCaptura), comando, saida } as { caminho: string; comando: string; saida: string };
             const extensao = path.extname(arquivo) || ".png";
             const destinoFinal = path.join(pasta, `${id}${extensao}`);
             await rm(destinoFinal, { force: true });
             await rename(path.join(destinoCaptura, arquivo), destinoFinal);
             await rm(destinoCaptura, { recursive: true, force: true });
-            return this.caminhoRelativo(id, extensao);
+            return { caminho: this.caminhoRelativo(id, extensao), comando, saida } as { caminho: string; comando: string; saida: string };
         } catch (erro: unknown) {
             const codigo = (erro as NodeJS.ErrnoException).code;
             const mensagem = codigo === "ENOENT" ? "Ferramenta gowitness não encontrada" : `Erro ao capturar ${url}`;
             this.error(mensagem, erro as Error);
             await rm(destinoCaptura, { recursive: true, force: true });
-            return await this.aplicarCapturaVazia(id, pasta, modeloVazio, destinoCaptura);
+            const caminho = await this.aplicarCapturaVazia(id, pasta, modeloVazio, destinoCaptura);
+            const saida = erro instanceof Error ? erro.message : String(erro || "");
+            return { caminho, comando, saida };
         }
     }
 

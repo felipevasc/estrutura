@@ -9,6 +9,7 @@ import { carregarBasePhishing } from "@/utils/basePhishing";
 import { tmpdir } from "os";
 import { alvoAcessivel } from "@/utils/conectividade";
 import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 const executar = promisify(execFile);
 
@@ -48,10 +49,12 @@ class PhishingCatcherService extends NanoService {
 
             const base = await carregarBasePhishing(dominio);
             const configuracao = await this.carregarConfiguracao(dominio, base);
-            const alvos = await this.executarFerramenta(dominio, configuracao);
+            const { alvos, comando, saida } = await this.executarFerramenta(dominio, configuracao);
             await this.registrarResultados(dominio.id, configuracao, alvos);
 
-            this.bus.emit("JOB_COMPLETED", { id, result: { encontrados: alvos.length } });
+            const executedCommand = comando || linhaComandoCti("phishing_catcher", { dominio: dominio.endereco });
+            const rawOutput = saidaBrutaCti(saida || alvos);
+            this.bus.emit("JOB_COMPLETED", { id, result: { encontrados: alvos.length }, executedCommand, rawOutput });
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "Falha desconhecida";
             this.bus.emit("JOB_FAILED", { id, error: mensagem });
@@ -92,17 +95,21 @@ class PhishingCatcherService extends NanoService {
 
     private async executarFerramenta(dominio: Dominio, configuracao: Configuracao) {
         const caminho = await this.gerarArquivoConfiguracao(dominio.id, configuracao);
+        const comando = linhaComandoCti("phishing_catcher", ["--config", caminho, "--dominio", dominio.endereco]);
         try {
             const { stdout, stderr } = await executar("phishing_catcher", ["--config", caminho, "--dominio", dominio.endereco], { maxBuffer: 15 * 1024 * 1024 });
             if (stderr) this.log(`Saida de erro phishing_catcher para ${dominio.endereco}: ${stderr}`);
-            return this.extrairAlvos(stdout, configuracao);
+            const alvos = this.extrairAlvos(stdout, configuracao);
+            const saida = saidaBrutaCti([stdout, stderr].filter(Boolean).join("\n"));
+            return { alvos, comando, saida } as { alvos: { alvo: string; termo: string }[]; comando: string; saida: string };
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "erro inesperado";
             const detalhes = erro as { stdout?: string; stderr?: string };
             if (detalhes.stdout) this.error(`Saida phishing_catcher com falha: ${detalhes.stdout}`);
             if (detalhes.stderr) this.error(`Erro phishing_catcher com falha: ${detalhes.stderr}`);
             this.error(`Falha na execução do phishing_catcher: ${mensagem}`);
-            return [] as { alvo: string; termo: string }[];
+            const saida = saidaBrutaCti([detalhes.stdout, detalhes.stderr, mensagem].filter(Boolean).join("\n"));
+            return { alvos: [] as { alvo: string; termo: string }[], comando, saida };
         }
     }
 

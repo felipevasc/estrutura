@@ -5,6 +5,7 @@ import { Dominio } from "@prisma/client";
 import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 import { alvoAcessivel } from "@/utils/conectividade";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 type Payload = { id: number; args: unknown };
 
@@ -56,14 +57,16 @@ class PhishingCrtshService extends NanoService {
             await queueCommand("phishing_crtsh_termo", { dominioId, termo }, dominio.projetoId);
         }
 
-        this.bus.emit("JOB_COMPLETED", { id, result: { termosEnfileirados: termos.length } });
+        const executedCommand = linhaComandoCti("phishing_crtsh_check", { dominioId });
+        const rawOutput = saidaBrutaCti(termos);
+        this.bus.emit("JOB_COMPLETED", { id, result: { termosEnfileirados: termos.length }, executedCommand, rawOutput });
     }
 
     private async executarTermo(id: number, dominioId: number, termo: string) {
         const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
         if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
-        const alvos = await this.buscarCrtsh(termo);
+        const { alvos, comando, saida } = await this.buscarCrtsh(termo);
         const criados: any[] = [];
 
         for (const alvo of alvos) {
@@ -76,7 +79,9 @@ class PhishingCrtshService extends NanoService {
             }
         }
 
-        this.bus.emit("JOB_COMPLETED", { id, result: criados });
+        const executedCommand = comando || linhaComandoCti("crt.sh", termo);
+        const rawOutput = saidaBrutaCti(saida || alvos);
+        this.bus.emit("JOB_COMPLETED", { id, result: criados, executedCommand, rawOutput });
     }
 
     private async obterTermos(dominio: Dominio) {
@@ -90,22 +95,27 @@ class PhishingCrtshService extends NanoService {
             const resposta = await fetch(url, { headers: { Accept: "application/json" } });
             if (!resposta.ok) {
                 this.error(`Falha ao consultar crt.sh para ${termo}: ${resposta.statusText}`);
-                return [] as string[];
+                const comando = linhaComandoCti("crt.sh", url);
+                return { alvos: [] as string[], comando, saida: resposta.statusText };
             }
 
-            const dados = await resposta.json().catch(() => [] as unknown[]);
-            if (!Array.isArray(dados)) return [] as string[];
+            const corpo = await resposta.text();
+            const dados = JSON.parse(corpo || "[]");
+            if (!Array.isArray(dados)) return { alvos: [] as string[], comando: linhaComandoCti("crt.sh", url), saida: saidaBrutaCti(corpo) };
 
             const alvos = dados.flatMap((entrada: Record<string, unknown>) => {
                 const bruto = String(entrada["name_value"] || "").toLowerCase();
                 return bruto.split(/\r?\n/).map(item => item.replace(/^\*\./, "").trim()).filter(Boolean);
             });
 
-            return Array.from(new Set(alvos));
+            const comando = linhaComandoCti("crt.sh", url);
+            const saida = saidaBrutaCti(corpo);
+            return { alvos: Array.from(new Set(alvos)), comando, saida };
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "erro inesperado";
             this.error(`Erro na busca do crt.sh: ${mensagem}`);
-            return [] as string[];
+            const comando = linhaComandoCti("crt.sh", termo);
+            return { alvos: [] as string[], comando, saida: mensagem };
         }
     }
 }

@@ -2,6 +2,7 @@
 import { NanoService } from '@/service/nano/NanoService';
 import prisma from '@/database';
 import { TakedownVerificacaoStatus } from '@prisma/client';
+import { linhaComandoCti, saidaBrutaCti } from './registroExecucaoCti';
 
 export class TakedownService extends NanoService {
     constructor() {
@@ -34,6 +35,7 @@ export class TakedownService extends NanoService {
                 }
 
                 let status: TakedownVerificacaoStatus;
+                let rawOutput = '';
                 try {
                     let headers = {};
                     if (takedown.headers) {
@@ -53,8 +55,10 @@ export class TakedownService extends NanoService {
                         method: takedown.metodoHttp || 'GET',
                         headers: headers,
                         body: takedown.body,
-                        redirect: 'follow', // Segue redirecionamentos
+                        redirect: 'follow',
                     });
+                    const corpo = await response.text();
+                    rawOutput = saidaBrutaCti({ status: response.status, corpo });
 
                     status = response.ok || (response.status >= 300 && response.status < 400)
                         ? TakedownVerificacaoStatus.ONLINE
@@ -62,6 +66,7 @@ export class TakedownService extends NanoService {
 
                 } catch (error) {
                     status = TakedownVerificacaoStatus.OFFLINE;
+                    rawOutput = saidaBrutaCti(error);
                 }
 
                 await prisma.takedown.update({
@@ -72,7 +77,8 @@ export class TakedownService extends NanoService {
                     },
                 });
 
-                this.bus.emit('JOB_COMPLETED', { id: jobId, result: `Verificação do Takedown ${takedownId} concluída. Status: ${status}` });
+                const executedCommand = linhaComandoCti('takedown_check', { id: takedownId, url: takedown.url });
+                this.bus.emit('JOB_COMPLETED', { id: jobId, result: `Verificação do Takedown ${takedownId} concluída. Status: ${status}`, executedCommand, rawOutput });
 
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido ao verificar takedown';

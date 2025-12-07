@@ -1,6 +1,7 @@
 import { NanoService } from '@/service/nano/NanoService';
 import prisma from '@/database';
 import { PhishingVerificacaoStatus } from '@prisma/client';
+import { linhaComandoCti, saidaBrutaCti } from './registroExecucaoCti';
 
 export default class PhishingVerificacaoService extends NanoService {
     constructor() {
@@ -28,15 +29,20 @@ export default class PhishingVerificacaoService extends NanoService {
 
                 const urls = this.obterUrls(registro.alvo);
                 let status = PhishingVerificacaoStatus.OFFLINE;
+                const saidas: string[] = [];
 
                 for (const url of urls) {
                     try {
                         const resposta = await fetch(url, { method: 'GET', redirect: 'follow' });
+                        saidas.push(`${url} ${resposta.status}`);
                         if (resposta.ok || (resposta.status >= 300 && resposta.status < 400)) {
                             status = PhishingVerificacaoStatus.ONLINE;
                             break;
                         }
-                    } catch {}
+                    } catch (erro) {
+                        const mensagem = erro instanceof Error ? erro.message : 'falha ao verificar';
+                        saidas.push(`${url} ${mensagem}`);
+                    }
                 }
 
                 await prisma.phishing.update({
@@ -44,7 +50,9 @@ export default class PhishingVerificacaoService extends NanoService {
                     data: { ultimaVerificacao: new Date(), statusUltimaVerificacao: status }
                 });
 
-                this.bus.emit('JOB_COMPLETED', { id: jobId, result: status });
+                const executedCommand = linhaComandoCti('phishing_verificar', { phishingId });
+                const rawOutput = saidaBrutaCti(saidas);
+                this.bus.emit('JOB_COMPLETED', { id: jobId, result: status, executedCommand, rawOutput });
             } catch (erro) {
                 const mensagem = erro instanceof Error ? erro.message : 'Erro ao verificar phishing';
                 this.bus.emit('JOB_FAILED', { id: jobId, error: mensagem });

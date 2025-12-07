@@ -1,6 +1,7 @@
 import { NanoService } from "../../NanoService";
 import prisma from "@/database";
 import puppeteer from "puppeteer";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 type Payload = {
     dominioId: number;
@@ -48,7 +49,9 @@ class DefaceForumZoneXsecService extends NanoService {
                     criados.push(criado);
                 }
             }
-            this.bus.emit("JOB_COMPLETED", { id, result: criados });
+            const executedCommand = linhaComandoCti("zone-xsec", { dominio: dominio.endereco, paginas });
+            const rawOutput = saidaBrutaCti(espelhos);
+            this.bus.emit("JOB_COMPLETED", { id, result: criados, executedCommand, rawOutput });
         } catch (erro: any) {
             this.bus.emit("JOB_FAILED", { id, error: erro.message });
         }

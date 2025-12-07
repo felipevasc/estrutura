@@ -7,6 +7,7 @@ import { queueCommand } from "@/service/nano/commandHelper";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 import { gerarTermosPhishing } from "@/utils/geradorTermosPhishing";
 import { alvoAcessivel } from "@/utils/conectividade";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 const executar = promisify(execFile);
 
@@ -61,14 +62,16 @@ class PhishingDnstwistService extends NanoService {
             await queueCommand("phishing_dnstwist_termo", { dominioId, termo }, dominio.projetoId);
         }
 
-        this.bus.emit("JOB_COMPLETED", { id, result: { termosEnfileirados: termos.length } });
+        const executedCommand = linhaComandoCti("phishing_dnstwist_check", { dominioId });
+        const rawOutput = saidaBrutaCti(termos);
+        this.bus.emit("JOB_COMPLETED", { id, result: { termosEnfileirados: termos.length }, executedCommand, rawOutput });
     }
 
     private async executarTermo(id: number, dominioId: number, termo: string) {
         const dominio = await prisma.dominio.findUnique({ where: { id: dominioId } });
         if (!dominio) throw new Error(`Domínio ${dominioId} não encontrado`);
 
-        const alvos = await this.executarDnstwist(termo);
+        const { alvos, comando, saida } = await this.executarDnstwist(termo);
         const criados: any[] = [];
 
         for (const alvoBruto of alvos) {
@@ -82,7 +85,9 @@ class PhishingDnstwistService extends NanoService {
             }
         }
 
-        this.bus.emit("JOB_COMPLETED", { id, result: criados });
+        const executedCommand = comando || linhaComandoCti("dnstwist", termo);
+        const rawOutput = saidaBrutaCti(saida || alvos);
+        this.bus.emit("JOB_COMPLETED", { id, result: criados, executedCommand, rawOutput });
     }
 
     private combinar(palavras: string[], tlds: string[]) {
@@ -99,12 +104,13 @@ class PhishingDnstwistService extends NanoService {
     }
 
     private async executarDnstwist(termo: string) {
+        const comando = linhaComandoCti("dnstwist", ["--registered", "--format", "json", termo]);
         try {
             const { stdout, stderr } = await executar("dnstwist", ["--registered", "--format", "json", termo], { maxBuffer: 15 * 1024 * 1024 });
             this.log(`Saida dnstwist para ${termo}: ${stdout}`);
             if (stderr) this.log(`Saida de erro dnstwist para ${termo}: ${stderr}`);
             const resultado = JSON.parse(stdout || "[]");
-            if (!Array.isArray(resultado)) return [] as string[];
+            if (!Array.isArray(resultado)) return { alvos: [] as string[], comando, saida: saidaBrutaCti(stdout) };
 
             const hosts = resultado.map((entrada: Record<string, unknown>) => {
                 const alvo = String(entrada["domain-name"] || entrada.domain || entrada.host || "").toLowerCase();
@@ -117,14 +123,16 @@ class PhishingDnstwistService extends NanoService {
                 return registros.length > 0 ? alvo : "";
             }).filter(Boolean);
 
-            return Array.from(new Set(hosts));
+            const saida = saidaBrutaCti([stdout, stderr].filter(Boolean).join("\n"));
+            return { alvos: Array.from(new Set(hosts)), comando, saida };
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "erro inesperado";
             const detalhes = erro as { stdout?: string; stderr?: string };
             if (detalhes.stdout) this.error(`Saida dnstwist com falha: ${detalhes.stdout}`);
             if (detalhes.stderr) this.error(`Erro dnstwist com falha: ${detalhes.stderr}`);
             this.error(`Falha na execução do dnstwist: ${mensagem}`);
-            return [] as string[];
+            const saida = saidaBrutaCti([detalhes.stdout, detalhes.stderr, mensagem].filter(Boolean).join("\n"));
+            return { alvos: [] as string[], comando, saida };
         }
     }
 }

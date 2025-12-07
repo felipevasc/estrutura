@@ -2,6 +2,7 @@ import { NanoService } from "../../NanoService";
 import prisma from "@/database";
 import { analisarHtmlPhishing } from "./phishingAnalise/avaliadorPhishing";
 import { PhishingStatus } from "@prisma/client";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 type Payload = { id: number; args: unknown };
 
@@ -38,7 +39,9 @@ class PhishingAnaliseService extends NanoService {
             const avaliacao = analisarHtmlPhishing(html);
 
             if (!avaliacao.salvar) {
-                this.bus.emit("JOB_COMPLETED", { id, result: { status: "DESCARTADO", motivo: avaliacao.motivo, filtro: avaliacao.filtro } });
+                const executedCommand = linhaComandoCti("phishing_analise_pagina", { dominioId, alvo });
+                const rawOutput = saidaBrutaCti({ avaliacao, html });
+                this.bus.emit("JOB_COMPLETED", { id, result: { status: "DESCARTADO", motivo: avaliacao.motivo, filtro: avaliacao.filtro }, executedCommand, rawOutput });
                 return;
             }
 
@@ -49,7 +52,9 @@ class PhishingAnaliseService extends NanoService {
                 ? await prisma.phishing.update({ where: { id: existente.id }, data: dados })
                 : await prisma.phishing.create({ data: dados });
 
-            this.bus.emit("JOB_COMPLETED", { id, result: { status: dados.status, registroId: registro.id } });
+            const executedCommand = linhaComandoCti("phishing_analise_pagina", { dominioId, alvo });
+            const rawOutput = saidaBrutaCti({ avaliacao, html, registroId: registro.id });
+            this.bus.emit("JOB_COMPLETED", { id, result: { status: dados.status, registroId: registro.id }, executedCommand, rawOutput });
         } catch (erro: unknown) {
             const mensagem = erro instanceof Error ? erro.message : "Falha na analise";
             this.bus.emit("JOB_FAILED", { id, error: mensagem });

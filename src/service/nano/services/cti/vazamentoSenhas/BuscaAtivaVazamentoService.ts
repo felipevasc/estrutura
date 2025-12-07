@@ -1,6 +1,7 @@
 import { NanoService } from '@/service/nano/NanoService';
 import { clienteTelegramBot } from './buscaAtiva/ClienteTelegramBot';
 import { clienteTelegramSessao } from './buscaAtiva/ClienteTelegramSessao';
+import { linhaComandoCti, saidaBrutaCti } from '../registroExecucaoCti';
 
 export class BuscaAtivaVazamentoService extends NanoService {
     comando = 'busca_ativa_vazamento_telegram';
@@ -32,9 +33,13 @@ export class BuscaAtivaVazamentoService extends NanoService {
                     command === this.comandoTeste
                         ? await cliente.testar(entrada)
                         : await cliente.executar(entrada);
+                const executedCommand = linhaComandoCti(command, entrada);
+                const rawOutput = saidaBrutaCti(resultado);
                 this.bus.emit('JOB_COMPLETED', {
                     id,
                     result: { ...resultado, metodoAutenticacao: metodo, tipo: command === this.comandoTeste ? 'TESTE' : 'EXECUCAO' },
+                    executedCommand,
+                    rawOutput,
                 });
             } catch (erro) {
                 this.bus.emit('JOB_FAILED', { id, error: erro });

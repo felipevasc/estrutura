@@ -1,6 +1,7 @@
 import { NanoService } from "../../NanoService";
 import prisma from "@/database";
 import { Dominio } from "@prisma/client";
+import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 
 type CheckPayload = {
     dominioId: number;
@@ -96,7 +97,9 @@ export abstract class CtiSearchService extends NanoService {
                 }
             }
             this.log(`Processamento concluído. Encontrados ${createdItems.length} novos resultados.`);
-            this.bus.emit('JOB_COMPLETED', { id, result: createdItems });
+            const executedCommand = linhaComandoCti('google_custom_search', { dork, fonte });
+            const rawOutput = saidaBrutaCti(result);
+            this.bus.emit('JOB_COMPLETED', { id, result: createdItems, executedCommand, rawOutput });
         } catch (error: any) {
             this.error(`Falha no processamento: ${error.message}`, error);
             this.bus.emit('JOB_FAILED', { id, error: error.message });
