@@ -5,7 +5,7 @@ import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider,
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio, PhishingStatus } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined, RightOutlined, LeftOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined, RightOutlined, LeftOutlined, FilterOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -14,14 +14,14 @@ const tamanhoPaginaCapturas = 8;
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
   padding: 12px 0;
   width: 100%;
 `;
 
-const Grade = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(360px, 1fr);
+const Section = styled.div`
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 `;
 
@@ -30,17 +30,18 @@ const Cartao = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
   border-radius: ${({ theme }) => theme.borders.radius};
   box-shadow: ${({ theme }) => theme.shadows.soft};
-  padding: 18px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 `;
 
-const Cabecalho = styled.div`
+const CabecalhoSection = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
 `;
 
 const BlocoTitulo = styled.div`
@@ -49,40 +50,60 @@ const BlocoTitulo = styled.div`
   gap: 4px;
 `;
 
-const BarraControle = styled.div`
+const BarraFerramentas = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 `;
 
-const PainelFerramenta = styled.div`
+const GradeFerramentas = styled.div`
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+`;
+
+const CartaoFerramenta = styled.div`
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: center;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
   border-radius: ${({ theme }) => theme.borders.radius};
   background: ${({ theme }) => theme.glass.default};
+  height: 100%;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.glass.card};
+    transform: translateY(-2px);
+  }
+`;
+
+const HeaderFerramenta = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 `;
 
 const IconeFerramenta = styled.div`
-  width: 56px;
-  height: 56px;
-  border-radius: 18px;
+  min-width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
   background: linear-gradient(135deg, ${({ theme }) => theme.colors.primary}22, ${({ theme }) => theme.colors.primary}55);
   color: ${({ theme }) => theme.colors.primary};
-  font-size: 26px;
+  font-size: 22px;
 `;
 
 const AcoesFerramenta = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
 `;
 
 const ListaTermos = styled.div`
@@ -100,14 +121,15 @@ const ListaTermos = styled.div`
 const PainelVisualizacao = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const GradeCapturas = styled.div`
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, auto);
-  gap: 12px;
+  gap: 16px;
+  width: 100%;
 `;
 
 const CarrosselContainer = styled.div`
@@ -119,21 +141,26 @@ const CarrosselContainer = styled.div`
 
 const BotaoNavegacao = styled(Button)`
   height: 100%;
-  min-height: 120px;
-  width: 40px;
+  min-height: 200px;
+  width: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: ${({ theme }) => theme.glass.default};
+  border-radius: ${({ theme }) => theme.borders.radius};
+  color: ${({ theme }) => theme.colors.textSecondary};
+  transition: all 0.2s;
 
   &:hover {
     background: ${({ theme }) => theme.glass.card} !important;
+    color: ${({ theme }) => theme.colors.primary};
+    transform: scale(1.05);
   }
 `;
 
 const LugarImagem = styled.div`
-  height: 220px;
+  height: 200px;
   border: 1px dashed ${({ theme }) => theme.colors.borderColor};
   border-radius: ${({ theme }) => theme.borders.radius};
   display: grid;
@@ -159,7 +186,7 @@ interface RegistroPhishing {
     criadoEm: string;
     ultimaVerificacao?: string;
     statusUltimaVerificacao?: 'ONLINE' | 'OFFLINE';
-    dominio: { endereco: string };
+    dominio: { id: number; endereco: string };
     status?: PhishingStatus;
     captura?: string | null;
     capturadoEm?: string | null;
@@ -174,11 +201,11 @@ type BasePhishing = { palavrasChave: string[]; palavrasAuxiliares: string[]; tld
 const configInicial: ConfiguracaoCatcher = { palavras: [], tlds: [], padrao: { palavras: [], tlds: [] } };
 const baseInicial: BasePhishing = { palavrasChave: [], palavrasAuxiliares: [], tlds: [], padrao: { palavrasChave: [], palavrasAuxiliares: [], tlds: [] } };
 const opcoesStatus = [
-    { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: '[possivel phishing]', cor: 'orange' },
-    { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: '[necessario analise]', cor: 'blue' },
-    { valor: PhishingStatus.PHISHING_IDENTIFICADO, rotulo: '[phishing identificado]', cor: 'red' },
-    { valor: PhishingStatus.FALSO_POSITIVO, rotulo: '[falso positivo]', cor: 'green' },
-    { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: '[necessario reanalise]', cor: 'gold' },
+    { valor: PhishingStatus.POSSIVEL_PHISHING, rotulo: 'Possível Phishing', cor: 'orange' },
+    { valor: PhishingStatus.NECESSARIO_ANALISE, rotulo: 'Análise Necessária', cor: 'blue' },
+    { valor: PhishingStatus.PHISHING_IDENTIFICADO, rotulo: 'Phishing Confirmado', cor: 'red' },
+    { valor: PhishingStatus.FALSO_POSITIVO, rotulo: 'Falso Positivo', cor: 'green' },
+    { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: 'Reanálise', cor: 'gold' },
 ];
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
@@ -256,9 +283,14 @@ const PhishingView = () => {
         buscarDados();
     }, [buscarDominios, buscarDados]);
 
+    // Filtrar dados localmente com base no domínio selecionado
+    const dadosFiltrados = dominioSelecionado
+        ? dados.filter(item => item.dominio.id === dominioSelecionado)
+        : dados;
+
     useEffect(() => {
         setPaginaCapturas(1);
-    }, [dados, visualizacao]);
+    }, [dadosFiltrados, visualizacao]);
 
     const carregarBase = useCallback(async (dominioId: number) => {
         if (!projetoId) return;
@@ -628,9 +660,9 @@ const PhishingView = () => {
         </div>
     );
 
-    const totalPaginasCapturas = Math.max(1, Math.ceil(dados.length / tamanhoPaginaCapturas));
+    const totalPaginasCapturas = Math.max(1, Math.ceil(dadosFiltrados.length / tamanhoPaginaCapturas));
     const paginaNormalizada = Math.min(paginaCapturas, totalPaginasCapturas);
-    const registrosPaginados = dados.slice((paginaNormalizada - 1) * tamanhoPaginaCapturas, paginaNormalizada * tamanhoPaginaCapturas);
+    const registrosPaginados = dadosFiltrados.slice((paginaNormalizada - 1) * tamanhoPaginaCapturas, paginaNormalizada * tamanhoPaginaCapturas);
 
     const colunas = [
         {
@@ -750,12 +782,12 @@ const PhishingView = () => {
 
     return (
         <Container>
-            <Grade>
+            <Section>
                 <Cartao>
-                    <Cabecalho>
+                    <CabecalhoSection>
                         <BlocoTitulo>
-                            <Title level={4} style={{ margin: 0 }}>Phishing</Title>
-                            <Text type="secondary">Descoberta de paginas de phishing.</Text>
+                            <Title level={4} style={{ margin: 0 }}>Monitoramento</Title>
+                            <Text type="secondary">Resultados das varreduras de phishing.</Text>
                         </BlocoTitulo>
                         <Flex gap={16} align="center">
                             <Segmented
@@ -767,71 +799,43 @@ const PhishingView = () => {
                                 ]}
                             />
                             <Space size={8}>
-                                <Tooltip title="Atualizar">
+                                <Tooltip title="Atualizar dados">
                                     <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando} />
                                 </Tooltip>
-                                <Tooltip title="Capturar prints">
+                                <Tooltip title="Capturar prints agora">
                                     <Button icon={<PictureOutlined />} onClick={capturarPrints} loading={capturando} disabled={!dados.length} />
                                 </Tooltip>
-                                <Tooltip title="Verificar todos">
+                                <Tooltip title="Verificar status">
                                     <Button icon={<SecurityScanOutlined />} onClick={() => verificarDominios()} loading={verificando} disabled={!dados.length} />
                                 </Tooltip>
                                 <Tooltip title="Excluir offline">
                                     <Button danger icon={<MinusCircleOutlined />} onClick={removerDominiosOffline} loading={removendoOffline} disabled={!dados.some((item) => item.statusUltimaVerificacao === 'OFFLINE')} />
                                 </Tooltip>
-                                <Tooltip title="Limpar tudo">
+                                <Tooltip title="Limpar histórico">
                                     <Button danger icon={<DeleteOutlined />} onClick={limparDados} disabled={carregando || !dados.length} />
                                 </Tooltip>
                             </Space>
                         </Flex>
-                    </Cabecalho>
-                    <BarraControle>
-                        <div style={{ minWidth: 140 }}>
-                            <Text type="secondary">Domínio alvo</Text>
-                        </div>
-                        <Select
-                            style={{ flex: 1 }}
-                            placeholder="Escolha o domínio"
-                            onChange={(valor) => {
-                                setDominioSelecionado(valor ?? null);
-                                if (valor) {
-                                    carregarBase(valor);
-                                    carregarConfiguracaoCatcher(valor);
-                                } else {
-                                    setBasePhishing(baseInicial);
-                                    setEntradaPalavrasChave([]);
-                                    setEntradaPalavrasAuxiliares([]);
-                                    setEntradaTlds([]);
-                                    setConfiguracaoCatcher(configInicial);
-                                }
-                            }}
-                            value={dominioSelecionado ?? undefined}
-                            allowClear
-                        >
-                            {dominios.map(dominio => <Option key={dominio.id} value={dominio.id}>{dominio.endereco}</Option>)}
-                        </Select>
-                        <Tooltip title="Recarregar domínios">
-                            <Button icon={<RadarChartOutlined />} onClick={buscarDominios} />
-                        </Tooltip>
-                        <Badge count={dados.length} showZero color="#722ed1">
-                            <Button type="primary" icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>
-                                Atualizar lista
-                            </Button>
-                        </Badge>
-                    </BarraControle>
+                    </CabecalhoSection>
+
                     {visualizacao === 'tabela' ? (
                         <Table
-                            dataSource={dados}
+                            dataSource={dadosFiltrados}
                             columns={colunas}
                             rowKey="id"
                             loading={carregando}
                             pagination={{ pageSize: 8 }}
                             scroll={{ x: true }}
+                            locale={{ emptyText: <Empty description="Nenhum resultado encontrado" /> }}
                         />
                     ) : (
                         <PainelVisualizacao>
-                            {dados.length ? (
+                            {dadosFiltrados.length ? (
                                 <CarrosselContainer>
+                                    <BotaoNavegacao onClick={voltarPagina}>
+                                        <LeftOutlined style={{ fontSize: 24 }} />
+                                    </BotaoNavegacao>
+
                                     <div style={{ flex: 1 }}>
                                         <GradeCapturas>
                                             {registrosPaginados.map((registro) => {
@@ -840,7 +844,7 @@ const PhishingView = () => {
                                                     <Image
                                                         src={registro.captura}
                                                         alt={registro.alvo}
-                                                        style={{ height: 220, objectFit: 'cover' }}
+                                                        style={{ height: 200, objectFit: 'cover' }}
                                                         preview={false}
                                                     />
                                                 ) : <LugarImagem>Sem captura</LugarImagem>;
@@ -852,6 +856,7 @@ const PhishingView = () => {
                                                         title={registro.alvo}
                                                         extra={<Tag color={status.cor}>{status.rotulo}</Tag>}
                                                         size="small"
+                                                        bodyStyle={{ padding: 12 }}
                                                     >
                                                         <Space direction="vertical" style={{ width: '100%' }} size={4}>
                                                             <Space size={4} wrap>
@@ -878,97 +883,117 @@ const PhishingView = () => {
                                     </div>
 
                                     <BotaoNavegacao onClick={avancarPagina}>
-                                        <RightOutlined style={{ fontSize: 24, color: '#8c8c8c' }} />
+                                        <RightOutlined style={{ fontSize: 24 }} />
                                     </BotaoNavegacao>
                                 </CarrosselContainer>
                             ) : (
-                                <Empty description="Nenhum registro de phishing" />
+                                <Empty description="Nenhum resultado para exibir" />
                             )}
                         </PainelVisualizacao>
                     )}
                 </Cartao>
+            </Section>
 
-                <Cartao>
-                    <Cabecalho>
-                        <BlocoTitulo>
-                            <Title level={5} style={{ margin: 0 }}>Detecção ativa</Title>
-                        </BlocoTitulo>
-                        <Space>
-                            <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>Configurar base</Button>
-                        </Space>
-                    </Cabecalho>
-                    <PainelFerramenta>
-                        <IconeFerramenta>
-                            <ThunderboltOutlined />
-                        </IconeFerramenta>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                                <div>
-                                    <Text strong>dnstwist</Text>
-                                    <div><Text type="secondary">Gera domínios lookalike e valida os ativos.</Text></div>
-                                </div>
-                            </div>
-                            <AcoesFerramenta>
-                                <Button onClick={abrirModalTermos} icon={<SettingOutlined />}>
-                                    Chaves ({basePhishing.palavrasChave.length || '-'}) / Auxiliares ({basePhishing.palavrasAuxiliares.length || '-'}) / TLDs ({basePhishing.tlds.length || '-'})
-                                </Button>
-                                <Button type="primary" icon={<RadarChartOutlined />} loading={executando} onClick={executarDnstwist}>
-                                    Varredura completa
-                                </Button>
-                            </AcoesFerramenta>
-                        </div>
-                    </PainelFerramenta>
-                    <PainelFerramenta>
-                        <IconeFerramenta>
-                            <SafetyOutlined />
-                        </IconeFerramenta>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                                <div>
-                                    <Text strong>phishing_catcher</Text>
-                                    <div><Text type="secondary">Prioriza TLDs e pesos por palavra-chave na caça ativa.</Text></div>
-                                </div>
-                            </div>
-                            <AcoesFerramenta>
-                                <Button icon={<SettingOutlined />} onClick={abrirConfiguracaoCatcher}>
-                                    Ajustar configuração
-                                </Button>
-                                <Button type="primary" icon={<ThunderboltOutlined />} loading={executandoCatcher} onClick={executarPhishingCatcher}>
-                                    Consultar agora
-                                </Button>
-                            </AcoesFerramenta>
-                        </div>
-                    </PainelFerramenta>
-                    <PainelFerramenta>
-                        <IconeFerramenta>
-                            <SecurityScanOutlined />
-                        </IconeFerramenta>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-                                <div>
-                                    <Text strong>crt.sh</Text>
-                                    <div><Text type="secondary">Busca certificados com nomes próximos e adiciona novos alvos.</Text></div>
-                                </div>
-                            </div>
-                            <AcoesFerramenta>
-                                <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>
-                                    Chaves ({basePhishing.palavrasChave.length || '-'})
-                                </Button>
-                                <Button type="primary" icon={<SecurityScanOutlined />} loading={executandoCrtsh} onClick={executarCrtsh}>
-                                    Consultar certificados
-                                </Button>
-                            </AcoesFerramenta>
-                        </div>
-                    </PainelFerramenta>
-                    <Alert
-                        message="Dicas"
-                        description="Personalize palavras e TLDs antes de rodar para cobrir variações de marca, departamentos e iscas comuns."
-                        type="info"
-                        showIcon
-                    />
-                </Cartao>
-            </Grade>
+            <Section>
+                <CabecalhoSection>
+                    <BlocoTitulo>
+                        <Title level={4} style={{ margin: 0 }}>Detecção Ativa</Title>
+                        <Text type="secondary">Ferramentas para descoberta de novos hosts e certificados.</Text>
+                    </BlocoTitulo>
+                    <BarraFerramentas>
+                        <Text strong>Domínio Alvo:</Text>
+                        <Select
+                            style={{ width: 280 }}
+                            placeholder="Selecione um domínio"
+                            onChange={(valor) => {
+                                setDominioSelecionado(valor ?? null);
+                                if (valor) {
+                                    carregarBase(valor);
+                                    carregarConfiguracaoCatcher(valor);
+                                } else {
+                                    setBasePhishing(baseInicial);
+                                    setEntradaPalavrasChave([]);
+                                    setEntradaPalavrasAuxiliares([]);
+                                    setEntradaTlds([]);
+                                    setConfiguracaoCatcher(configInicial);
+                                }
+                            }}
+                            value={dominioSelecionado ?? undefined}
+                            allowClear
+                            suffixIcon={<FilterOutlined />}
+                        >
+                            {dominios.map(dominio => <Option key={dominio.id} value={dominio.id}>{dominio.endereco}</Option>)}
+                        </Select>
+                        <Tooltip title="Recarregar lista de domínios">
+                            <Button icon={<ReloadOutlined />} onClick={buscarDominios} />
+                        </Tooltip>
+                    </BarraFerramentas>
+                </CabecalhoSection>
 
+                <GradeFerramentas>
+                    <CartaoFerramenta>
+                        <HeaderFerramenta>
+                            <IconeFerramenta>
+                                <ThunderboltOutlined />
+                            </IconeFerramenta>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <Text strong style={{ fontSize: 16 }}>dnstwist</Text>
+                                <Text type="secondary" style={{ fontSize: 13 }}>Gera permutações de domínio (lookalikes) e valida resolução DNS.</Text>
+                            </div>
+                        </HeaderFerramenta>
+                        <AcoesFerramenta>
+                            <Button onClick={abrirModalTermos} icon={<SettingOutlined />}>
+                                Configurar
+                            </Button>
+                            <Button type="primary" icon={<RadarChartOutlined />} loading={executando} onClick={executarDnstwist} block disabled={!dominioSelecionado}>
+                                Executar
+                            </Button>
+                        </AcoesFerramenta>
+                    </CartaoFerramenta>
+
+                    <CartaoFerramenta>
+                        <HeaderFerramenta>
+                            <IconeFerramenta>
+                                <SafetyOutlined />
+                            </IconeFerramenta>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <Text strong style={{ fontSize: 16 }}>phishing_catcher</Text>
+                                <Text type="secondary" style={{ fontSize: 13 }}>Monitoramento em tempo real baseado em pontuação de palavras-chave.</Text>
+                            </div>
+                        </HeaderFerramenta>
+                        <AcoesFerramenta>
+                            <Button icon={<SettingOutlined />} onClick={abrirConfiguracaoCatcher}>
+                                Ajustar
+                            </Button>
+                            <Button type="primary" icon={<ThunderboltOutlined />} loading={executandoCatcher} onClick={executarPhishingCatcher} block disabled={!dominioSelecionado}>
+                                Consultar
+                            </Button>
+                        </AcoesFerramenta>
+                    </CartaoFerramenta>
+
+                    <CartaoFerramenta>
+                        <HeaderFerramenta>
+                            <IconeFerramenta>
+                                <SecurityScanOutlined />
+                            </IconeFerramenta>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                <Text strong style={{ fontSize: 16 }}>crt.sh</Text>
+                                <Text type="secondary" style={{ fontSize: 13 }}>Busca em logs de transparência de certificados por subdomínios e similares.</Text>
+                            </div>
+                        </HeaderFerramenta>
+                        <AcoesFerramenta>
+                            <Button icon={<SettingOutlined />} onClick={abrirModalTermos}>
+                                Chaves
+                            </Button>
+                            <Button type="primary" icon={<SecurityScanOutlined />} loading={executandoCrtsh} onClick={executarCrtsh} block disabled={!dominioSelecionado}>
+                                Buscar
+                            </Button>
+                        </AcoesFerramenta>
+                    </CartaoFerramenta>
+                </GradeFerramentas>
+            </Section>
+
+            {/* Modais permanecem inalterados na lógica, apenas renderizados aqui */}
             <Modal
                 title="Base de phishing"
                 open={modalTermosVisivel}
