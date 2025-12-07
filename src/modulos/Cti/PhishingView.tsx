@@ -1,14 +1,15 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col, Popconfirm } from 'antd';
+import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col, Popconfirm, Segmented, Card, Image, Pagination, Empty } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio, PhishingStatus } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const tamanhoPaginaCapturas = 8;
 
 const Container = styled.div`
   display: flex;
@@ -104,6 +105,37 @@ const ListaTermos = styled.div`
   gap: 8px;
 `;
 
+const PainelVisualizacao = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const GradeCapturas = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+`;
+
+const LugarImagem = styled.div`
+  height: 220px;
+  border: 1px dashed ${({ theme }) => theme.colors.borderColor};
+  border-radius: ${({ theme }) => theme.borders.radius};
+  display: grid;
+  place-items: center;
+  background: ${({ theme }) => theme.glass.default};
+  color: #8c8c8c;
+  font-weight: 600;
+`;
+
+const RodapeCartao = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+`;
+
 interface RegistroPhishing {
     id: number;
     alvo: string;
@@ -114,6 +146,8 @@ interface RegistroPhishing {
     statusUltimaVerificacao?: 'ONLINE' | 'OFFLINE';
     dominio: { endereco: string };
     status?: PhishingStatus;
+    captura?: string | null;
+    capturadoEm?: string | null;
 }
 
 type PalavraCatcher = { termo: string; peso: number };
@@ -163,6 +197,9 @@ const PhishingView = () => {
     const [removendoRegistros, setRemovendoRegistros] = useState<number[]>([]);
     const [removendoOffline, setRemovendoOffline] = useState(false);
     const [modalAjuda, setModalAjuda] = useState<{ titulo: string; descricao: React.ReactNode } | null>(null);
+    const [visualizacao, setVisualizacao] = useState<'tabela' | 'capturas'>('tabela');
+    const [paginaCapturas, setPaginaCapturas] = useState(1);
+    const [capturando, setCapturando] = useState(false);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -202,6 +239,10 @@ const PhishingView = () => {
         buscarDominios();
         buscarDados();
     }, [buscarDominios, buscarDados]);
+
+    useEffect(() => {
+        setPaginaCapturas(1);
+    }, [dados, visualizacao]);
 
     const carregarBase = useCallback(async (dominioId: number) => {
         if (!projetoId) return;
@@ -378,6 +419,26 @@ const PhishingView = () => {
         }
     };
 
+    const capturarPrints = async () => {
+        if (!projetoId) return;
+        setCapturando(true);
+        try {
+            const corpo = dominioSelecionado ? { dominioId: dominioSelecionado } : {};
+            const resposta = await fetch(`/api/v1/projetos/${projetoId}/cti/phishing/capturas`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(corpo)
+            });
+            const retorno = await resposta.json();
+            if (!resposta.ok) throw new Error();
+            message.success(retorno.message || 'Capturas enfileiradas.');
+        } catch {
+            message.error('Não foi possível enfileirar as capturas.');
+        } finally {
+            setCapturando(false);
+        }
+    };
+
     const removerDominiosOffline = async () => {
         if (!projetoId) return;
         setRemovendoOffline(true);
@@ -532,6 +593,10 @@ const PhishingView = () => {
         </div>
     );
 
+    const totalPaginasCapturas = Math.max(1, Math.ceil(dados.length / tamanhoPaginaCapturas));
+    const paginaNormalizada = Math.min(paginaCapturas, totalPaginasCapturas);
+    const registrosPaginados = dados.slice((paginaNormalizada - 1) * tamanhoPaginaCapturas, paginaNormalizada * tamanhoPaginaCapturas);
+
     const colunas = [
         {
             title: 'Host identificado',
@@ -633,7 +698,18 @@ const PhishingView = () => {
                             <Title level={4} style={{ margin: 0 }}>Phishing</Title>
                             <Text type="secondary">Descoberta de paginas de phishing.</Text>
                         </BlocoTitulo>
-                        <Space>
+                        <Space wrap>
+                            <Segmented
+                                value={visualizacao}
+                                onChange={(valor) => setVisualizacao(valor as 'tabela' | 'capturas')}
+                                options={[
+                                    { label: 'Tabela', value: 'tabela', icon: <TableOutlined /> },
+                                    { label: 'Capturas', value: 'capturas', icon: <AppstoreOutlined /> }
+                                ]}
+                            />
+                            <Button icon={<PictureOutlined />} onClick={capturarPrints} loading={capturando} disabled={!dados.length}>
+                                Capturar prints
+                            </Button>
                             <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>Atualizar</Button>
                             <Button icon={<SecurityScanOutlined />} onClick={() => verificarDominios()} loading={verificando} disabled={!dados.length}>
                                 Verificar todos
@@ -678,14 +754,76 @@ const PhishingView = () => {
                             </Button>
                         </Badge>
                     </BarraControle>
-                    <Table
-                        dataSource={dados}
-                        columns={colunas}
-                        rowKey="id"
-                        loading={carregando}
-                        pagination={{ pageSize: 8 }}
-                        scroll={{ x: true }}
-                    />
+                    {visualizacao === 'tabela' ? (
+                        <Table
+                            dataSource={dados}
+                            columns={colunas}
+                            rowKey="id"
+                            loading={carregando}
+                            pagination={{ pageSize: 8 }}
+                            scroll={{ x: true }}
+                        />
+                    ) : (
+                        <PainelVisualizacao>
+                            {dados.length ? (
+                                <>
+                                    <GradeCapturas>
+                                        {registrosPaginados.map((registro) => {
+                                            const status = obterInfoStatus(registro.status);
+                                            const imagem = registro.captura ? (
+                                                <Image
+                                                    src={registro.captura}
+                                                    alt={registro.alvo}
+                                                    style={{ height: 220, objectFit: 'cover' }}
+                                                    preview={false}
+                                                />
+                                            ) : <LugarImagem>Sem captura</LugarImagem>;
+
+                                            return (
+                                                <Card
+                                                    key={registro.id}
+                                                    cover={imagem}
+                                                    title={registro.alvo}
+                                                    extra={<Tag color={status.cor}>{status.rotulo}</Tag>}
+                                                >
+                                                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
+                                                        <Space size={6} wrap>
+                                                            <Tag color="purple">{registro.termo}</Tag>
+                                                            <Tag>{registro.fonte.toUpperCase()}</Tag>
+                                                            {registro.statusUltimaVerificacao && (
+                                                                <Tag color={registro.statusUltimaVerificacao === 'ONLINE' ? 'red' : 'green'}>
+                                                                    {registro.statusUltimaVerificacao}
+                                                                </Tag>
+                                                            )}
+                                                        </Space>
+                                                        <Space size={6} wrap>
+                                                            <Tag color="blue">{registro.dominio.endereco}</Tag>
+                                                            {registro.capturadoEm && <Tag color="gold">Capturado {formatarData(registro.capturadoEm)}</Tag>}
+                                                        </Space>
+                                                        <RodapeCartao>
+                                                            <Text type="secondary" style={{ fontSize: 12 }}>Detectado {formatarData(registro.criadoEm)}</Text>
+                                                            {registro.captura && <a href={registro.captura} target="_blank" rel="noreferrer">Abrir imagem</a>}
+                                                        </RodapeCartao>
+                                                    </Space>
+                                                </Card>
+                                            );
+                                        })}
+                                    </GradeCapturas>
+                                    {dados.length > tamanhoPaginaCapturas && (
+                                        <Pagination
+                                            current={paginaNormalizada}
+                                            pageSize={tamanhoPaginaCapturas}
+                                            total={dados.length}
+                                            onChange={(pagina) => setPaginaCapturas(pagina)}
+                                            showSizeChanger={false}
+                                        />
+                                    )}
+                                </>
+                            ) : (
+                                <Empty description="Nenhum registro de phishing" />
+                            )}
+                        </PainelVisualizacao>
+                    )}
                 </Cartao>
 
                 <Cartao>

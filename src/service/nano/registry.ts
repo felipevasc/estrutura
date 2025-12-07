@@ -25,6 +25,7 @@ import PhishingCatcherService from './services/cti/PhishingCatcherService';
 import PhishingCrtshService from './services/cti/PhishingCrtshService';
 import PhishingVerificacaoService from './services/cti/PhishingVerificacaoService';
 import PhishingAnaliseService from './services/cti/PhishingAnaliseService';
+import PhishingCapturaService from './services/cti/PhishingCapturaService';
 import { WgetRecursivoService } from './services/tools/WgetRecursivoService';
 
 export const registeredServices: NanoService[] = [
@@ -49,6 +50,7 @@ export const registeredServices: NanoService[] = [
     new PhishingCrtshService(),
     new PhishingVerificacaoService(),
     new PhishingAnaliseService(),
+    new PhishingCapturaService(),
     new TakedownService(),
     new FontesDadosVazamentoService(),
     new BuscaAtivaVazamentoService(),

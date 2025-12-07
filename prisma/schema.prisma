@@ -178,6 +178,8 @@ model Phishing {
   criadoEm  DateTime @default(now())
   ultimaVerificacao       DateTime?
   statusUltimaVerificacao PhishingVerificacaoStatus?
+  captura   String?
+  capturadoEm DateTime?
   status   PhishingStatus @default(NECESSARIO_ANALISE)
 
   @@map("phishing")
