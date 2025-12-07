@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col, Popconfirm, Segmented, Card, Image, Pagination, Empty } from 'antd';
+import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col, Popconfirm, Segmented, Card, Image, Pagination, Empty, Flex } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio, PhishingStatus } from '@prisma/client';
-import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined } from '@ant-design/icons';
+import { RadarChartOutlined, ReloadOutlined, SettingOutlined, ThunderboltOutlined, SafetyOutlined, InfoCircleOutlined, PlusOutlined, MinusCircleOutlined, SecurityScanOutlined, EditOutlined, DeleteOutlined, PictureOutlined, AppstoreOutlined, TableOutlined, RightOutlined, LeftOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -47,14 +47,6 @@ const BlocoTitulo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 4px;
-`;
-
-const Selo = styled(Tag)`
-  margin: 0;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
 `;
 
 const BarraControle = styled.div`
@@ -113,8 +105,31 @@ const PainelVisualizacao = styled.div`
 
 const GradeCapturas = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, auto);
   gap: 12px;
+`;
+
+const CarrosselContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+`;
+
+const BotaoNavegacao = styled(Button)`
+  height: 100%;
+  min-height: 120px;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: ${({ theme }) => theme.glass.default};
+
+  &:hover {
+    background: ${({ theme }) => theme.glass.card} !important;
+  }
 `;
 
 const LugarImagem = styled.div`
@@ -717,6 +732,22 @@ const PhishingView = () => {
         }
     ];
 
+    const avancarPagina = () => {
+        if (paginaNormalizada < totalPaginasCapturas) {
+            setPaginaCapturas(paginaNormalizada + 1);
+        } else {
+            setPaginaCapturas(1);
+        }
+    };
+
+    const voltarPagina = () => {
+        if (paginaNormalizada > 1) {
+            setPaginaCapturas(paginaNormalizada - 1);
+        } else {
+            setPaginaCapturas(totalPaginasCapturas);
+        }
+    };
+
     return (
         <Container>
             <Grade>
@@ -726,27 +757,33 @@ const PhishingView = () => {
                             <Title level={4} style={{ margin: 0 }}>Phishing</Title>
                             <Text type="secondary">Descoberta de paginas de phishing.</Text>
                         </BlocoTitulo>
-                        <Space wrap>
+                        <Flex gap={16} align="center">
                             <Segmented
                                 value={visualizacao}
                                 onChange={(valor) => setVisualizacao(valor as 'tabela' | 'capturas')}
                                 options={[
-                                    { label: 'Tabela', value: 'tabela', icon: <TableOutlined /> },
-                                    { label: 'Capturas', value: 'capturas', icon: <AppstoreOutlined /> }
+                                    { value: 'tabela', icon: <Tooltip title="Visualizar Tabela"><TableOutlined /></Tooltip> },
+                                    { value: 'capturas', icon: <Tooltip title="Visualizar Imagens"><AppstoreOutlined /></Tooltip> }
                                 ]}
                             />
-                            <Button icon={<PictureOutlined />} onClick={capturarPrints} loading={capturando} disabled={!dados.length}>
-                                Capturar prints
-                            </Button>
-                            <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando}>Atualizar</Button>
-                            <Button icon={<SecurityScanOutlined />} onClick={() => verificarDominios()} loading={verificando} disabled={!dados.length}>
-                                Verificar todos
-                            </Button>
-                            <Button danger icon={<MinusCircleOutlined />} onClick={removerDominiosOffline} loading={removendoOffline} disabled={!dados.some((item) => item.statusUltimaVerificacao === 'OFFLINE')}>
-                                Excluir offline
-                            </Button>
-                            <Button danger onClick={limparDados} disabled={carregando}>Limpar</Button>
-                        </Space>
+                            <Space size={8}>
+                                <Tooltip title="Atualizar">
+                                    <Button icon={<ReloadOutlined />} onClick={buscarDados} loading={carregando} />
+                                </Tooltip>
+                                <Tooltip title="Capturar prints">
+                                    <Button icon={<PictureOutlined />} onClick={capturarPrints} loading={capturando} disabled={!dados.length} />
+                                </Tooltip>
+                                <Tooltip title="Verificar todos">
+                                    <Button icon={<SecurityScanOutlined />} onClick={() => verificarDominios()} loading={verificando} disabled={!dados.length} />
+                                </Tooltip>
+                                <Tooltip title="Excluir offline">
+                                    <Button danger icon={<MinusCircleOutlined />} onClick={removerDominiosOffline} loading={removendoOffline} disabled={!dados.some((item) => item.statusUltimaVerificacao === 'OFFLINE')} />
+                                </Tooltip>
+                                <Tooltip title="Limpar tudo">
+                                    <Button danger icon={<DeleteOutlined />} onClick={limparDados} disabled={carregando || !dados.length} />
+                                </Tooltip>
+                            </Space>
+                        </Flex>
                     </Cabecalho>
                     <BarraControle>
                         <div style={{ minWidth: 140 }}>
@@ -794,59 +831,56 @@ const PhishingView = () => {
                     ) : (
                         <PainelVisualizacao>
                             {dados.length ? (
-                                <>
-                                    <GradeCapturas>
-                                        {registrosPaginados.map((registro) => {
-                                            const status = obterInfoStatus(registro.status);
-                                            const imagem = registro.captura ? (
-                                                <Image
-                                                    src={registro.captura}
-                                                    alt={registro.alvo}
-                                                    style={{ height: 220, objectFit: 'cover' }}
-                                                    preview={false}
-                                                />
-                                            ) : <LugarImagem>Sem captura</LugarImagem>;
+                                <CarrosselContainer>
+                                    <div style={{ flex: 1 }}>
+                                        <GradeCapturas>
+                                            {registrosPaginados.map((registro) => {
+                                                const status = obterInfoStatus(registro.status);
+                                                const imagem = registro.captura ? (
+                                                    <Image
+                                                        src={registro.captura}
+                                                        alt={registro.alvo}
+                                                        style={{ height: 220, objectFit: 'cover' }}
+                                                        preview={false}
+                                                    />
+                                                ) : <LugarImagem>Sem captura</LugarImagem>;
 
-                                            return (
-                                                <Card
-                                                    key={registro.id}
-                                                    cover={imagem}
-                                                    title={registro.alvo}
-                                                    extra={<Tag color={status.cor}>{status.rotulo}</Tag>}
-                                                >
-                                                    <Space direction="vertical" style={{ width: '100%' }} size={8}>
-                                                        <Space size={6} wrap>
-                                                            <Tag color="purple">{registro.termo}</Tag>
-                                                            <Tag>{registro.fonte.toUpperCase()}</Tag>
-                                                            {registro.statusUltimaVerificacao && (
-                                                                <Tag color={registro.statusUltimaVerificacao === 'ONLINE' ? 'red' : 'green'}>
-                                                                    {registro.statusUltimaVerificacao}
-                                                                </Tag>
-                                                            )}
+                                                return (
+                                                    <Card
+                                                        key={registro.id}
+                                                        cover={imagem}
+                                                        title={registro.alvo}
+                                                        extra={<Tag color={status.cor}>{status.rotulo}</Tag>}
+                                                        size="small"
+                                                    >
+                                                        <Space direction="vertical" style={{ width: '100%' }} size={4}>
+                                                            <Space size={4} wrap>
+                                                                <Tag color="purple">{registro.termo}</Tag>
+                                                                <Tag>{registro.fonte.toUpperCase()}</Tag>
+                                                            </Space>
+                                                            <Space size={4} wrap>
+                                                                {registro.statusUltimaVerificacao && (
+                                                                    <Tag color={registro.statusUltimaVerificacao === 'ONLINE' ? 'red' : 'green'}>
+                                                                        {registro.statusUltimaVerificacao}
+                                                                    </Tag>
+                                                                )}
+                                                                <Tag color="blue">{registro.dominio.endereco}</Tag>
+                                                            </Space>
+                                                            <RodapeCartao>
+                                                                <Text type="secondary" style={{ fontSize: 10 }}>Detectado {formatarData(registro.criadoEm)}</Text>
+                                                                {registro.captura && <a href={registro.captura} target="_blank" rel="noreferrer">Abrir</a>}
+                                                            </RodapeCartao>
                                                         </Space>
-                                                        <Space size={6} wrap>
-                                                            <Tag color="blue">{registro.dominio.endereco}</Tag>
-                                                            {registro.capturadoEm && <Tag color="gold">Capturado {formatarData(registro.capturadoEm)}</Tag>}
-                                                        </Space>
-                                                        <RodapeCartao>
-                                                            <Text type="secondary" style={{ fontSize: 12 }}>Detectado {formatarData(registro.criadoEm)}</Text>
-                                                            {registro.captura && <a href={registro.captura} target="_blank" rel="noreferrer">Abrir imagem</a>}
-                                                        </RodapeCartao>
-                                                    </Space>
-                                                </Card>
-                                            );
-                                        })}
-                                    </GradeCapturas>
-                                    {dados.length > tamanhoPaginaCapturas && (
-                                        <Pagination
-                                            current={paginaNormalizada}
-                                            pageSize={tamanhoPaginaCapturas}
-                                            total={dados.length}
-                                            onChange={(pagina) => setPaginaCapturas(pagina)}
-                                            showSizeChanger={false}
-                                        />
-                                    )}
-                                </>
+                                                    </Card>
+                                                );
+                                            })}
+                                        </GradeCapturas>
+                                    </div>
+
+                                    <BotaoNavegacao onClick={avancarPagina}>
+                                        <RightOutlined style={{ fontSize: 24, color: '#8c8c8c' }} />
+                                    </BotaoNavegacao>
+                                </CarrosselContainer>
                             ) : (
                                 <Empty description="Nenhum registro de phishing" />
                             )}
