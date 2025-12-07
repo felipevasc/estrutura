@@ -1,14 +1,14 @@
 import StoreContext from "@/store";
 import { UsuarioResponse } from "@/types/UsuarioResponse";
-import { faEthernet, faServer, faUser } from "@fortawesome/free-solid-svg-icons";
+import { faUser } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
-import useElementoPorta from "../ElementoPorta";
 import { NoCarregavel } from "../tipos";
+import useElementoIp from "../ElementoIp";
 
 const useElementoUsuario = () => {
   const { selecaoTarget } = useContext(StoreContext);
-  const elementoPorta = useElementoPorta();
+  const elementoIp = useElementoIp();
 
   const getUsuario = async (usuario: UsuarioResponse): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
@@ -18,31 +18,8 @@ const useElementoUsuario = () => {
     const carregar = async () => {
       const filhos: NoCarregavel[] = [];
       if (usuario.ip) {
-        const ip = usuario.ip;
-        const filhosIp: NoCarregavel[] = [];
-        const portas = ip.portas ?? [];
-
-        if (portas.length) {
-          const filhosPortas: NoCarregavel[] = [];
-          for (const porta of portas) {
-            filhosPortas.push(await elementoPorta.getPorta(porta));
-          }
-          filhosIp.push({
-            key: `user-${usuario.id}-ip-${ip.id}-portas`,
-            title: <div><FontAwesomeIcon icon={faEthernet} /> Portas/Serviços</div>,
-            children: filhosPortas,
-            className: "folder",
-            isLeaf: filhosPortas.length === 0
-          });
-        }
-
-        filhos.push({
-          key: `user-${usuario.id}-ip-${ip.id}`,
-          title: <div><FontAwesomeIcon icon={faServer} /> {ip.endereco}</div>,
-          children: filhosIp.length ? filhosIp : undefined,
-          className: "ip",
-          isLeaf: filhosIp.length === 0
-        });
+        const ip = await elementoIp.getIp(usuario.ip, ["usuario"]);
+        filhos.push(ip);
       }
 
       return filhos;

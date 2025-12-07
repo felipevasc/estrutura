@@ -2,49 +2,57 @@ import prisma from "@/database";
 import { NextRequest, NextResponse } from "next/server";
 import { TipoDominio } from "@prisma/client";
 
-const includeIp = {
-    include: {
-        portas: true
-    }
+const parseNumero = (valor?: string | null) => {
+    if (!valor) return undefined;
+    const numero = Number(valor);
+    return Number.isNaN(numero) ? undefined : numero;
+};
+
+const montarIncludeIp = (limite?: number) => {
+    const limiteAplicado = limite ? { take: limite } : {};
+    return {
+        include: {
+            portas: { include: { whatwebResultados: true }, ...limiteAplicado },
+            dominios: limiteAplicado,
+            redes: true,
+            usuarios: limiteAplicado,
+            diretorios: { include: { whatwebResultados: true }, ...limiteAplicado },
+            whatwebResultados: true,
+        }
+    };
+};
+
+const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2, tipo: TipoDominio = TipoDominio.principal) => {
+    const limiteNivelAplicado = limiteNivel ? { take: limiteNivel } : {};
+    const incluirSubdominios = profundidade > 0 ? {
+        subDominios: {
+            where: { tipo },
+            include: montarIncludeDominio(limiteFilhos, limiteFilhos, profundidade - 1, tipo),
+            ...limiteNivelAplicado,
+        }
+    } : {};
+
+    return {
+        whatwebResultados: true,
+        ips: montarIncludeIp(limiteFilhos),
+        diretorios: { include: { whatwebResultados: true }, ...limiteNivelAplicado },
+        ...incluirSubdominios,
+    };
 };
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-    const { id } = await params
+    const { id } = await params;
     if (!id)
-        return NextResponse.json({ error: "Id do dominio é obrigatório" }, { status: 400 })
+        return NextResponse.json({ error: "Id do dominio é obrigatório" }, { status: 400 });
+
+    const limiteNivel = parseNumero(req.nextUrl.searchParams.get("limite"));
+    const limiteFilhos = parseNumero(req.nextUrl.searchParams.get("limiteFilhos"));
+    const include = montarIncludeDominio(limiteNivel, limiteFilhos);
 
     const ret = await prisma.dominio.findFirst({
         where: { id: Number(id), tipo: TipoDominio.principal },
-        include: {
-            ips: includeIp,
-            subDominios: {
-                where: { tipo: TipoDominio.principal },
-                include: {
-                    ips: includeIp,
-                    subDominios: {
-                        where: { tipo: TipoDominio.principal },
-                        include: {
-                            ips: includeIp,
-                            subDominios: {
-                                where: { tipo: TipoDominio.principal },
-                                include: {
-                                    ips: includeIp,
-                                    subDominios: {
-                                        where: { tipo: TipoDominio.principal },
-                                        include: {
-                                            ips: includeIp,
-                                            subDominios: true,
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        include,
     });
-    console.log("AAAA", ret, "-------")
     return NextResponse.json(ret);
 }
 

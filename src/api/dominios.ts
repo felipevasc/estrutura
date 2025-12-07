@@ -12,7 +12,7 @@ const useDominios = () => {
     const getDominios = useCallback((idProjeto?: number) => useQuery({
         queryKey: ["dominios", idProjeto],
         queryFn: async (): Promise<DominioResponse[]> => {
-            const res = await fetch("/api/v1/projetos/" + idProjeto + "/dominios");
+            const res = await fetch(`/api/v1/projetos/${idProjeto}/dominios?limite=1&limiteFilhos=1`);
             const data = await res.json();
             return data;
         },
