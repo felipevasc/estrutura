@@ -372,7 +372,8 @@ const PhishingView = () => {
         if (!caminho) return '';
         if (caminho.startsWith('http')) return caminho;
         if (typeof window === 'undefined') return caminho;
-        return `${window.location.origin}${caminho}`;
+        const caminhoNormalizado = caminho.startsWith('/') ? caminho : `/${caminho}`;
+        return `${window.location.origin}${caminhoNormalizado}`;
     }, []);
 
     const buscarDominios = useCallback(async () => {
