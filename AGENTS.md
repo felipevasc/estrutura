@@ -17,6 +17,12 @@ Este repositório foi arquitetado para ser mantido e expandido por IAs. Siga est
     *   Para adicionar um serviço ou visualização, crie o arquivo e adicione-o ao arquivo de registro correspondente (`registry.ts` ou `viewRegistry.tsx`).
 3.  **Imutabilidade do Core:** Se você precisa alterar `QueueService`, `TerminalService` ou `System.ts`, pare e pense. É provável que você deva criar um *novo* serviço que interaja com eles via eventos.
 
+## Comandos e Logs Unificados
+
+* Cada ferramenta possui um arquivo JSON em `src/service/nano/services/tools/comandos/<ferramenta>.json` que registra o comando real a ser executado.
+* Toda execução grava o retorno completo (sucesso ou erro) em `logs/execucoes/<id>.log`, e essas saídas são a fonte para histórico, fila em execução e pendências.
+* Novas ferramentas devem criar o JSON correspondente e reutilizar esses arquivos como fonte única para exibir e reprocessar execuções.
+
 ## Estrutura do Backend (Nano-Serviços)
 
 ### Como criar um novo serviço (Ferramenta)
