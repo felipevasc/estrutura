@@ -16,7 +16,7 @@ const ArvoreDns = () => {
   const [carregando, setCarregando] = useState(false);
   const api = useApi();
   const { projeto } = useContext(StoreContext);
-  const { data: dnsProjeto, refetch: recarregarDns } = api.dns.getDns(projeto?.get()?.id);
+  const { data: dnsProjeto, refetch: recarregarDns } = api.dns.getDns(projeto?.get()?.id, 1);
   const elementoDominio = useElementoDominio("dns");
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 

@@ -4,6 +4,7 @@ import { GlobalOutlined } from "@ant-design/icons";
 import { faFolderOpen, faNetworkWired, faRoute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
+import useApi from "@/api";
 import useElementoIp from "../ElementoIp";
 import useElementoDiretorio from "../ElementoDiretorio";
 import { NoCarregavel } from "../tipos";
@@ -12,6 +13,7 @@ import { TargetType } from "@/types/TargetType";
 
 const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
   const { selecaoTarget } = useContext(StoreContext);
+  const api = useApi();
   const elementoIp = useElementoIp();
   const elementoDiretorio = useElementoDiretorio();
   const elementoWhatweb = useElementoWhatweb();
@@ -26,10 +28,12 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
     const possuiFilhos = possuiSubdominios || possuiIps || possuiDiretorios || possuiWhatweb;
 
     const carregar = async () => {
+      const dominioAtualizado = dominio.id ? await api.dominios.buscarDominio(dominio.id, false, 1) : dominio;
+      const alvo = dominioAtualizado || dominio;
       const filhos: NoCarregavel[] = [];
 
       if (possuiSubdominios) {
-        const subdominios = dominio.subDominios ?? [];
+        const subdominios = alvo.subDominios ?? [];
         const filhosSubdominios: NoCarregavel[] = [];
         for (let i = 0; i < subdominios.length; i++) {
           const subdominio = subdominios[i];
@@ -45,7 +49,7 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
       }
 
       if (possuiIps) {
-        const ips = dominio.ips ?? [];
+        const ips = alvo.ips ?? [];
         const filhosIp: NoCarregavel[] = [];
         for (let i = 0; i < ips.length; i++) {
           const ip = ips[i];
@@ -61,7 +65,7 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
       }
 
       if (possuiDiretorios) {
-        const diretorios = dominio.diretorios ?? [];
+        const diretorios = alvo.diretorios ?? [];
         const filhosDiretorios: NoCarregavel[] = [];
         for (let i = 0; i < diretorios.length; i++) {
           const dir = diretorios[i];

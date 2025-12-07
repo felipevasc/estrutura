@@ -17,7 +17,7 @@ const ArvoreDominios = () => {
   const [carregando, setCarregando] = useState(false);
   const api = useApi();
   const { projeto } = useContext(StoreContext);
-  const { data: dominiosProjeto, refetch: recarregarDominios } = api.dominios.getDominios(projeto?.get()?.id);
+  const { data: dominiosProjeto, refetch: recarregarDominios } = api.dominios.getDominios(projeto?.get()?.id, 1);
   const elementoDominio = useElementoDominio();
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
