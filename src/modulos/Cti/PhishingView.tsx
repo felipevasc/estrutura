@@ -188,7 +188,7 @@ const CartaoCaptura = styled.div`
 const ImagemFundo = styled.div<{ $url?: string | null }>`
   width: 100%;
   height: 100%;
-  background-image: url(${props => props.$url || ''});
+  background-image: ${props => props.$url ? `url(${props.$url})` : 'none'};
   background-size: cover;
   background-position: center;
   opacity: ${props => props.$url ? 0.8 : 0.4};
@@ -331,9 +331,14 @@ const opcoesStatus = [
     { valor: PhishingStatus.FALSO_POSITIVO, rotulo: 'Seguro', cor: '#52c41a' }, // Green
     { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: 'Reanálise', cor: '#faad14' }, // Gold
 ];
+const opcoesStatusVerificacao = [
+    { valor: 'ONLINE', rotulo: 'Online', cor: '#52c41a' },
+    { valor: 'OFFLINE', rotulo: 'Offline', cor: '#f5222d' }
+];
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
 const obterInfoStatus = (status?: PhishingStatus) => opcoesStatus.find((item) => item.valor === status) || opcoesStatus[1];
+const obterInfoStatusVerificacao = (status?: 'ONLINE' | 'OFFLINE') => opcoesStatusVerificacao.find((item) => item.valor === status) || { valor: 'INDEFINIDO', rotulo: 'Sem verificação', cor: '#1890ff' };
 
 const PhishingView = () => {
     const { projeto } = useStore();
@@ -367,6 +372,15 @@ const PhishingView = () => {
     const [visualizacao, setVisualizacao] = useState<'tabela' | 'capturas'>('tabela');
     const [paginaCapturas, setPaginaCapturas] = useState(1);
     const [capturando, setCapturando] = useState(false);
+    const [capturaSelecionada, setCapturaSelecionada] = useState<string | null>(null);
+
+    const resolverUrlCaptura = useCallback((caminho?: string | null) => {
+        if (!caminho) return '';
+        if (caminho.startsWith('http')) return caminho;
+        if (typeof window === 'undefined') return caminho;
+        const caminhoNormalizado = caminho.startsWith('/') ? caminho : `/${caminho}`;
+        return `${window.location.origin}${caminhoNormalizado}`;
+    }, []);
 
     const buscarDominios = useCallback(async () => {
         if (!projetoId) return;
@@ -701,6 +715,14 @@ const PhishingView = () => {
         }
     };
 
+    const abrirModalCaptura = (url?: string | null) => {
+        if (url) setCapturaSelecionada(url);
+    };
+
+    const fecharModalCaptura = () => setCapturaSelecionada(null);
+
+    const montarLinkDominio = (alvo: string) => alvo.startsWith('http') ? alvo : `http://${alvo}`;
+
     const executarPhishingCatcher = async () => {
         if (!dominioSelecionado || !projetoId) {
             message.warning('Escolha um domínio alvo.');
@@ -963,11 +985,14 @@ const PhishingView = () => {
                                     <div style={{ flex: 1 }}>
                                         <GradeCapturas>
                                             {registrosPaginados.map((registro) => {
-                                                const status = obterInfoStatus(registro.status);
+                                                const statusVerificacao = obterInfoStatusVerificacao(registro.statusUltimaVerificacao);
+                                                const infoStatus = obterInfoStatus(registro.status);
+                                                const urlCaptura = resolverUrlCaptura(registro.captura);
+                                                const podeVisualizar = Boolean(registro.captura && urlCaptura);
 
                                                 return (
-                                                    <CartaoCaptura key={registro.id} onClick={() => registro.captura && window.open(registro.captura, '_blank')}>
-                                                        <ImagemFundo $url={registro.captura} />
+                                                    <CartaoCaptura key={registro.id} onClick={() => podeVisualizar && abrirModalCaptura(urlCaptura)}>
+                                                        <ImagemFundo $url={urlCaptura} />
 
                                                         {registro.captura ? (
                                                             <OverlayActions className="overlay-actions">
@@ -978,6 +1003,7 @@ const PhishingView = () => {
                                                                     type="primary"
                                                                     ghost
                                                                     style={{ backdropFilter: 'blur(4px)' }}
+                                                                    onClick={(evento) => { evento.stopPropagation(); abrirModalCaptura(urlCaptura); }}
                                                                 />
                                                             </OverlayActions>
                                                         ) : (
@@ -989,17 +1015,19 @@ const PhishingView = () => {
 
                                                         <TechLabel>
                                                             <TagOutlined />
-                                                            {registro.fonte.toUpperCase()}
+                                                            {statusVerificacao.rotulo}
                                                         </TechLabel>
 
-                                                        <StatusBadge $color={status.cor}>
-                                                            {status.rotulo}
+                                                        <StatusBadge $color={infoStatus.cor}>
+                                                            {infoStatus.rotulo}
                                                         </StatusBadge>
 
                                                         <InfoOverlay className="overlay-info">
                                                             <TituloCard>
                                                                 <GlobalOutlined />
-                                                                {registro.alvo}
+                                                                <a href={montarLinkDominio(registro.alvo)} target="_blank" rel="noreferrer" onClick={(evento) => evento.stopPropagation()} style={{ color: 'white' }}>
+                                                                    {registro.alvo}
+                                                                </a>
                                                             </TituloCard>
                                                             <SubtituloCard>
                                                                 <ClockCircleOutlined />
@@ -1122,6 +1150,10 @@ const PhishingView = () => {
                     </CartaoFerramenta>
                 </GradeFerramentas>
             </Section>
+
+            <Modal open={Boolean(capturaSelecionada)} onCancel={fecharModalCaptura} footer={null} centered width={900} bodyStyle={{ padding: 0, background: '#000' }}>
+                {capturaSelecionada && <Image src={capturaSelecionada} alt="Captura de phishing" preview={false} style={{ width: '100%', borderRadius: 12 }} />}
+            </Modal>
 
             {/* Modais permanecem inalterados na lógica, apenas renderizados aqui */}
             <Modal
