@@ -331,9 +331,14 @@ const opcoesStatus = [
     { valor: PhishingStatus.FALSO_POSITIVO, rotulo: 'Seguro', cor: '#52c41a' }, // Green
     { valor: PhishingStatus.NECESSARIO_REANALISE, rotulo: 'Reanálise', cor: '#faad14' }, // Gold
 ];
+const opcoesStatusVerificacao = [
+    { valor: 'ONLINE', rotulo: 'Online', cor: '#52c41a' },
+    { valor: 'OFFLINE', rotulo: 'Offline', cor: '#f5222d' }
+];
 
 const formatarData = (valor: string) => new Date(valor).toLocaleString('pt-BR');
 const obterInfoStatus = (status?: PhishingStatus) => opcoesStatus.find((item) => item.valor === status) || opcoesStatus[1];
+const obterInfoStatusVerificacao = (status?: 'ONLINE' | 'OFFLINE') => opcoesStatusVerificacao.find((item) => item.valor === status) || { valor: 'INDEFINIDO', rotulo: 'Sem verificação', cor: '#1890ff' };
 
 const PhishingView = () => {
     const { projeto } = useStore();
@@ -971,7 +976,7 @@ const PhishingView = () => {
                                     <div style={{ flex: 1 }}>
                                         <GradeCapturas>
                                             {registrosPaginados.map((registro) => {
-                                                const status = obterInfoStatus(registro.status);
+                                                const statusVerificacao = obterInfoStatusVerificacao(registro.statusUltimaVerificacao);
                                                 const urlCaptura = resolverUrlCaptura(registro.captura);
 
                                                 return (
@@ -998,11 +1003,11 @@ const PhishingView = () => {
 
                                                         <TechLabel>
                                                             <TagOutlined />
-                                                            {status.rotulo}
+                                                            {statusVerificacao.rotulo}
                                                         </TechLabel>
 
-                                                        <StatusBadge $color={status.cor}>
-                                                            {status.rotulo}
+                                                        <StatusBadge $color={statusVerificacao.cor}>
+                                                            {statusVerificacao.rotulo}
                                                         </StatusBadge>
 
                                                         <InfoOverlay className="overlay-info">
