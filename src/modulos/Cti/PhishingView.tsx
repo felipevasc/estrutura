@@ -372,6 +372,7 @@ const PhishingView = () => {
     const [visualizacao, setVisualizacao] = useState<'tabela' | 'capturas'>('tabela');
     const [paginaCapturas, setPaginaCapturas] = useState(1);
     const [capturando, setCapturando] = useState(false);
+    const [capturaSelecionada, setCapturaSelecionada] = useState<string | null>(null);
 
     const resolverUrlCaptura = useCallback((caminho?: string | null) => {
         if (!caminho) return '';
@@ -714,6 +715,14 @@ const PhishingView = () => {
         }
     };
 
+    const abrirModalCaptura = (url?: string | null) => {
+        if (url) setCapturaSelecionada(url);
+    };
+
+    const fecharModalCaptura = () => setCapturaSelecionada(null);
+
+    const montarLinkDominio = (alvo: string) => alvo.startsWith('http') ? alvo : `http://${alvo}`;
+
     const executarPhishingCatcher = async () => {
         if (!dominioSelecionado || !projetoId) {
             message.warning('Escolha um domínio alvo.');
@@ -979,9 +988,10 @@ const PhishingView = () => {
                                                 const statusVerificacao = obterInfoStatusVerificacao(registro.statusUltimaVerificacao);
                                                 const infoStatus = obterInfoStatus(registro.status);
                                                 const urlCaptura = resolverUrlCaptura(registro.captura);
+                                                const podeVisualizar = Boolean(registro.captura && urlCaptura);
 
                                                 return (
-                                                    <CartaoCaptura key={registro.id} onClick={() => urlCaptura && window.open(urlCaptura, '_blank')}>
+                                                    <CartaoCaptura key={registro.id} onClick={() => podeVisualizar && abrirModalCaptura(urlCaptura)}>
                                                         <ImagemFundo $url={urlCaptura} />
 
                                                         {registro.captura ? (
@@ -993,6 +1003,7 @@ const PhishingView = () => {
                                                                     type="primary"
                                                                     ghost
                                                                     style={{ backdropFilter: 'blur(4px)' }}
+                                                                    onClick={(evento) => { evento.stopPropagation(); abrirModalCaptura(urlCaptura); }}
                                                                 />
                                                             </OverlayActions>
                                                         ) : (
@@ -1014,7 +1025,9 @@ const PhishingView = () => {
                                                         <InfoOverlay className="overlay-info">
                                                             <TituloCard>
                                                                 <GlobalOutlined />
-                                                                {registro.alvo}
+                                                                <a href={montarLinkDominio(registro.alvo)} target="_blank" rel="noreferrer" onClick={(evento) => evento.stopPropagation()} style={{ color: 'white' }}>
+                                                                    {registro.alvo}
+                                                                </a>
                                                             </TituloCard>
                                                             <SubtituloCard>
                                                                 <ClockCircleOutlined />
@@ -1137,6 +1150,10 @@ const PhishingView = () => {
                     </CartaoFerramenta>
                 </GradeFerramentas>
             </Section>
+
+            <Modal open={Boolean(capturaSelecionada)} onCancel={fecharModalCaptura} footer={null} centered width={900} bodyStyle={{ padding: 0, background: '#000' }}>
+                {capturaSelecionada && <Image src={capturaSelecionada} alt="Captura de phishing" preview={false} style={{ width: '100%', borderRadius: 12 }} />}
+            </Modal>
 
             {/* Modais permanecem inalterados na lógica, apenas renderizados aqui */}
             <Modal
