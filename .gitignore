@@ -51,3 +51,4 @@ next-env.d.ts
 *.db-journal
 *.log
 \n# Database files\n*.db\n*.db-*\nprisma/store.db\ndb/store.db\nprisma/prisma/store.db
+prisma/store.db

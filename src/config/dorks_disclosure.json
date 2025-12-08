@@ -1,0 +1,51 @@
+{
+  "password_leak": [
+    "filetype:env intext:password",
+    "filetype:pdf intext:senha",
+    "filetype:csv intext:senha",
+    "filetype:xlsx intext:senha",
+    "filetype:txt intext:password",
+    "filetype:log intext:password"
+  ],
+  "admin_portal": [
+    "inurl:admin",
+    "intitle:\"Index of\" intext:admin",
+    "site:target.com inurl:admin",
+    "inurl:login",
+    "inurl:wp-login.php",
+    "inurl:administrator",
+    "intitle:\"Login\""
+  ],
+  "exposed_files": [
+    "filetype:xls",
+    "filetype:xlsx",
+    "filetype:doc",
+    "filetype:docx",
+    "filetype:pdf",
+    "filetype:ppt",
+    "filetype:pptx",
+    "filetype:bkp",
+    "filetype:sql",
+    "filetype:conf",
+    "filetype:cfg",
+    "filetype:ini"
+  ],
+  "database_files": [
+    "filetype:sql",
+    "filetype:db",
+    "filetype:dump",
+    "ext:sql intext:\"INSERT INTO\""
+  ],
+  "config_files": [
+    "filetype:xml",
+    "filetype:conf",
+    "filetype:cnf",
+    "filetype:reg",
+    "filetype:inf",
+    "filetype:rdp",
+    "filetype:cfg",
+    "filetype:txt",
+    "filetype:ora",
+    "filetype:ini"
+  ]
+}

@@ -38,6 +38,9 @@ export abstract class CtiSearchService extends NanoService {
     protected abstract getDork(dominio: Dominio, args?: any): string | Promise<string>;
     protected abstract getFonte(args?: any): string;
 
+    // Método abstrato para processar e salvar os resultados
+    protected abstract processResults(items: any[], dominio: Dominio, fonte: string): Promise<any[]>;
+
     private async handleCheck({ id, args }: { id: number, args: any }) {
         try {
             let parsedArgs: CheckPayload;
@@ -72,30 +75,12 @@ export abstract class CtiSearchService extends NanoService {
             // O Google Custom Search tem limite de ~2048 chars na URL.
 
             const result = await this.searchWithApi(dork);
-            const createdItems = [];
 
-            if (result.items) {
-                for (const item of result.items) {
-                    // Evitar duplicatas óbvias
-                    const exists = await prisma.deface.findFirst({
-                        where: {
-                            url: item.link,
-                            dominioId: dominio.id
-                        }
-                    });
-
-                    if (!exists) {
-                        const created = await prisma.deface.create({
-                            data: {
-                                url: item.link,
-                                fonte,
-                                dominioId: dominio.id,
-                            }
-                        });
-                        createdItems.push(created);
-                    }
-                }
+            let createdItems: any[] = [];
+            if (result.items && result.items.length > 0) {
+                createdItems = await this.processResults(result.items, dominio, fonte);
             }
+
             this.log(`Processamento concluído. Encontrados ${createdItems.length} novos resultados.`);
             const executedCommand = linhaComandoCti('google_custom_search', { dork, fonte });
             const rawOutput = saidaBrutaCti(result);

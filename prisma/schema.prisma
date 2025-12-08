@@ -40,6 +40,7 @@ model Dominio {
   ips Ip[]
   diretorios Diretorio[]
   deface Deface[]
+  vazamentos VazamentoInformacao[]
   whatwebResultados WhatwebResultado[]
   phishing Phishing[]
   termosPhishing TermoPhishing[]
@@ -168,6 +169,19 @@ model Deface {
   createdAt DateTime @default(now())
 
   @@map("deface")
+}
+
+model VazamentoInformacao {
+  id        Int      @id @default(autoincrement())
+  url       String
+  fonte     String
+  titulo    String?
+  snippet   String?
+  dominioId Int
+  dominio   Dominio  @relation(fields: [dominioId], references: [id])
+  criadoEm  DateTime @default(now())
+
+  @@map("vazamentos_informacao")
 }
 
 model Phishing {

@@ -7,6 +7,7 @@ import DefaceView from './DefaceView';
 import PhishingView from './PhishingView';
 import TakedownView from './TakedownView';
 import VazamentoSenhasView from './VazamentoSenhasView';
+import InfoDisclosureView from './InfoDisclosureView';
 
 const { TabPane } = Tabs;
 
@@ -48,6 +49,9 @@ const CtiModule = () => {
                 </TabPane>
                 <TabPane tab="Vazamento de Senhas" key="pass_leak">
                     <VazamentoSenhasView />
+                </TabPane>
+                <TabPane tab="Information Disclosure" key="info_disclosure">
+                    <InfoDisclosureView />
                 </TabPane>
                 <TabPane tab="Vazamento de E-mails" key="mail_leak" disabled>
                     {/* Conteúdo futuro aqui */}

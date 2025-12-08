@@ -1,5 +1,6 @@
 import { Dominio } from "@prisma/client";
 import { CtiSearchService } from "./CtiSearchService";
+import prisma from "@/database";
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -9,6 +10,31 @@ const CONFIG_PATH = path.join(process.cwd(), 'src/config/dorks.json');
 class DefaceDorkService extends CtiSearchService {
     constructor() {
         super("DefaceDorkService", "deface_dork_check");
+    }
+
+    protected async processResults(items: any[], dominio: Dominio, fonte: string): Promise<any[]> {
+        const createdItems = [];
+        for (const item of items) {
+            // Evitar duplicatas óbvias
+            const exists = await prisma.deface.findFirst({
+                where: {
+                    url: item.link,
+                    dominioId: dominio.id
+                }
+            });
+
+            if (!exists) {
+                const created = await prisma.deface.create({
+                    data: {
+                        url: item.link,
+                        fonte,
+                        dominioId: dominio.id,
+                    }
+                });
+                createdItems.push(created);
+            }
+        }
+        return createdItems;
     }
 
     protected async getDork(dominio: Dominio, args: any): Promise<string> {

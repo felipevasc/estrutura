@@ -28,6 +28,7 @@ import PhishingAnaliseService from './services/cti/PhishingAnaliseService';
 import PhishingCapturaService from './services/cti/PhishingCapturaService';
 import { WgetRecursivoService } from './services/tools/WgetRecursivoService';
 import DefaceCapturaService from './services/cti/DefaceCapturaService';
+import InfoDisclosureDorkService from './services/cti/InfoDisclosureDorkService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -47,6 +48,7 @@ export const registeredServices: NanoService[] = [
     new DefaceForumZoneXsecService(),
     new DefaceForumHackDbService(),
     new DefaceCapturaService(),
+    new InfoDisclosureDorkService(),
     new PhishingDnstwistService(),
     new PhishingCatcherService(),
     new PhishingCrtshService(),
