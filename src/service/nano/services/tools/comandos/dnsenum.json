@@ -1,1 +1,15 @@
-{}
+{
+  "8430": {
+    "comando": "dnsenum",
+    "argumentos": [
+      "--noreverse",
+      "-o",
+      "/tmp/dnsenum_9_8430_1765223924278.xml",
+      "--threads",
+      "5",
+      "-f",
+      "/opt/estrutura/db/wordlists/subdomains.txt",
+      "ufu.br"
+    ]
+  }
+}
