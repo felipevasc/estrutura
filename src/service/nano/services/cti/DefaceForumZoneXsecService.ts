@@ -19,7 +19,6 @@ class DefaceForumZoneXsecService extends NanoService {
     }
 
     async initialize() {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.listen("COMMAND_RECEIVED", (payload: any) => {
             if (payload.command === "deface_forum_zone_xsec_check") {
                 this.executar(payload as EscutaPayload).catch((erro: unknown) => {
@@ -61,7 +60,6 @@ class DefaceForumZoneXsecService extends NanoService {
     private async buscarEspelhos(endereco: string, paginas: number) {
         const alvo = endereco.toLowerCase();
         const espelhos: string[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const navegador = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ["--ignore-certificate-errors", "--ignore-certificate-errors-spki-list"] } as any);
         const pagina = await navegador.newPage();
         try {

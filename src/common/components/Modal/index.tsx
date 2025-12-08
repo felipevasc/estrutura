@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { StyledModal, StyledModalContent, CloseButton } from "./styles";
 
 type ModalProps = {

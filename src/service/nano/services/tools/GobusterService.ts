@@ -50,14 +50,11 @@ export class GobusterService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'gobuster') this.processarComando(payload as PayloadComando);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.GOBUSTER_RESULT, (payload: any) => this.processarResultado(payload as RetornoTerminal));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.GOBUSTER_ERROR, (payload: any) => this.processarErro(payload as ErroTerminal));
   }
 

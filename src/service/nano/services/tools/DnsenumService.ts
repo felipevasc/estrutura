@@ -13,7 +13,6 @@ const DEFAULT_WORDLIST_URL = 'https://raw.githubusercontent.com/danielmiessler/S
 
 interface CommandPayload {
   id: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any;
   projectId: number;
   command: string;
@@ -23,7 +22,6 @@ interface TerminalResultPayload {
   executionId?: number;
   id?: number;
   output?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta: any;
   command?: string;
   args?: string[];
@@ -37,16 +35,13 @@ export class DnsenumService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'dnsenum') {
         this.processarComando(payload as CommandPayload);
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.DNSENUM_TERMINAL_RESULT, (payload: any) => this.processarResultado(payload as TerminalResultPayload));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.DNSENUM_TERMINAL_ERROR, (payload: any) => this.processarErro(payload as TerminalResultPayload));
   }
 
@@ -96,7 +91,6 @@ export class DnsenumService extends NanoService {
     try {
         await dns.resolveNs(dominio);
     } catch (erro: unknown) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const codigo = (erro as any)?.code ?? '';
         if (['ENODATA', 'ENOTFOUND', 'SERVFAIL', 'REFUSED'].includes(codigo)) {
             throw new Error('Domínio inválido ou sem registros NS');

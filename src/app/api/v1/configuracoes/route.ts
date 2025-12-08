@@ -20,7 +20,7 @@ async function readEnvFile(): Promise<Record<string, string>> {
             }
         }
         return env;
-    } catch (error) {
+    } catch {
         // Se o arquivo não existir, retorna um objeto vazio
         return {};
     }
@@ -59,7 +59,7 @@ async function updateEnvFile(newValues: Record<string, string>) {
     let content = '';
     try {
         content = await fs.readFile(envFilePath, 'utf-8');
-    } catch (error) {
+    } catch {
         // Se o arquivo não existir, será criado.
     }
 

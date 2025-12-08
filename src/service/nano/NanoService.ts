@@ -10,7 +10,6 @@ export abstract class NanoService {
 
   abstract initialize(): void;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   protected listen(event: string, callback: (...args: any[]) => void) {
     this.bus.on(event, callback);
   }

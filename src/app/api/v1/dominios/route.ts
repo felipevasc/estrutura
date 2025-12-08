@@ -1,7 +1,7 @@
 import prisma from "@/database";
 import { ApiResponse } from "@/types/ApiResponse";
 import { DominioResponse } from "@/types/DominioResponse";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { TipoDominio } from "@prisma/client";
 
 export async function GET(): ApiResponse<DominioResponse[]> {

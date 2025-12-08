@@ -11,8 +11,7 @@ export async function GET() {
     try {
         const data = await fs.readFile(CONFIG_PATH, 'utf-8');
         return NextResponse.json(JSON.parse(data));
-    } catch (error) {
-        // Se arquivo não existe, retorna vazio ou erro controlado
+    } catch {
         return NextResponse.json({}, { status: 200 });
     }
 }

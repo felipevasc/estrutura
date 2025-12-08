@@ -11,7 +11,6 @@ import { lerLogExecucao, obterCaminhoLogExecucao, obterComandoRegistrado, regist
 
 interface CommandPayload {
   id: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any;
   projectId: number;
   command: string;
@@ -21,7 +20,6 @@ interface TerminalResultPayload {
   executionId?: number;
   id?: number;
   output?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta: any;
   command?: string;
   args?: string[];
@@ -34,16 +32,13 @@ export class AmassService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'amass') {
         this.processarComando(payload);
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.AMASS_TERMINAL_RESULT, (payload: any) => this.processarResultado(payload));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.AMASS_TERMINAL_ERROR, (payload: any) => this.processarErro(payload));
   }
 
@@ -150,7 +145,6 @@ export class AmassService extends NanoService {
         id: jobId,
         result: { subdominios: subdominiosUnicos, ips: ipsUnicos },
         rawOutput: lerLogExecucao(jobId) || output,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         executedCommand: linhaComando || obterComandoRegistrado('amass', jobId as number) || `${command} ${(args as any).join(' ')}`
       });
     } catch (e: unknown) {

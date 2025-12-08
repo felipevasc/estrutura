@@ -364,7 +364,6 @@ const VazamentoSenhasView = () => {
         {
             title: 'Parâmetros principais',
             key: 'parametros',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (_: any, fonte: FonteVazamento) => <Text type="secondary">{resumoParametros(fonte)}</Text>,
         },
         {
@@ -376,7 +375,6 @@ const VazamentoSenhasView = () => {
         {
             title: 'Ações',
             key: 'acoes',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (_: any, fonte: FonteVazamento) => (
                 <Space>
                     <Button icon={<EditOutlined />} onClick={() => abrirModalEdicao(fonte)} />

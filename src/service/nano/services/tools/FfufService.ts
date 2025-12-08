@@ -55,13 +55,10 @@ export class FfufService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'ffuf') this.processarComando(payload as PayloadComando);
     });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.FFUF_RESULT, (payload: any) => this.processarResultado(payload as RetornoTerminal));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.FFUF_ERROR, (payload: any) => this.processarErro(payload as ErroTerminal));
   }
 

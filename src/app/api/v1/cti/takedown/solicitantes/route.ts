@@ -11,7 +11,7 @@ export async function GET() {
             }
         });
         return NextResponse.json(solicitantes);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Erro ao buscar solicitantes' }, { status: 500 });
     }
 }

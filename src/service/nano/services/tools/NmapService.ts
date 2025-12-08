@@ -11,7 +11,6 @@ import { lerLogExecucao, obterCaminhoLogExecucao, obterComandoRegistrado, regist
 
 interface CommandPayload {
   id: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any;
   projectId: number;
   command: string;
@@ -21,7 +20,6 @@ interface TerminalResultPayload {
   executionId?: number;
   id?: number;
   output?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta: any;
   command?: string;
   args?: string[];
@@ -34,16 +32,13 @@ export class NmapService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'nmap') {
         this.processCommand(payload as CommandPayload);
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.NMAP_TERMINAL_RESULT, (payload: any) => this.processResult(payload as TerminalResultPayload));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.NMAP_TERMINAL_ERROR, (payload: any) => this.processError(payload as TerminalResultPayload));
   }
 
@@ -111,7 +106,6 @@ export class NmapService extends NanoService {
             id: id!,
             result: portas,
             rawOutput: lerLogExecucao(id as number) || payload.output,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             executedCommand: linhaComando || obterComandoRegistrado('nmap', id as number) || `${command} ${(args as any).join(' ')}`
         });
 

@@ -6,7 +6,6 @@ import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 type CheckPayload = {
     dominioId: number;
     // Permitir argumentos extras na payload base
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 }
 
@@ -36,16 +35,12 @@ export abstract class CtiSearchService extends NanoService {
     }
 
     // Agora getDork pode receber args opcionais
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected abstract getDork(dominio: Dominio, args?: any): string | Promise<string>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected abstract getFonte(args?: any): string;
 
     // Método abstrato para processar e salvar os resultados
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected abstract processResults(items: any[], dominio: Dominio, fonte: string): Promise<any[]>;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handleCheck({ id, args }: { id: number, args: any }) {
         try {
             let parsedArgs: CheckPayload;

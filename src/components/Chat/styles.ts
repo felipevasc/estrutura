@@ -18,7 +18,6 @@ export const ChatButtonContainer = styled.div`
     }
 `;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const StyledDrawer: any = styled(AntDrawer)`
     .ant-drawer-content {
         background: transparent;

@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
             },
         });
         return NextResponse.json(takedowns);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Erro ao buscar takedowns' }, { status: 500 });
     }
 }

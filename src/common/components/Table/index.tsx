@@ -71,7 +71,7 @@ const Table = <T,>({ actions, data, children }: TableProps<T>) => {
     </div>
 }
 
-const Thead = <T,>(props: TableTheadProps<T>) => null;
+const Thead = <T,>(_props: TableTheadProps<T>) => null;
 Thead.displayName = "TableThead";
 
 Table.Thead = Thead;

@@ -10,7 +10,6 @@ export default class PhishingVerificacaoService extends NanoService {
     }
 
     initialize() {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         this.listen('COMMAND_RECEIVED', async (payload: any) => {
             if (payload.command !== 'phishing_verificar') return;
 

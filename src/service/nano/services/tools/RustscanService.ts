@@ -10,7 +10,6 @@ import { extrairPortasGrep } from './parserPortas';
 
 interface CommandPayload {
   id: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any;
   projectId: number;
   command: string;
@@ -21,7 +20,6 @@ interface TerminalResultPayload {
   id?: number;
   output?: string;
   stdout?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta: any;
   command?: string;
   args?: string[];
@@ -34,16 +32,13 @@ export class RustscanService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'rustscan') {
         this.processarComando(payload as CommandPayload);
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.RUSTSCAN_TERMINAL_RESULT, (payload: any) => this.processarResultado(payload as TerminalResultPayload));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.RUSTSCAN_TERMINAL_ERROR, (payload: any) => this.processarErro(payload as TerminalResultPayload));
   }
 
@@ -104,7 +99,6 @@ export class RustscanService extends NanoService {
             id: id!,
             result: portas,
             rawOutput: "Output stored in DB",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             executedCommand: `${command} ${(args as any).join(' ')}`
         });
       } catch (e: unknown) {

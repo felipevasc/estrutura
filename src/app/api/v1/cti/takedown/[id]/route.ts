@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/database';
 
 // GET /api/v1/cti/takedown/[id] - (Opcional, se necessário para buscar um único item)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
+export async function GET(request: NextRequest, contexto: { params: { id: string } }) {
+    const { id } = contexto.params;
     try {
         const takedown = await prisma.takedown.findUnique({
             where: { id: parseInt(id, 10) },
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             return NextResponse.json({ error: 'Takedown não encontrado' }, { status: 404 });
         }
         return NextResponse.json(takedown);
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Erro ao buscar takedown' }, { status: 500 });
     }
 }
@@ -60,14 +60,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 }
 
 // DELETE /api/v1/cti/takedown/[id]
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
+export async function DELETE(request: NextRequest, contexto: { params: { id: string } }) {
+    const { id } = contexto.params;
     try {
         await prisma.takedown.delete({
             where: { id: parseInt(id, 10) },
         });
         return new NextResponse(null, { status: 204 });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Erro ao deletar takedown' }, { status: 500 });
     }
 }

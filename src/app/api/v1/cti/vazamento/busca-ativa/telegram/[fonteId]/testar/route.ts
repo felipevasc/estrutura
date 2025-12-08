@@ -57,7 +57,6 @@ export async function POST(request: Request, contexto: { params: Promise<{ fonte
         if (!fonte.buscaAtiva.destinoCentral)
             return NextResponse.json({ error: 'Informe o destino centralizado para o teste' }, { status: 400 });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parametros = (fonte.parametros as any) || {};
         const metodoAutenticacao = parametros.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
         const credenciais = credenciaisTelegram();

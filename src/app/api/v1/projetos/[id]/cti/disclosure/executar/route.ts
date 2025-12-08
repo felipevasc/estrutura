@@ -1,7 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { queueCommand } from '@/service/nano/commandHelper';
-import prisma from '@/database';
 
 export const dynamic = 'force-dynamic';
 

@@ -44,14 +44,11 @@ export class WhatwebService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'whatweb') this.processarComando(payload as PayloadComando);
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.WHATWEB_RESULT, (payload: any) => this.processarResultado(payload as ResultadoTerminal));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.WHATWEB_ERROR, (payload: any) => this.processarErro(payload as ErroTerminal));
   }
 

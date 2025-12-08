@@ -28,7 +28,6 @@ const Inspector = () => {
                 <AreaConteudo>
                     {alvo ? (
                         abaAtiva ? (
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             <InspectorAcoes alvo={alvo as any} grupoAtivo={abaAtiva} />
                         ) : (
                             <InspectorBody>

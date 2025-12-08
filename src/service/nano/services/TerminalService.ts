@@ -26,7 +26,6 @@ export class TerminalService extends NanoService {
 
   private execute(payload: TerminalPayload) {
     const { id, command, args, replyTo, errorTo, meta, outputFile } = payload;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const executionId = id ?? (payload as any).executionId;
     const caminhoSaida = obterCaminhoLogExecucao(executionId);
     const linhaComando = registrarComandoFerramenta(command, executionId, command, args);

@@ -9,7 +9,6 @@ import { NanoEvents } from '../../events';
 
 interface CommandPayload {
   id: number;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any;
   projectId: number;
   command: string;
@@ -20,7 +19,6 @@ interface TerminalResultPayload {
   id?: number;
   output?: string;
   outputFile?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   meta: any;
   command?: string;
   args?: string[];
@@ -33,16 +31,13 @@ export class SubfinderService extends NanoService {
   }
 
   initialize(): void {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'subfinder') {
         this.processCommand(payload as CommandPayload);
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.SUBFINDER_TERMINAL_RESULT, (payload: any) => this.processResult(payload as TerminalResultPayload));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.listen(NanoEvents.SUBFINDER_TERMINAL_ERROR, (payload: any) => this.processError(payload as TerminalResultPayload));
   }
 
@@ -102,7 +97,6 @@ export class SubfinderService extends NanoService {
           id: id!,
           result: subdominios,
           rawOutput: fileContent,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           executedCommand: `${command} ${(args as any).join(' ')}`
       });
     } catch (e: unknown) {

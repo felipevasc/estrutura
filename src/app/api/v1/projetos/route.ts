@@ -1,6 +1,5 @@
 import prisma from "@/database";
 import { ApiResponse } from "@/types/ApiResponse";
-import { ErrorResponse } from "@/types/ErrorResponse";
 import { ProjetoResponse } from "@/types/ProjetoResponse";
 import { NextResponse } from "next/server";
 

@@ -122,10 +122,6 @@ const QueueStatus = () => {
         limparIntervalo();
     };
 
-    const comandosExecutando = comandosSecao.executando;
-    const comandosPendentes = comandosSecao.pendentes;
-    const comandosHistorico = comandosSecao.historico;
-
     const obterEtiquetaStatus = (status: CommandStatus) => {
         switch (status) {
             case 'RUNNING': return <Tag icon={<LoadingOutlined spin />} color="processing">Executando</Tag>;
