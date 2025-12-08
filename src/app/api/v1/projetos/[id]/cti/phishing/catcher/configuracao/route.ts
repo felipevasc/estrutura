@@ -41,9 +41,10 @@ const aplicarBase = (palavras: { termo: string; peso: number }[], permitidos: st
 
 const montarPadrao = (padrao: { palavras: string[]; tlds: string[] }) => ({ palavras: padrao.palavras.map(termo => ({ termo, peso: 3 })), tlds: padrao.tlds });
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const { id } = await contexto.params;
+        const projetoId = parseInt(id, 10);
         const dominioId = parseInt(request.nextUrl.searchParams.get("dominioId") || "", 10);
         if (isNaN(projetoId) || isNaN(dominioId)) return responderErro("Parâmetros inválidos");
 
@@ -68,9 +69,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const { id } = await contexto.params;
+        const projetoId = parseInt(id, 10);
         const corpo = await request.json() as { dominioId?: number; palavras?: any[]; tlds?: any[] };
         if (isNaN(projetoId) || !corpo?.dominioId) return responderErro("Parâmetros inválidos");
 

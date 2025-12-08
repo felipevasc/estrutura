@@ -2,12 +2,14 @@ import OpenAI from 'openai';
 import prisma from '@/database';
 
 export class AiService {
-  private openai: OpenAI;
+  private openai?: OpenAI;
 
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  private obterCliente() {
+    if (this.openai) return this.openai;
+    const chave = process.env.OPENAI_API_KEY;
+    if (!chave) throw new Error('Chave da OpenAI não configurada');
+    this.openai = new OpenAI({ apiKey: chave });
+    return this.openai;
   }
 
   async getProjectContext(projectId: number) {
@@ -75,6 +77,7 @@ export class AiService {
   }
 
   async generateResponse(projectId: number, messages: any[]) {
+      const cliente = this.obterCliente();
       const context = await this.getProjectContext(projectId);
       const systemPrompt = `
 Você é um Assistente de Red Team em um Kali Linux que trabalha no CISC (Centro Integrado de Seguranca Cibernetica) do Gov.BR. Voce faz parte de uma aplicacao que tem por objetivo centralizar as ferramentas e os achados e facilitar seu uso. 
@@ -124,7 +127,7 @@ AMBIENTE:
       ];
 
       try {
-        const completion = await this.openai.chat.completions.create({
+        const completion = await cliente.chat.completions.create({
             messages: conversation as any,
             model: process.env.OPENAI_MODEL || 'gpt-4',
         });

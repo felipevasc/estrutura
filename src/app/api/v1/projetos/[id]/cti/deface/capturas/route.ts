@@ -4,9 +4,10 @@ import { queueCommand } from "@/service/nano/commandHelper";
 
 type Payload = { dominioId?: number; ids?: number[] };
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const { id } = await contexto.params;
+        const projetoId = parseInt(id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
         const corpo = await request.json() as Payload;

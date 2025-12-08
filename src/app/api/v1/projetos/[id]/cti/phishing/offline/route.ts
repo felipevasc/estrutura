@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/database";
 import { PhishingVerificacaoStatus } from "@prisma/client";
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const { id } = await contexto.params;
+        const projetoId = parseInt(id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
         const resultado = await prisma.phishing.deleteMany({

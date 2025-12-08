@@ -4,9 +4,10 @@ import { queueCommand } from "@/service/nano/commandHelper";
 
 const responderErro = (mensagem: string, status = 400) => NextResponse.json({ error: mensagem }, { status });
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: { params: Promise<{ id: string }> }) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const { id } = await contexto.params;
+        const projetoId = parseInt(id, 10);
         const corpo = await request.json() as { dominioId?: number };
         if (isNaN(projetoId) || !corpo?.dominioId) return responderErro("Parâmetros inválidos");
 
