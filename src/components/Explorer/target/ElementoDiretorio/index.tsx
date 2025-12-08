@@ -10,7 +10,7 @@ const useElementoDiretorio = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoWhatweb = useElementoWhatweb();
 
-  const getDiretorio = async (diretorio: DiretorioResponse): Promise<NoCarregavel> => {
+  const getDiretorio = async (diretorio: DiretorioResponse, nome?: string, filhos: NoCarregavel[] = []): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
     const checked = selecionado?.tipo === "diretorio" && selecionado?.id === diretorio.id;
 
@@ -20,7 +20,7 @@ const useElementoDiretorio = () => {
     const classeTipo = diretorio.tipo === "arquivo" ? "arquivo" : "pasta";
 
     const pasta = elementoWhatweb.getResultados(diretorio.whatwebResultados ?? [], `diretorio-${diretorio.id}`);
-    const children: NoCarregavel[] = [];
+    const children: NoCarregavel[] = [...filhos];
     if (pasta) children.push(pasta);
 
     return {
@@ -28,7 +28,7 @@ const useElementoDiretorio = () => {
       title: (
         <div className="item-diretorio" onClick={() => selecaoTarget?.set({ tipo: "diretorio", id: diretorio.id })}>
           <FontAwesomeIcon icon={icone} />{" "}
-          <span className="nome-diretorio">{diretorio.caminho}</span>{" "}
+          <span className="nome-diretorio">{nome ?? diretorio.caminho}</span>{" "}
           <small>({status} - {tamanho})</small>
         </div>
       ),

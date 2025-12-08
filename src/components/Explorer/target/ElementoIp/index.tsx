@@ -9,6 +9,7 @@ import useElementoUsuario from "../ElementoUsuario";
 import useElementoDiretorio from "../ElementoDiretorio";
 import { NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
+import { construirArvoreDiretorios, NodoDiretorio } from "../construirArvoreDiretorios";
 
 const useElementoIp = () => {
   const { selecaoTarget } = useContext(StoreContext);
@@ -75,13 +76,9 @@ const useElementoIp = () => {
     }
 
     if (!anteriores.includes("diretorios") && (ip.diretorios?.length ?? 0) > 0) {
-      const diretorios = ip.diretorios ?? [];
+      const diretorios = construirArvoreDiretorios(ip.diretorios ?? []);
       if (diretorios.length) {
-        const filhosDiretorios: NoCarregavel[] = [];
-        for (let i = 0; i < diretorios.length; i++) {
-          const dir = diretorios[i];
-          filhosDiretorios.push(await elementoDiretorio.getDiretorio(dir));
-        }
+        const filhosDiretorios = await montarDiretorios(diretorios);
         filhos.push({
           key: `${ip.endereco}-${ip.id}-diretorios`,
           title: <div><FontAwesomeIcon icon={faFolderOpen} /> Diretórios</div>,
@@ -129,6 +126,15 @@ const useElementoIp = () => {
       isLeaf: !possuiFilhos,
       carregar: possuiFilhos ? () => carregarIp(ip, anteriores) : undefined
     };
+  };
+
+  const montarDiretorios = async (diretorios: NodoDiretorio[]): Promise<NoCarregavel[]> => {
+    const filhos = await Promise.all(diretorios.map(async (nodo) => {
+      const filhosNodos = await montarDiretorios(nodo.filhos);
+      return elementoDiretorio.getDiretorio(nodo.diretorio, nodo.nome, filhosNodos);
+    }));
+
+    return filhos;
   };
 
   return {

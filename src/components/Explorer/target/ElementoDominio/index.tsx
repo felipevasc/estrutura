@@ -9,6 +9,7 @@ import useElementoDiretorio from "../ElementoDiretorio";
 import { NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
 import { TargetType } from "@/types/TargetType";
+import { construirArvoreDiretorios, NodoDiretorio } from "../construirArvoreDiretorios";
 
 const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
   const { selecaoTarget } = useContext(StoreContext);
@@ -52,12 +53,8 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
     }
 
     if (!anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0) {
-      const diretorios = dominio.diretorios ?? [];
-      const filhosDiretorios: NoCarregavel[] = [];
-      for (let i = 0; i < diretorios.length; i++) {
-        const dir = diretorios[i];
-        filhosDiretorios.push(await elementoDiretorio.getDiretorio(dir));
-      }
+      const diretorios = construirArvoreDiretorios(dominio.diretorios ?? []);
+      const filhosDiretorios = await montarDiretorios(diretorios);
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}-diretorios`,
         title: <div><FontAwesomeIcon icon={faFolderOpen} /> Diretórios</div>,
@@ -102,6 +99,15 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
       isLeaf: !possuiFilhos,
       carregar: possuiFilhos ? () => carregarDominio(dominio, anteriores) : undefined
     };
+  };
+
+  const montarDiretorios = async (diretorios: NodoDiretorio[]): Promise<NoCarregavel[]> => {
+    const filhos = await Promise.all(diretorios.map(async (nodo) => {
+      const filhosNodos = await montarDiretorios(nodo.filhos);
+      return elementoDiretorio.getDiretorio(nodo.diretorio, nodo.nome, filhosNodos);
+    }));
+
+    return filhos;
   };
 
   return {
