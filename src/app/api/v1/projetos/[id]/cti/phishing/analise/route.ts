@@ -3,10 +3,11 @@ import { queueCommand } from "@/service/nano/commandHelper";
 import prisma from "@/database";
 
 type Entrada = { dominioId?: number; alvo?: string; html?: string };
+type ContextoProjeto = { params: Promise<{ id: string }> };
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto invalido" }, { status: 400 });
 
         const corpo = await request.json() as Entrada;

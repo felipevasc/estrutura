@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import prisma from '@/database';
 import { CommandStatus } from '@prisma/client';
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-    const { id } = params;
+type ContextoQueue = { params: Promise<{ id: string }> };
+
+export async function DELETE(request: Request, contexto: ContextoQueue) {
+    const { id } = await contexto.params;
 
     try {
         const commandId = Number(id);

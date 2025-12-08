@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/database";
 import { PhishingStatus } from "@prisma/client";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+type ContextoProjeto = { params: Promise<{ id: string }> };
+
+export async function GET(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
         const registros = await prisma.phishing.findMany({
@@ -20,9 +22,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
         const corpo = await request.json() as { id?: number; status?: PhishingStatus };
@@ -42,9 +44,9 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
         const corpo = await request.json().catch(() => null) as { id?: number } | null;

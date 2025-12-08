@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { queueCommand } from "@/service/nano/commandHelper";
 
 type Payload = { dominioId: number };
+type ContextoProjeto = { params: Promise<{ id: string }> };
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         if (isNaN(projetoId)) return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });
 
         const corpo = await request.json() as Payload;

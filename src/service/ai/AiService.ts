@@ -2,12 +2,15 @@ import OpenAI from 'openai';
 import prisma from '@/database';
 
 export class AiService {
-  private openai: OpenAI;
+  private openai?: OpenAI;
 
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+  private cliente() {
+    if (!this.openai) {
+        const chave = process.env.OPENAI_API_KEY;
+        if (!chave) throw new Error('Chave da OpenAI não configurada');
+        this.openai = new OpenAI({ apiKey: chave });
+    }
+    return this.openai;
   }
 
   async getProjectContext(projectId: number) {
@@ -124,7 +127,8 @@ AMBIENTE:
       ];
 
       try {
-        const completion = await this.openai.chat.completions.create({
+        const cliente = this.cliente();
+        const completion = await cliente.chat.completions.create({
             messages: conversation as any,
             model: process.env.OPENAI_MODEL || 'gpt-4',
         });
