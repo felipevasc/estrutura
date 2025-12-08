@@ -50,12 +50,15 @@ export class GobusterService extends NanoService {
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
-      if (payload.command === 'gobuster') this.processarComando(payload);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
+      if (payload.command === 'gobuster') this.processarComando(payload as PayloadComando);
     });
 
-    this.listen(NanoEvents.GOBUSTER_RESULT, (payload) => this.processarResultado(payload));
-    this.listen(NanoEvents.GOBUSTER_ERROR, (payload) => this.processarErro(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.GOBUSTER_RESULT, (payload: any) => this.processarResultado(payload as RetornoTerminal));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.GOBUSTER_ERROR, (payload: any) => this.processarErro(payload as ErroTerminal));
   }
 
   private async processarComando(payload: PayloadComando) {
@@ -64,7 +67,8 @@ export class GobusterService extends NanoService {
     this.log(`Iniciando Gobuster para projeto ${projectId}`);
 
     try {
-      const { dominio, ip, alvo, caminhoBase } = await resolverAlvo(args);
+      const alvoResolvido = await resolverAlvo(args);
+      const { alvo } = alvoResolvido;
       const tipoFuzz = this.definirTipoFuzz(args);
       const extensoes = typeof args.extensoes === 'string' && args.extensoes ? args.extensoes : '.php,.html,.txt,.js,.bak,.zip,.conf';
       const wordlist = typeof args.wordlist === 'string' && args.wordlist ? args.wordlist : '/usr/share/wordlists/dirb/common.txt';
@@ -75,13 +79,11 @@ export class GobusterService extends NanoService {
       const arquivoLog = this.criarCaminhoArquivo(`gobuster_${projectId}_${id}_${Date.now()}_log.txt`);
       const argumentos = this.montarArgumentos(alvoComBarra, tipoFuzz, extensoes, wordlist, arquivoResultado);
       const meta: MetadadosGobuster = {
+        ...alvoResolvido,
         projectId,
-        dominio,
-        ip,
         arquivoResultado,
         arquivoLog,
         alvo: alvoComBarra,
-        caminhoBase,
         tipoFuzz,
         referenciaErro
       };

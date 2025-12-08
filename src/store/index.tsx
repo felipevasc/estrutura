@@ -62,7 +62,7 @@ export const StoreProvider = ({ children }: StoreProviderProps) => {
         },
         isConfiguracoesOpen: {
             get: () => isConfiguracoesOpen,
-            set: setIsConfiguracoesOpen
+            set: (v) => setIsConfiguracoesOpen(v ?? false)
         }
     }), [projeto, explorer, selecaoTarget, layout, configuracoes, isConfiguracoesOpen]);
 

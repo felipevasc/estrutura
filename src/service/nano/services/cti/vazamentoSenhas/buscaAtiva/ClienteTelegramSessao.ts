@@ -71,9 +71,9 @@ const prepararCliente = async (credenciais: CredenciaisSessao) => {
         connectionRetries: 3,
     });
     await cliente.connect();
-    if (!cliente.isConnected()) throw new Error('Conexão com o Telegram falhou');
+    if (!cliente.connected) throw new Error('Conexão com o Telegram falhou');
     const usuario = await cliente.getMe();
-    const sessao = cliente.session.save();
+    const sessao = String(cliente.session.save());
     const caminho = join(process.cwd(), 'tmp', 'sessoes-telegram');
     await mkdir(caminho, { recursive: true });
     const nomeArquivo = join(caminho, `${credenciais.numero || credenciais.codigoPais || 'conta'}.session`);
@@ -96,9 +96,9 @@ const lerMensagens = async (cliente: TelegramClient, parametros?: Record<string,
         id: mensagem.id,
         texto: mensagem.message,
         data:
-            mensagem.date instanceof Date
+            typeof mensagem.date === 'object' && (mensagem.date as any) instanceof Date
                 ? dayjs(mensagem.date).toISOString()
-                : mensagem.date
+                : typeof mensagem.date === 'number'
                   ? dayjs(mensagem.date * 1000).toISOString()
                   : undefined,
         possuiArquivo: Boolean(mensagem.document),

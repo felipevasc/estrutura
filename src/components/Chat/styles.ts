@@ -18,8 +18,8 @@ export const ChatButtonContainer = styled.div`
     }
 `;
 
-// @ts-ignore - Fixing TS4023
-export const StyledDrawer = styled(AntDrawer)`
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const StyledDrawer: any = styled(AntDrawer)`
     .ant-drawer-content {
         background: transparent;
     }

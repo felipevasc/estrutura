@@ -9,23 +9,45 @@ import { NanoEvents } from '../../events';
 import { extrairPortasGrep } from './parserPortas';
 import { lerLogExecucao, obterCaminhoLogExecucao, obterComandoRegistrado, registrarComandoFerramenta } from './armazenamentoExecucao';
 
+interface CommandPayload {
+  id: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any;
+  projectId: number;
+  command: string;
+}
+
+interface TerminalResultPayload {
+  executionId?: number;
+  id?: number;
+  output?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta: any;
+  command?: string;
+  args?: string[];
+  error?: string;
+}
+
 export class NmapService extends NanoService {
   constructor() {
     super('NmapService');
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'nmap') {
-        this.processCommand(payload);
+        this.processCommand(payload as CommandPayload);
       }
     });
 
-    this.listen(NanoEvents.NMAP_TERMINAL_RESULT, (payload) => this.processResult(payload));
-    this.listen(NanoEvents.NMAP_TERMINAL_ERROR, (payload) => this.processError(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.NMAP_TERMINAL_RESULT, (payload: any) => this.processResult(payload as TerminalResultPayload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.NMAP_TERMINAL_ERROR, (payload: any) => this.processError(payload as TerminalResultPayload));
   }
 
-  private async processCommand(payload: any) {
+  private async processCommand(payload: CommandPayload) {
     const { id, args, projectId } = payload;
     const idIp = args.idIp;
     const faixaPortas = args.faixaPortas || "1-9999";
@@ -57,15 +79,15 @@ export class NmapService extends NanoService {
             meta: { projectId, enderecoIp, op, idIp, grepOutput, linhaComando }
         });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
-            error: e.message
+            error: (e as Error).message || String(e)
         });
     }
   }
 
-  private async processResult(payload: any) {
+  private async processResult(payload: TerminalResultPayload) {
       const { id, meta, command, args } = payload;
       const { idIp, grepOutput, linhaComando } = meta;
 
@@ -86,23 +108,24 @@ export class NmapService extends NanoService {
         await Database.adicionarPortas(portas, Number(idIp));
 
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
-            id: id,
+            id: id!,
             result: portas,
-            rawOutput: lerLogExecucao(id) || payload.output,
-            executedCommand: linhaComando || obterComandoRegistrado('nmap', id) || `${command} ${args.join(' ')}`
+            rawOutput: lerLogExecucao(id as number) || payload.output,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            executedCommand: linhaComando || obterComandoRegistrado('nmap', id as number) || `${command} ${(args as any).join(' ')}`
         });
 
-      } catch (e: any) {
+      } catch (e: unknown) {
           if (grepOutput && fs.existsSync(grepOutput)) fs.unlinkSync(grepOutput);
 
           this.bus.emit(NanoEvents.JOB_FAILED, {
-              id: id,
-              error: e.message
+              id: id!,
+              error: (e as Error).message || String(e)
           });
       }
   }
 
-  private processError(payload: any) {
+  private processError(payload: TerminalResultPayload) {
       const { id, error, meta } = payload;
       const { grepOutput, stdoutFile } = meta || {};
 

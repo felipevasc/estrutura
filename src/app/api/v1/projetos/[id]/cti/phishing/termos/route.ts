@@ -4,9 +4,9 @@ import { carregarBasePhishing } from "@/utils/basePhishing";
 
 const responderErro = (mensagem: string, status = 400) => NextResponse.json({ error: mensagem }, { status });
 
-const normalizarPalavras = (lista: any[]) => Array.from(new Set((lista || []).map((termo: any) => String(termo || "").toLowerCase().trim()).filter(Boolean)));
-const normalizarAuxiliares = (lista: any[]) => Array.from(new Set((lista || []).map((termo: any) => String(termo || "").toLowerCase().trim()).filter(Boolean))));
-const normalizarTlds = (lista: any[]) => Array.from(new Set((lista || []).map((tld: any) => String(tld || "").toLowerCase().replace(/^\./, "")).filter(Boolean))));
+const normalizarPalavras = (lista: string[] | undefined) => Array.from(new Set((lista || []).map((termo) => String(termo || "").toLowerCase().trim()).filter(Boolean)));
+const normalizarAuxiliares = (lista: string[] | undefined) => Array.from(new Set((lista || []).map((termo) => String(termo || "").toLowerCase().trim()).filter(Boolean)));
+const normalizarTlds = (lista: string[] | undefined) => Array.from(new Set((lista || []).map((tld) => String(tld || "").toLowerCase().replace(/^\./, "")).filter(Boolean)));
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
     try {

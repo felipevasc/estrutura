@@ -9,23 +9,45 @@ import { TipoDominio } from '@prisma/client';
 import { NanoEvents } from '../../events';
 import { lerLogExecucao, obterCaminhoLogExecucao, obterComandoRegistrado, registrarComandoFerramenta } from './armazenamentoExecucao';
 
+interface CommandPayload {
+  id: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any;
+  projectId: number;
+  command: string;
+}
+
+interface TerminalResultPayload {
+  executionId?: number;
+  id?: number;
+  output?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta: any;
+  command?: string;
+  args?: string[];
+  error?: string;
+}
+
 export class AmassService extends NanoService {
   constructor() {
     super('AmassService');
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'amass') {
         this.processarComando(payload);
       }
     });
 
-    this.listen(NanoEvents.AMASS_TERMINAL_RESULT, (payload) => this.processarResultado(payload));
-    this.listen(NanoEvents.AMASS_TERMINAL_ERROR, (payload) => this.processarErro(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.AMASS_TERMINAL_RESULT, (payload: any) => this.processarResultado(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.AMASS_TERMINAL_ERROR, (payload: any) => this.processarErro(payload));
   }
 
-  private async processarComando(payload: any) {
+  private async processarComando(payload: CommandPayload) {
     const { id, args, projectId } = payload;
 
     try {
@@ -64,17 +86,17 @@ export class AmassService extends NanoService {
         errorTo: NanoEvents.AMASS_TERMINAL_ERROR,
         meta: { projectId, dominio, op, jsonOutputFile: arquivoJson, linhaComando }
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       this.bus.emit(NanoEvents.JOB_FAILED, {
         id,
-        error: e.message
+        error: (e as Error).message || String(e)
       });
     }
   }
 
-  private async processarResultado(payload: any) {
+  private async processarResultado(payload: TerminalResultPayload) {
     const { executionId, id, output, meta, command, args } = payload;
-    const jobId = id ?? executionId;
+    const jobId = (id ?? executionId) as number;
     const { op, jsonOutputFile, linhaComando } = meta;
 
     this.log(`Processando resultado ${jobId}`);
@@ -105,7 +127,9 @@ export class AmassService extends NanoService {
                 }
               }
             }
-          } catch (_) {}
+          } catch {
+              // ignore
+          }
         }
 
         fs.unlinkSync(jsonOutputFile);
@@ -126,19 +150,20 @@ export class AmassService extends NanoService {
         id: jobId,
         result: { subdominios: subdominiosUnicos, ips: ipsUnicos },
         rawOutput: lerLogExecucao(jobId) || output,
-        executedCommand: linhaComando || obterComandoRegistrado('amass', jobId) || `${command} ${args.join(' ')}`
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        executedCommand: linhaComando || obterComandoRegistrado('amass', jobId as number) || `${command} ${(args as any).join(' ')}`
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (jsonOutputFile && fs.existsSync(jsonOutputFile)) fs.unlinkSync(jsonOutputFile);
 
       this.bus.emit(NanoEvents.JOB_FAILED, {
         id: jobId,
-        error: e.message
+        error: (e as Error).message || String(e)
       });
     }
   }
 
-  private processarErro(payload: any) {
+  private processarErro(payload: TerminalResultPayload) {
     const { executionId, id, error, meta } = payload;
     const { jsonOutputFile } = meta || {};
 

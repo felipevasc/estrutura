@@ -28,9 +28,10 @@ const Breadcrumbs = () => {
             {target && (
                 <>
                     <FontAwesomeIcon icon={faChevronRight} className="separator" />
-                    <div className="item">{target.tipo.toUpperCase()}</div>
+                    <div className="item">{target.tipo?.toUpperCase()}</div>
                     <FontAwesomeIcon icon={faChevronRight} className="separator" />
-                    <div className="item active">{target.valor}</div>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <div className="item active">{(target as any).valor || target.id}</div>
                 </>
             )}
         </BreadcrumbBar>

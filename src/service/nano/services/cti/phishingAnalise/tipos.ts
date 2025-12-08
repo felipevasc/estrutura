@@ -21,4 +21,5 @@ type ResultadoAnalise = {
     filtro: string;
 };
 
-export { DecisaoFiltro, ResultadoFiltro, FiltroPhishing, ResultadoAnalise };
+export { DecisaoFiltro };
+export type { ResultadoFiltro, FiltroPhishing, ResultadoAnalise };

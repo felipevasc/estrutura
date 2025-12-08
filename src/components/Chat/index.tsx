@@ -161,7 +161,7 @@ const ChatWidget = () => {
                 mask={false}
             >
                 <ChatContainer>
-                    <BlocoMensagens mensagens={mensagens} carregando={carregando} aoExecutar={executarComando} referenciaFinal={referenciaMensagens} />
+                    <BlocoMensagens mensagens={mensagens} carregando={carregando} aoExecutar={executarComando} referenciaFinal={referenciaMensagens as RefObject<HTMLDivElement>} />
                     <InputArea>
                         <Input.TextArea
                             value={textoEntrada}

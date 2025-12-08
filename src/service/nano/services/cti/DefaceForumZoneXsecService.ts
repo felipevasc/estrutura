@@ -19,10 +19,11 @@ class DefaceForumZoneXsecService extends NanoService {
     }
 
     async initialize() {
-        this.listen("COMMAND_RECEIVED", (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.listen("COMMAND_RECEIVED", (payload: any) => {
             if (payload.command === "deface_forum_zone_xsec_check") {
-                this.executar(payload as EscutaPayload).catch((erro: any) => {
-                    this.error(`Erro não tratado em executar: ${erro.message}`, erro);
+                this.executar(payload as EscutaPayload).catch((erro: unknown) => {
+                    this.error(`Erro não tratado em executar: ${(erro as Error).message}`, erro);
                 });
             }
         });
@@ -52,15 +53,16 @@ class DefaceForumZoneXsecService extends NanoService {
             const executedCommand = linhaComandoCti("zone-xsec", { dominio: dominio.endereco, paginas });
             const rawOutput = saidaBrutaCti(espelhos);
             this.bus.emit("JOB_COMPLETED", { id, result: criados, executedCommand, rawOutput });
-        } catch (erro: any) {
-            this.bus.emit("JOB_FAILED", { id, error: erro.message });
+        } catch (erro: unknown) {
+            this.bus.emit("JOB_FAILED", { id, error: (erro as Error).message });
         }
     }
 
     private async buscarEspelhos(endereco: string, paginas: number) {
         const alvo = endereco.toLowerCase();
         const espelhos: string[] = [];
-        const navegador = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ["--ignore-certificate-errors", "--ignore-certificate-errors-spki-list"] });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const navegador = await puppeteer.launch({ headless: true, ignoreHTTPSErrors: true, args: ["--ignore-certificate-errors", "--ignore-certificate-errors-spki-list"] } as any);
         const pagina = await navegador.newPage();
         try {
             for (let indice = 1; indice <= paginas; indice += 1) {

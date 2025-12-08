@@ -16,7 +16,7 @@ const CtiContainer = styled.div`
   flex-direction: column;
   height: 100%;
   padding: 24px;
-  background: ${({ theme }) => theme.background};
+  background: ${({ theme }) => theme.colors.background};
 
   .ant-tabs, .ant-tabs-content {
     display: flex;

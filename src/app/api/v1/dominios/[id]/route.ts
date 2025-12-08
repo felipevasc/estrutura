@@ -1,6 +1,6 @@
 import prisma from "@/database";
 import { NextRequest, NextResponse } from "next/server";
-import { TipoDominio } from "@prisma/client";
+import { Prisma, TipoDominio } from "@prisma/client";
 
 const parseNumero = (valor?: string | null) => {
     if (!valor) return undefined;
@@ -8,7 +8,7 @@ const parseNumero = (valor?: string | null) => {
     return Number.isNaN(numero) ? undefined : numero;
 };
 
-const montarIncludeIp = (limite?: number) => {
+const montarIncludeIp = (limite?: number): Prisma.IpFindManyArgs => {
     const limiteAplicado = limite ? { take: limite } : {};
     return {
         include: {
@@ -22,9 +22,9 @@ const montarIncludeIp = (limite?: number) => {
     };
 };
 
-const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2, tipo: TipoDominio = TipoDominio.principal) => {
+const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2, tipo: TipoDominio = TipoDominio.principal): Prisma.DominioInclude => {
     const limiteNivelAplicado = limiteNivel ? { take: limiteNivel } : {};
-    const incluirSubdominios = profundidade > 0 ? {
+    const incluirSubdominios: Prisma.DominioInclude = profundidade > 0 ? {
         subDominios: {
             where: { tipo },
             include: montarIncludeDominio(limiteFilhos, limiteFilhos, profundidade - 1, tipo),

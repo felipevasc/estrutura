@@ -364,7 +364,8 @@ const VazamentoSenhasView = () => {
         {
             title: 'Parâmetros principais',
             key: 'parametros',
-            render: (_: unknown, fonte: FonteVazamento) => <Text type="secondary">{resumoParametros(fonte)}</Text>,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            render: (_: any, fonte: FonteVazamento) => <Text type="secondary">{resumoParametros(fonte)}</Text>,
         },
         {
             title: 'Atualizado em',
@@ -375,7 +376,8 @@ const VazamentoSenhasView = () => {
         {
             title: 'Ações',
             key: 'acoes',
-            render: (_: unknown, fonte: FonteVazamento) => (
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            render: (_: any, fonte: FonteVazamento) => (
                 <Space>
                     <Button icon={<EditOutlined />} onClick={() => abrirModalEdicao(fonte)} />
                     <Button icon={<DeleteOutlined />} danger onClick={() => removerFonte(fonte.id)} />

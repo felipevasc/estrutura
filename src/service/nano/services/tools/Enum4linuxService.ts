@@ -6,23 +6,46 @@ import os from 'node:os';
 import { TipoUsuario } from '@/database/functions/usuario';
 import { NanoEvents } from '../../events';
 
+interface CommandPayload {
+  id: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any;
+  projectId: number;
+  command: string;
+}
+
+interface TerminalResultPayload {
+  executionId?: number;
+  id?: number;
+  output?: string;
+  stdout?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta: any;
+  command?: string;
+  args?: string[];
+  error?: string;
+}
+
 export class Enum4linuxService extends NanoService {
   constructor() {
     super('Enum4linuxService');
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'enum4linux') {
-        this.processCommand(payload);
+        this.processCommand(payload as CommandPayload);
       }
     });
 
-    this.listen(NanoEvents.ENUM4LINUX_TERMINAL_RESULT, (payload) => this.processResult(payload));
-    this.listen(NanoEvents.ENUM4LINUX_TERMINAL_ERROR, (payload) => this.processError(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.ENUM4LINUX_TERMINAL_RESULT, (payload: any) => this.processResult(payload as TerminalResultPayload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.ENUM4LINUX_TERMINAL_ERROR, (payload: any) => this.processError(payload as TerminalResultPayload));
   }
 
-  private async processCommand(payload: any) {
+  private async processCommand(payload: CommandPayload) {
     const { id, args, projectId } = payload;
     const idIp = args.idIp;
     const opcoes = (args.opcoes as string) || "-U -r";
@@ -54,15 +77,15 @@ export class Enum4linuxService extends NanoService {
             meta: { projectId, enderecoIp, ip, idIp }
         });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
-            error: e.message
+            error: (e as Error).message || String(e)
         });
     }
   }
 
-  private async processResult(payload: any) {
+  private async processResult(payload: TerminalResultPayload) {
       const { id, stdout, meta, command, args } = payload;
       const { idIp } = meta;
 
@@ -85,24 +108,25 @@ export class Enum4linuxService extends NanoService {
         await Database.adicionarUsuarios(usuarios, Number(idIp));
 
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
-            id: id,
+            id: id!,
             result: usuarios,
             rawOutput: stdout,
-            executedCommand: `${command} ${args.join(' ')}`
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            executedCommand: `${command} ${(args as any).join(' ')}`
         });
 
-      } catch (e: any) {
+      } catch (e: unknown) {
           this.bus.emit(NanoEvents.JOB_FAILED, {
-              id: id,
-              error: e.message
+              id: id!,
+              error: (e as Error).message || String(e)
           });
       }
   }
 
-  private processError(payload: any) {
+  private processError(payload: TerminalResultPayload) {
       const { id, error } = payload;
       this.bus.emit(NanoEvents.JOB_FAILED, {
-          id: id,
+          id: id!,
           error: error
       });
   }

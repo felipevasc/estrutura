@@ -4,18 +4,30 @@ import { createWriteStream } from 'node:fs';
 import { NanoEvents } from '../events';
 import { obterCaminhoLogExecucao, registrarComandoFerramenta } from './tools/armazenamentoExecucao';
 
+interface TerminalPayload {
+  id: number;
+  command: string;
+  args: string[];
+  replyTo?: string;
+  errorTo?: string;
+  meta?: Record<string, unknown>;
+  outputFile?: string;
+  executionId?: number;
+}
+
 export class TerminalService extends NanoService {
   constructor() {
     super('TerminalService');
   }
 
   initialize(): void {
-    this.bus.on(NanoEvents.EXECUTE_TERMINAL, (payload) => this.execute(payload));
+    this.listen(NanoEvents.EXECUTE_TERMINAL, (payload) => this.execute(payload as TerminalPayload));
   }
 
-  private execute(payload: any) {
+  private execute(payload: TerminalPayload) {
     const { id, command, args, replyTo, errorTo, meta, outputFile } = payload;
-    const executionId = id ?? payload.executionId;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const executionId = id ?? (payload as any).executionId;
     const caminhoSaida = obterCaminhoLogExecucao(executionId);
     const linhaComando = registrarComandoFerramenta(command, executionId, command, args);
     const caminhosSaida = [caminhoSaida, outputFile].filter(Boolean) as string[];

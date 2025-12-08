@@ -7,23 +7,46 @@ import os from 'node:os';
 import { promises as fs } from 'node:fs';
 import { NanoEvents } from '../../events';
 
+interface CommandPayload {
+  id: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any;
+  projectId: number;
+  command: string;
+}
+
+interface TerminalResultPayload {
+  executionId?: number;
+  id?: number;
+  output?: string;
+  outputFile?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta: any;
+  command?: string;
+  args?: string[];
+  error?: string;
+}
+
 export class SubfinderService extends NanoService {
   constructor() {
     super('SubfinderService');
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'subfinder') {
-        this.processCommand(payload);
+        this.processCommand(payload as CommandPayload);
       }
     });
 
-    this.listen(NanoEvents.SUBFINDER_TERMINAL_RESULT, (payload) => this.processResult(payload));
-    this.listen(NanoEvents.SUBFINDER_TERMINAL_ERROR, (payload) => this.processError(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.SUBFINDER_TERMINAL_RESULT, (payload: any) => this.processResult(payload as TerminalResultPayload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.SUBFINDER_TERMINAL_ERROR, (payload: any) => this.processError(payload as TerminalResultPayload));
   }
 
-  private async processCommand(payload: any) {
+  private async processCommand(payload: CommandPayload) {
     const { id, args, projectId } = payload;
     const idDominio = args.idDominio;
     const todasFontes = args.todasFontes !== false;
@@ -58,41 +81,42 @@ export class SubfinderService extends NanoService {
             meta: { projectId, dominio, op }
         });
 
-    } catch (e: any) {
+    } catch (e: unknown) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
-            error: e.message
+            error: (e as Error).message || String(e)
         });
     }
   }
 
-  private async processResult(payload: any) {
+  private async processResult(payload: TerminalResultPayload) {
     const { id, outputFile, meta, command, args } = payload;
     const { op } = meta;
     this.log(`Processing result for ${id} from file ${outputFile}`);
     try {
-      const fileContent = await fs.readFile(outputFile, 'utf-8');
-      await fs.unlink(outputFile);
+      const fileContent = await fs.readFile(outputFile!, 'utf-8');
+      await fs.unlink(outputFile!);
       const subdominios = fileContent?.split("\n").map((s: string) => s.trim()).filter((s: string) => !!s && s.includes('.')) ?? [];
       await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0, TipoDominio.dns);
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
-          id: id,
+          id: id!,
           result: subdominios,
           rawOutput: fileContent,
-          executedCommand: `${command} ${args.join(' ')}`
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          executedCommand: `${command} ${(args as any).join(' ')}`
       });
-    } catch (e: any) {
+    } catch (e: unknown) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
-            id: id,
-            error: e.message
+            id: id!,
+            error: (e as Error).message || String(e)
         });
     }
   }
 
-  private processError(payload: any) {
+  private processError(payload: TerminalResultPayload) {
       const { id, error } = payload;
       this.bus.emit(NanoEvents.JOB_FAILED, {
-          id: id,
+          id: id!,
           error: error
       });
   }

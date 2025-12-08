@@ -44,12 +44,15 @@ export class WhatwebService extends NanoService {
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
-      if (payload.command === 'whatweb') this.processarComando(payload);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
+      if (payload.command === 'whatweb') this.processarComando(payload as PayloadComando);
     });
 
-    this.listen(NanoEvents.WHATWEB_RESULT, (payload) => this.processarResultado(payload));
-    this.listen(NanoEvents.WHATWEB_ERROR, (payload) => this.processarErro(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.WHATWEB_RESULT, (payload: any) => this.processarResultado(payload as ResultadoTerminal));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.WHATWEB_ERROR, (payload: any) => this.processarErro(payload as ErroTerminal));
   }
 
   private async processarComando(payload: PayloadComando) {
@@ -212,7 +215,7 @@ export class WhatwebService extends NanoService {
 
     const entries = Object.entries(obj)
         .filter(([k, v]) => !['name', 'certainty'].includes(k) && (typeof v === 'string' || typeof v === 'number'))
-        .map(([_, v]) => String(v));
+        .map(([, v]) => String(v));
 
     if (entries.length > 0) return entries.join(', ');
 

@@ -39,7 +39,8 @@ export function Visualizacao({ relatorio, resultado }: VisualizacaoProps) {
         if (resultado.tipoGrafico === 'linha') {
             return (
                 <ResponsiveContainer width="100%" height="100%" minHeight={420}>
-                    <LineChart data={resultado.dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <LineChart data={resultado.dadosGrafico as any[]} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#555" />
                         <XAxis dataKey="nome" angle={-30} textAnchor="end" height={60} interval={0} fontSize={12} stroke="#ccc" label={resultado.eixoX ? { value: resultado.eixoX, position: 'insideBottom', offset: -20, fill: '#ccc' } : undefined} />
                         <YAxis stroke="#ccc" label={resultado.eixoY ? { value: resultado.eixoY, angle: -90, position: 'insideLeft', fill: '#ccc' } : undefined} />
@@ -56,7 +57,8 @@ export function Visualizacao({ relatorio, resultado }: VisualizacaoProps) {
                     <PieChart>
                         <Tooltip contentStyle={{ backgroundColor: '#222', border: '1px solid #444', color: '#fff' }} />
                         <Legend verticalAlign="bottom" height={50} />
-                        <Pie data={resultado.dadosGrafico} dataKey="valor" nameKey="nome" innerRadius={60} outerRadius={110} paddingAngle={3}>
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        <Pie data={resultado.dadosGrafico as any[]} dataKey="valor" nameKey="nome" innerRadius={60} outerRadius={110} paddingAngle={3}>
                             {resultado.dadosGrafico.map((_, index) => (
                                 <Cell key={index} fill={cores[index % cores.length]} />
                             ))}
@@ -69,7 +71,8 @@ export function Visualizacao({ relatorio, resultado }: VisualizacaoProps) {
         if (resultado.tipoGrafico === 'area') {
             return (
                 <ResponsiveContainer width="100%" height="100%" minHeight={420}>
-                    <AreaChart data={resultado.dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <AreaChart data={resultado.dadosGrafico as any[]} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#555" />
                         <XAxis dataKey="nome" angle={-25} textAnchor="end" height={60} interval={0} fontSize={12} stroke="#ccc" label={resultado.eixoX ? { value: resultado.eixoX, position: 'insideBottom', offset: -20, fill: '#ccc' } : undefined} />
                         <YAxis stroke="#ccc" label={resultado.eixoY ? { value: resultado.eixoY, angle: -90, position: 'insideLeft', fill: '#ccc' } : undefined} />
@@ -82,7 +85,8 @@ export function Visualizacao({ relatorio, resultado }: VisualizacaoProps) {
 
         return (
             <ResponsiveContainer width="100%" height="100%" minHeight={420}>
-                <BarChart data={resultado.dadosGrafico} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <BarChart data={resultado.dadosGrafico as any[]} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.2} stroke="#555" />
                     <XAxis dataKey="nome" angle={-40} textAnchor="end" height={70} interval={0} fontSize={12} stroke="#ccc" label={resultado.eixoX ? { value: resultado.eixoX, position: 'insideBottom', offset: -30, fill: '#ccc' } : undefined} />
                     <YAxis stroke="#ccc" label={resultado.eixoY ? { value: resultado.eixoY, angle: -90, position: 'insideLeft', fill: '#ccc' } : undefined} />

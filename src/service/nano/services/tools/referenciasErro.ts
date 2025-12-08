@@ -22,6 +22,7 @@ const normalizarUrl = (base: string, caminho: string) => {
 
 const medirResposta = async (url: string): Promise<Medicao | null> => {
   try {
+    // @ts-expect-error - node fetch supports agent
     const resposta = await fetch(url, { agent: agenteInseguro });
     const corpo = await resposta.text();
     const tamanho = Buffer.byteLength(corpo);

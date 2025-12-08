@@ -6,6 +6,7 @@ import { linhaComandoCti, saidaBrutaCti } from "./registroExecucaoCti";
 type CheckPayload = {
     dominioId: number;
     // Permitir argumentos extras na payload base
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 }
 
@@ -35,12 +36,16 @@ export abstract class CtiSearchService extends NanoService {
     }
 
     // Agora getDork pode receber args opcionais
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected abstract getDork(dominio: Dominio, args?: any): string | Promise<string>;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected abstract getFonte(args?: any): string;
 
     // Método abstrato para processar e salvar os resultados
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     protected abstract processResults(items: any[], dominio: Dominio, fonte: string): Promise<any[]>;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private async handleCheck({ id, args }: { id: number, args: any }) {
         try {
             let parsedArgs: CheckPayload;
@@ -85,9 +90,9 @@ export abstract class CtiSearchService extends NanoService {
             const executedCommand = linhaComandoCti('google_custom_search', { dork, fonte });
             const rawOutput = saidaBrutaCti(result);
             this.bus.emit('JOB_COMPLETED', { id, result: createdItems, executedCommand, rawOutput });
-        } catch (error: any) {
-            this.error(`Falha no processamento: ${error.message}`, error);
-            this.bus.emit('JOB_FAILED', { id, error: error.message });
+        } catch (error: unknown) {
+            this.error(`Falha no processamento: ${(error as Error).message}`, error);
+            this.bus.emit('JOB_FAILED', { id, error: (error as Error).message });
         }
     }
 

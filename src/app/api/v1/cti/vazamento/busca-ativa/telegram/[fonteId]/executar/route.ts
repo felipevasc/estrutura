@@ -14,8 +14,8 @@ const credenciaisTelegram = () => ({
     sessao: process.env.TELEGRAM_SESSAO,
 });
 
-export async function POST(_request: Request, contexto: { params: { fonteId: string } }) {
-    const { fonteId: parametroFonteId } = contexto.params;
+export async function POST(_request: Request, contexto: { params: Promise<{ fonteId: string }> }) {
+    const { fonteId: parametroFonteId } = await contexto.params;
     const fonteId = parseInt(parametroFonteId, 10);
     if (Number.isNaN(fonteId)) return NextResponse.json({ error: 'Identificador inválido' }, { status: 400 });
 
@@ -35,11 +35,13 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
         if (!fonte.buscaAtiva.destinoCentral)
             return NextResponse.json({ error: 'Informe o destino centralizado para a coleta' }, { status: 400 });
 
-        const metodoAutenticacao = fonte.parametros?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parametros = (fonte.parametros as any) || {};
+        const metodoAutenticacao = parametros.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
         const credenciais = credenciaisTelegram();
         if (metodoAutenticacao === 'SESSAO' && (!credenciais.apiId || !credenciais.apiHash || !credenciais.sessao))
             return NextResponse.json({ error: 'Configure sessão, API ID e API Hash do Telegram' }, { status: 400 });
-        if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
+        if (metodoAutenticacao === 'BOT' && !parametros.tokenBot)
             return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 
         const command = await prisma.command.create({
@@ -54,8 +56,8 @@ export async function POST(_request: Request, contexto: { params: { fonteId: str
                     projetoId: fonte.projetoId,
                     metodoAutenticacao,
                     credenciais,
-                    tokenBot: fonte.parametros?.tokenBot,
-                    nomeSessao: fonte.parametros?.nomeSessao,
+                    tokenBot: parametros.tokenBot,
+                    nomeSessao: parametros.nomeSessao,
                 }),
                 projectId: fonte.projetoId,
             },

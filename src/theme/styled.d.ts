@@ -16,6 +16,7 @@ declare module 'styled-components' {
       success: string
       warning: string
       error: string
+      info: string
       text: string
       textSecondary: string
     }

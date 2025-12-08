@@ -11,23 +11,46 @@ import dns from 'node:dns/promises';
 
 const DEFAULT_WORDLIST_URL = 'https://raw.githubusercontent.com/danielmiessler/SecLists/master/Discovery/DNS/subdomains-top1million-5000.txt';
 
+interface CommandPayload {
+  id: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any;
+  projectId: number;
+  command: string;
+}
+
+interface TerminalResultPayload {
+  executionId?: number;
+  id?: number;
+  output?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  meta: any;
+  command?: string;
+  args?: string[];
+  error?: string;
+  stderr?: string;
+}
+
 export class DnsenumService extends NanoService {
   constructor() {
     super('DnsenumService');
   }
 
   initialize(): void {
-    this.listen(NanoEvents.COMMAND_RECEIVED, (payload) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.COMMAND_RECEIVED, (payload: any) => {
       if (payload.command === 'dnsenum') {
-        this.processarComando(payload);
+        this.processarComando(payload as CommandPayload);
       }
     });
 
-    this.listen(NanoEvents.DNSENUM_TERMINAL_RESULT, (payload) => this.processarResultado(payload));
-    this.listen(NanoEvents.DNSENUM_TERMINAL_ERROR, (payload) => this.processarErro(payload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.DNSENUM_TERMINAL_RESULT, (payload: any) => this.processarResultado(payload as TerminalResultPayload));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.listen(NanoEvents.DNSENUM_TERMINAL_ERROR, (payload: any) => this.processarErro(payload as TerminalResultPayload));
   }
 
-  private async processarComando(payload: any) {
+  private async processarComando(payload: CommandPayload) {
     const { id, args, projectId } = payload;
     const { idDominio, threads, wordlist } = args;
     this.log(`Processando dnsenum para domínio ${idDominio}`);
@@ -49,10 +72,10 @@ export class DnsenumService extends NanoService {
             errorTo: NanoEvents.DNSENUM_TERMINAL_ERROR,
             meta: { projectId, dominio: dominioNormalizado, outputFile: caminhoSaida }
         });
-    } catch (e: any) {
+    } catch (e: unknown) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
             id: id,
-            error: e.message
+            error: (e as Error).message || String(e)
         });
     }
   }
@@ -72,8 +95,9 @@ export class DnsenumService extends NanoService {
   private async validarDominio(dominio: string) {
     try {
         await dns.resolveNs(dominio);
-    } catch (erro: any) {
-        const codigo = erro?.code ?? '';
+    } catch (erro: unknown) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const codigo = (erro as any)?.code ?? '';
         if (['ENODATA', 'ENOTFOUND', 'SERVFAIL', 'REFUSED'].includes(codigo)) {
             throw new Error('Domínio inválido ou sem registros NS');
         }
@@ -105,7 +129,7 @@ export class DnsenumService extends NanoService {
     return argumentos;
   }
 
-  private async processarResultado(payload: any) {
+  private async processarResultado(payload: TerminalResultPayload) {
       const { id, meta } = payload;
       const { projectId, outputFile } = meta;
       try {
@@ -144,19 +168,19 @@ export class DnsenumService extends NanoService {
         if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projectId);
         this.limparArquivos([outputFile, ...arquivosIps]);
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
-            id: id,
+            id: id!,
             result: { subdominios: subdominiosUnicos.length, ips: ipsUnicos.length }
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
           this.limparArquivos([outputFile, ...this.localizarArquivosIps(meta?.dominio)]);
           this.bus.emit(NanoEvents.JOB_FAILED, {
-              id: id,
-              error: e.message
+              id: id!,
+              error: (e as Error).message || String(e)
           });
       }
   }
 
-  private processarErro(payload: any) {
+  private processarErro(payload: TerminalResultPayload) {
       const { id, error, stderr, meta } = payload;
       const mensagemErro = stderr ? `${error} - Detalhes: ${stderr}` : error;
       const mensagemNormalizada = mensagemErro?.toUpperCase() ?? '';

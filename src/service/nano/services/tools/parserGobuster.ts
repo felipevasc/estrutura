@@ -13,13 +13,13 @@ export const extrairResultadosGobuster = (conteudo: string, base: string) => {
     if (!texto) continue;
 
     const semPrefixo = texto.startsWith("Found: ") ? texto.slice(7).trim() : texto;
-    const regex = /^(?<alvo>\S+?)\s*\(Status:\s*(?<status>\d+)\)\s*\[Size:\s*(?<tamanho>\d+)\]/;
+    const regex = /^(\S+?)\s*\(Status:\s*(\d+)\)\s*\[Size:\s*(\d+)\]/;
     const encontrado = semPrefixo.match(regex);
     if (!encontrado) continue;
 
-    let caminho = encontrado.groups?.alvo ?? "";
-    const status = parseInt(encontrado.groups?.status ?? "", 10);
-    const tamanho = parseInt(encontrado.groups?.tamanho ?? "", 10);
+    let caminho = encontrado[1] ?? "";
+    const status = parseInt(encontrado[2] ?? "", 10);
+    const tamanho = parseInt(encontrado[3] ?? "", 10);
 
     if (baseNormalizada && caminho.startsWith(baseNormalizada)) caminho = caminho.slice(baseNormalizada.length);
     if (!caminho.startsWith("/")) caminho = `/${caminho}`;

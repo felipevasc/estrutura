@@ -60,3 +60,5 @@ const GlobalStyles = createGlobalStyle`
     font-family: inherit;
   }
 `
+
+export default GlobalStyles

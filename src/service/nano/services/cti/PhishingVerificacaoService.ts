@@ -10,7 +10,8 @@ export default class PhishingVerificacaoService extends NanoService {
     }
 
     initialize() {
-        this.listen('COMMAND_RECEIVED', async (payload) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        this.listen('COMMAND_RECEIVED', async (payload: any) => {
             if (payload.command !== 'phishing_verificar') return;
 
             const { id: jobId, args } = payload;
@@ -28,7 +29,7 @@ export default class PhishingVerificacaoService extends NanoService {
                 }
 
                 const urls = this.obterUrls(registro.alvo);
-                let status = PhishingVerificacaoStatus.OFFLINE;
+                let status: PhishingVerificacaoStatus = PhishingVerificacaoStatus.OFFLINE;
                 const saidas: string[] = [];
 
                 for (const url of urls) {

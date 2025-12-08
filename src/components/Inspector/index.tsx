@@ -28,7 +28,8 @@ const Inspector = () => {
                 <AreaConteudo>
                     {alvo ? (
                         abaAtiva ? (
-                            <InspectorAcoes alvo={alvo} grupoAtivo={abaAtiva} />
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            <InspectorAcoes alvo={alvo as any} grupoAtivo={abaAtiva} />
                         ) : (
                             <InspectorBody>
                                 <Empty description="Sem ações disponíveis" image={Empty.PRESENTED_IMAGE_SIMPLE} />

@@ -57,11 +57,13 @@ export async function POST(request: Request, contexto: { params: Promise<{ fonte
         if (!fonte.buscaAtiva.destinoCentral)
             return NextResponse.json({ error: 'Informe o destino centralizado para o teste' }, { status: 400 });
 
-        const metodoAutenticacao = fonte.parametros?.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parametros = (fonte.parametros as any) || {};
+        const metodoAutenticacao = parametros.metodoAutenticacao === 'BOT' ? 'BOT' : 'SESSAO';
         const credenciais = credenciaisTelegram();
         if (metodoAutenticacao === 'SESSAO' && (!credenciais.apiId || !credenciais.apiHash || !credenciais.sessao))
             return NextResponse.json({ error: 'Configure sessão, API ID e API Hash do Telegram' }, { status: 400 });
-        if (metodoAutenticacao === 'BOT' && !fonte.parametros?.tokenBot)
+        if (metodoAutenticacao === 'BOT' && !parametros.tokenBot)
             return NextResponse.json({ error: 'Informe o token do bot do Telegram' }, { status: 400 });
 
         const command = await prisma.command.create({
@@ -76,8 +78,8 @@ export async function POST(request: Request, contexto: { params: Promise<{ fonte
                     projetoId: fonte.projetoId,
                     metodoAutenticacao,
                     credenciais,
-                    tokenBot: fonte.parametros?.tokenBot,
-                    nomeSessao: fonte.parametros?.nomeSessao,
+                    tokenBot: parametros.tokenBot,
+                    nomeSessao: parametros.nomeSessao,
                     registroBusca: fonte.buscaAtiva,
                     etapaTeste,
                 }),

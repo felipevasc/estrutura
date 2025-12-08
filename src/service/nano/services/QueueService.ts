@@ -3,6 +3,18 @@ import prisma from '@/database';
 import { CommandStatus } from '@prisma/client';
 import { NanoEvents } from '../events';
 
+interface JobCompletedPayload {
+    id: number;
+    result: unknown;
+    executedCommand?: string;
+    rawOutput?: string;
+}
+
+interface JobFailedPayload {
+    id: number;
+    error: string | object;
+}
+
 export class QueueService extends NanoService {
   private isProcessing = false;
   private currentCommandId: number | null = null;
@@ -16,8 +28,8 @@ export class QueueService extends NanoService {
   initialize(): void {
     this.recoverQueue();
     this.listen(NanoEvents.KICK_QUEUE, () => this.processQueue());
-    this.listen(NanoEvents.JOB_COMPLETED, (payload: any) => this.handleJobCompleted(payload));
-    this.listen(NanoEvents.JOB_FAILED, (payload: any) => this.handleJobFailed(payload));
+    this.listen(NanoEvents.JOB_COMPLETED, (payload: unknown) => this.handleJobCompleted(payload as JobCompletedPayload));
+    this.listen(NanoEvents.JOB_FAILED, (payload: unknown) => this.handleJobFailed(payload as JobFailedPayload));
   }
 
   /**
@@ -102,7 +114,7 @@ export class QueueService extends NanoService {
     }
   }
 
-  private async handleJobCompleted(payload: any) {
+  private async handleJobCompleted(payload: JobCompletedPayload) {
       const { id, result, executedCommand, rawOutput } = payload;
 
       if (this.currentCommandId !== id) {
@@ -133,7 +145,7 @@ export class QueueService extends NanoService {
       this.processQueue();
   }
 
-  private async handleJobFailed(payload: any) {
+  private async handleJobFailed(payload: JobFailedPayload) {
       const { id, error } = payload;
 
       if (this.currentCommandId !== id) {
@@ -146,7 +158,7 @@ export class QueueService extends NanoService {
       await this.failCommand(id, error);
   }
 
-  private async failCommand(commandId: number, error: string) {
+  private async failCommand(commandId: number, error: string | object) {
       try {
           await prisma.command.update({
               where: { id: commandId },
