@@ -204,7 +204,9 @@ export class WgetRecursivoService extends NanoService {
 
   private async salvar(registros: ResultadoDiretorio[], alvo: AlvoResolvido) {
     const { dominio, ip } = alvo;
-    for (const registro of registros) {
+    const hierarquia = this.gerarHierarquia(registros);
+
+    for (const registro of hierarquia) {
       await prisma.diretorio.create({
         data: {
           caminho: registro.caminho,
@@ -216,5 +218,39 @@ export class WgetRecursivoService extends NanoService {
         }
       });
     }
+  }
+
+  private gerarHierarquia(registros: ResultadoDiretorio[]) {
+    const mapa = new Map<string, ResultadoDiretorio>();
+
+    registros.forEach((registro) => {
+      const caminhos = this.expandirCaminho(registro);
+      caminhos.forEach((caminho) => {
+        const existente = mapa.get(caminho.caminho);
+        if (!existente || existente.tipo === 'diretorio') mapa.set(caminho.caminho, caminho);
+      });
+    });
+
+    return Array.from(mapa.values());
+  }
+
+  private expandirCaminho(registro: ResultadoDiretorio) {
+    const partes = registro.caminho.split('/').filter(Boolean);
+    if (!partes.length) return [registro];
+
+    let acumulado = '';
+    const caminhos: ResultadoDiretorio[] = [];
+
+    partes.forEach((parte, indice) => {
+      acumulado = `${acumulado}/${parte}`;
+      const ultimo = indice === partes.length - 1;
+      const tipo = ultimo ? registro.tipo : 'diretorio';
+      const caminho = tipo === 'diretorio' ? this.aplicarBarraResultado(acumulado) : acumulado;
+      const status = ultimo ? registro.status : null;
+      const tamanho = ultimo ? registro.tamanho : null;
+      caminhos.push({ caminho, status, tamanho, tipo });
+    });
+
+    return caminhos;
   }
 }
