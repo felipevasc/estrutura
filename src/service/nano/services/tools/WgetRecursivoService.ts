@@ -231,7 +231,12 @@ export class WgetRecursivoService extends NanoService {
       });
     });
 
-    return Array.from(mapa.values());
+    return Array.from(mapa.values()).sort((a, b) => {
+      const tamanhoA = a.caminho.split('/').filter(Boolean).length;
+      const tamanhoB = b.caminho.split('/').filter(Boolean).length;
+      if (tamanhoA === tamanhoB) return a.caminho.localeCompare(b.caminho);
+      return tamanhoA - tamanhoB;
+    });
   }
 
   private expandirCaminho(registro: ResultadoDiretorio) {
