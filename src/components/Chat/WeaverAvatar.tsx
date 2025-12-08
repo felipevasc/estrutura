@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from 'react';
-import styled, { keyframes, css } from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 const flutuar = keyframes`
     0% { transform: translateY(0px) translateX(0px); }

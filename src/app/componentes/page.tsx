@@ -47,7 +47,7 @@ const Page = () => {
         </Table>
         <hr/>
         <h4>Terminal</h4>
-        <Terminal children="asd" />
+        <Terminal>asd</Terminal>
         <hr/>
         <hr/>
     </div>

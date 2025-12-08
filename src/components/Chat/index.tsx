@@ -1,4 +1,5 @@
 import { memo, useCallback, useContext, useEffect, useRef, useState, type RefObject } from 'react';
+import Image from 'next/image';
 import { Button, Input, Spin, message as antMessage } from 'antd';
 import { SendOutlined, CaretRightOutlined } from '@ant-design/icons';
 import { StyledDrawer, ChatButtonContainer, ChatContainer, MessagesArea, InputArea, MessageBubble, CommandBlock, CommandHeader, CommandContent, CommandActions } from './styles';
@@ -9,15 +10,17 @@ import useApi from '@/api';
 interface Mensagem {
     role: 'user' | 'assistant' | 'system';
     content: string;
-    comandos?: any[];
+    comandos?: ComandoSugerido[];
 }
 
 interface MensagensProps {
     mensagens: Mensagem[];
     carregando: boolean;
-    aoExecutar: (comando: any) => void;
+    aoExecutar: (comando: ComandoSugerido) => void;
     referenciaFinal: RefObject<HTMLDivElement>;
 }
+
+type ComandoSugerido = { COMANDO: string } & Record<string, unknown>;
 
 const imagemFallback = '/weaver/animacao1/p1.png';
 
@@ -26,7 +29,7 @@ const BlocoMensagens = memo(({ mensagens, carregando, aoExecutar, referenciaFina
         {mensagens.length === 0 && (
             <div style={{ color: '#666', textAlign: 'center', marginTop: '50px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div style={{ marginBottom: '20px' }}>
-                    <img src={imagemFallback} width={120} />
+                    <Image src={imagemFallback} width={120} height={120} alt="Weaver" />
                 </div>
                 <p>Como posso ajudar com o seu projeto?</p>
             </div>
@@ -44,7 +47,7 @@ const BlocoMensagens = memo(({ mensagens, carregando, aoExecutar, referenciaFina
                             <span>SUGESTÃO DE COMANDO</span>
                         </CommandHeader>
                         <CommandContent>
-                            $ {comando.COMANDO} {Object.values(comando).filter(valor => valor !== comando.COMANDO).join(' ')}
+                            $ {comando.COMANDO} {Object.entries(comando).filter(([chave]) => chave !== 'COMANDO').map(([, valor]) => String(valor ?? '')).join(' ')}
                         </CommandContent>
                         <CommandActions>
                             <Button
@@ -65,6 +68,8 @@ const BlocoMensagens = memo(({ mensagens, carregando, aoExecutar, referenciaFina
     </MessagesArea>
 ));
 
+BlocoMensagens.displayName = 'BlocoMensagens';
+
 const ChatWidget = () => {
     const [aberto, definirAberto] = useState(false);
     const [mensagens, definirMensagens] = useState<Mensagem[]>([]);
@@ -84,18 +89,18 @@ const ChatWidget = () => {
         if (aberto) rolarParaFim();
     }, [mensagens, aberto, rolarParaFim]);
 
-    const interpretarResposta = useCallback((conteudo: string): { texto: string, comandos: any[] } => {
+    const interpretarResposta = useCallback((conteudo: string): { texto: string, comandos: ComandoSugerido[] } => {
         if (!conteudo) return { texto: '', comandos: [] };
 
         const linhas = conteudo.split('\n');
-        const comandos: any[] = [];
+        const comandos: ComandoSugerido[] = [];
         const linhasTexto: string[] = [];
 
         linhas.forEach(linha => {
             const linhaTratada = linha.trim();
             if (linhaTratada.startsWith('{') && linhaTratada.endsWith('}') && linhaTratada.includes('"COMANDO"')) {
                 try {
-                    const comando = JSON.parse(linhaTratada);
+                    const comando = JSON.parse(linhaTratada) as ComandoSugerido;
                     comandos.push(comando);
                 } catch {
                     linhasTexto.push(linha);
@@ -128,21 +133,23 @@ const ChatWidget = () => {
             const { texto, comandos } = interpretarResposta(resposta.message);
             const mensagemAssistente: Mensagem = { role: 'assistant', content: texto, comandos };
             definirMensagens(lista => [...lista, mensagemAssistente]);
-        } catch (erro: any) {
-            antMessage.error(`Erro ao enviar mensagem: ${erro.message}`);
+        } catch (erro) {
+            const mensagemErro = erro instanceof Error ? erro.message : 'Erro desconhecido';
+            antMessage.error(`Erro ao enviar mensagem: ${mensagemErro}`);
         } finally {
             definirCarregando(false);
         }
     };
 
-    const executarComando = useCallback(async (comando: any) => {
+    const executarComando = useCallback(async (comando: ComandoSugerido) => {
         if (!idProjeto) return;
         try {
             antMessage.loading({ content: 'Enfileirando comando...', key: 'exec_cmd' });
             await api.chat.executeCommand(idProjeto, comando);
             antMessage.success({ content: 'Comando enfileirado com sucesso!', key: 'exec_cmd' });
-        } catch (erro: any) {
-            antMessage.error({ content: `Erro ao executar: ${erro.message}`, key: 'exec_cmd' });
+        } catch (erro) {
+            const mensagemErro = erro instanceof Error ? erro.message : 'Erro desconhecido';
+            antMessage.error({ content: `Erro ao executar: ${mensagemErro}`, key: 'exec_cmd' });
         }
     }, [idProjeto, api.chat]);
 
