@@ -38,6 +38,7 @@ const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profu
         whatwebResultados: true,
         ips: montarIncludeIp(limiteFilhos),
         diretorios: { include: { whatwebResultados: true }, ...limiteNivelAplicado },
+        informacoes: true,
         ...incluirSubdominios,
     };
 };

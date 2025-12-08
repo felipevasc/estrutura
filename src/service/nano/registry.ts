@@ -29,6 +29,7 @@ import PhishingCapturaService from './services/cti/PhishingCapturaService';
 import { WgetRecursivoService } from './services/tools/WgetRecursivoService';
 import DefaceCapturaService from './services/cti/DefaceCapturaService';
 import InfoDisclosureDorkService from './services/cti/InfoDisclosureDorkService';
+import { WhoisDominioService } from './services/tools/WhoisDominioService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -44,6 +45,7 @@ export const registeredServices: NanoService[] = [
     new DnsenumService(),
     new Enum4linuxService(),
     new FfufService(),
+    new WhoisDominioService(),
     new DefaceDorkService(),
     new DefaceForumZoneXsecService(),
     new DefaceForumHackDbService(),

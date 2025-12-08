@@ -42,6 +42,7 @@ model Dominio {
   deface Deface[]
   vazamentos VazamentoInformacao[]
   whatwebResultados WhatwebResultado[]
+  informacoes InformacaoDominio[]
   phishing Phishing[]
   termosPhishing TermoPhishing[]
   auxiliaresPhishing AuxiliarPhishing[]
@@ -352,4 +353,17 @@ model WhatwebResultado {
   criadoEm   DateTime @default(now())
 
   @@map("whatweb_resultados")
+}
+
+model InformacaoDominio {
+  id        Int      @id @default(autoincrement())
+  campo     String
+  valor     String
+  dominioId Int
+  dominio   Dominio @relation(fields: [dominioId], references: [id])
+  criadoEm  DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@unique([dominioId, campo])
+  @@map("informacoes_dominio")
 }

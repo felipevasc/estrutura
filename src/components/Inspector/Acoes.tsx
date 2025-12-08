@@ -80,6 +80,15 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <SearchOutlined />,
         },
         {
+            chave: "whoisDominio",
+            titulo: "Whois",
+            descricao: "Informações de registro",
+            comando: "whoisDominio",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <GlobalOutlined />,
+        },
+        {
             chave: "subfinder",
             titulo: "Subfinder",
             descricao: "Subdomínios passivos",
@@ -275,6 +284,16 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             argsBase: { idDominio: id },
             campos: camposWhatweb,
             valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "whoisDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [],
+            valores: {},
         };
     }
     if (acao.chave === "nslookup") {

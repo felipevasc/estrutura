@@ -1,0 +1,14 @@
+{
+  "12000": {
+    "comando": "whois",
+    "argumentos": [
+      "exemplo.com"
+    ]
+  },
+  "12001": {
+    "comando": "whois",
+    "argumentos": [
+      "gov.br"
+    ]
+  }
+}

@@ -6,7 +6,6 @@ import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { IpResponse } from "@/types/IpResponse";
 
-// Styled Components
 const DashboardContainer = styled.div`
   padding: 2rem;
   background-color: ${({ theme }) => theme.colors.background};
@@ -65,6 +64,7 @@ const InfoItem = styled.div`
   span {
     font-size: 0.9rem;
     color: ${({ theme }) => theme.colors.foreground};
+    word-break: break-word;
   }
 `;
 
@@ -88,11 +88,140 @@ const ListItem = styled.li`
   }
 `;
 
+const Bandeiras = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+`;
+
+const BandeiraItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: 8px;
+  background-color: ${({ theme }) => theme.colors.hoverBackground};
+`;
+
+const BandeiraImagem = styled.img`
+  width: 32px;
+  height: 24px;
+  border-radius: 4px;
+  object-fit: cover;
+`;
+
+const BandeiraEmoji = styled.span`
+  font-size: 1.5rem;
+`;
+
+const BandeiraDescricao = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+
+  span {
+    font-size: 0.85rem;
+    opacity: 0.8;
+  }
+
+  strong {
+    font-size: 1rem;
+  }
+`;
+
+const rotulos: Record<string, string> = {
+  endereco: 'Endereço',
+  alias: 'Alias',
+  registrador: 'Registrador',
+  registrante: 'Registrante',
+  organizacao: 'Organização',
+  email: 'E-mail',
+  telefone: 'Telefone',
+  pais: 'País',
+  estado: 'Estado',
+  cidade: 'Cidade',
+  dns: 'Servidores DNS',
+  datacriacao: 'Data de criação',
+  dataatualizacao: 'Data de atualização',
+  dataexpiracao: 'Data de expiração',
+};
+
+const estadosBrasil: Record<string, string> = {
+  AC: 'ACRE',
+  AL: 'ALAGOAS',
+  AP: 'AMAPA',
+  AM: 'AMAZONAS',
+  BA: 'BAHIA',
+  CE: 'CEARA',
+  DF: 'DISTRITO FEDERAL',
+  ES: 'ESPIRITO SANTO',
+  GO: 'GOIAS',
+  MA: 'MARANHAO',
+  MT: 'MATO GROSSO',
+  MS: 'MATO GROSSO DO SUL',
+  MG: 'MINAS GERAIS',
+  PA: 'PARA',
+  PB: 'PARAIBA',
+  PR: 'PARANA',
+  PE: 'PERNAMBUCO',
+  PI: 'PIAUI',
+  RJ: 'RIO DE JANEIRO',
+  RN: 'RIO GRANDE DO NORTE',
+  RS: 'RIO GRANDE DO SUL',
+  RO: 'RONDONIA',
+  RR: 'RORAIMA',
+  SC: 'SANTA CATARINA',
+  SP: 'SAO PAULO',
+  SE: 'SERGIPE',
+  TO: 'TOCANTINS',
+};
+
+const normalizarCampo = (campo: string) => campo.toLowerCase();
+
+const formatarCampo = (campo: string) => rotulos[campo] ?? campo;
+
+const formatarData = (valor: string) => {
+  const data = new Date(valor);
+  if (Number.isNaN(data.getTime())) return valor;
+  return data.toLocaleString('pt-BR');
+};
+
+const formatarValor = (campo: string, valor: string) => campo.startsWith('data') ? formatarData(valor) : valor;
+
+const codigoPais = (valor: string) => {
+  const texto = valor.trim();
+  if (!texto) return '';
+  const maiusculo = texto.toUpperCase();
+  if (maiusculo.length === 2) return maiusculo;
+  if (maiusculo.includes('BRASIL') || maiusculo.includes('BRAZIL')) return 'BR';
+  return '';
+};
+
+const normalizarEstado = (valor: string) => {
+  const texto = valor.trim().toUpperCase();
+  const entrada = Object.entries(estadosBrasil).find(([sigla, nome]) => sigla === texto || nome === texto);
+  return entrada ? entrada[0] : '';
+};
+
+const emojiPais = (codigo: string) => String.fromCodePoint(...codigo.split('').map((c) => c.charCodeAt(0) + 127397));
+
 const VisualizarDominio = () => {
     const { selecaoTarget } = useContext(StoreContext);
     const api = useApi();
     const idDominio = selecaoTarget?.get()?.id;
     const { data: dominio, isLoading, error } = api.dominios.getDominio(idDominio);
+
+    const informacoes = dominio?.informacoes ?? [];
+    const valorCampo = (chave: string) => informacoes.find((info) => normalizarCampo(info.campo) === normalizarCampo(chave))?.valor ?? '';
+
+    const codigo = codigoPais(valorCampo('pais'));
+    const estado = codigo === 'BR' ? normalizarEstado(valorCampo('estado')) : '';
+    const bandeiraPais = codigo ? `https://flagcdn.com/w40/${codigo.toLowerCase()}.png` : '';
+    const bandeiraEstado = estado ? `https://raw.githubusercontent.com/wgenial/br-flags/master/png/${estado.toLowerCase()}.png` : '';
+    const emoji = codigo ? emojiPais(codigo) : '';
 
     if (isLoading) return <DashboardContainer><h2>Carregando...</h2></DashboardContainer>;
     if (error) return <DashboardContainer><h2>Erro ao carregar dados do domínio.</h2></DashboardContainer>;
@@ -117,6 +246,41 @@ const VisualizarDominio = () => {
                         <span>{dominio.alias}</span>
                     </InfoItem>}
                 </InfoGrid>
+            </Card>
+
+            <Card>
+                <CardTitle>Informações de Registro</CardTitle>
+                {(bandeiraPais || bandeiraEstado) && <Bandeiras>
+                    {bandeiraPais && <BandeiraItem>
+                        {emoji ? <BandeiraEmoji>{emoji}</BandeiraEmoji> : <BandeiraImagem src={bandeiraPais} alt="Bandeira do país" />}
+                        <BandeiraDescricao>
+                            <span>País</span>
+                            <strong>{codigo}</strong>
+                        </BandeiraDescricao>
+                    </BandeiraItem>}
+                    {bandeiraEstado && <BandeiraItem>
+                        <BandeiraImagem src={bandeiraEstado} alt="Bandeira do estado" />
+                        <BandeiraDescricao>
+                            <span>Estado</span>
+                            <strong>{estado}</strong>
+                        </BandeiraDescricao>
+                    </BandeiraItem>}
+                </Bandeiras>}
+                {informacoes.length > 0 ? (
+                    <InfoGrid>
+                        {informacoes.map((info) => {
+                            const chave = normalizarCampo(info.campo);
+                            return (
+                                <InfoItem key={`${info.campo}-${info.valor}`}>
+                                    <strong>{formatarCampo(chave)}</strong>
+                                    <span>{formatarValor(chave, info.valor)}</span>
+                                </InfoItem>
+                            );
+                        })}
+                    </InfoGrid>
+                ) : (
+                    <p>Nenhuma informação de registro disponível.</p>
+                )}
             </Card>
 
             <Card>

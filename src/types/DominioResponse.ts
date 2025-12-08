@@ -1,6 +1,7 @@
 import { DiretorioResponse } from "./DiretorioResponse";
 import { IpResponse } from "./IpResponse";
 import { WhatwebResultadoResponse } from "./WhatwebResultadoResponse";
+import { InformacaoDominioResponse } from "./InformacaoDominioResponse";
 
 export type DominioResponse = {
     id?: number;
@@ -12,4 +13,5 @@ export type DominioResponse = {
     ips?: IpResponse[];
     diretorios?: DiretorioResponse[];
     whatwebResultados?: WhatwebResultadoResponse[];
+    informacoes?: InformacaoDominioResponse[];
 }

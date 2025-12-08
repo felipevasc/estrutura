@@ -10,7 +10,8 @@ import {
     AimOutlined,
     FileSearchOutlined,
     FolderOpenOutlined,
-    BranchesOutlined
+    BranchesOutlined,
+    GlobalOutlined
 } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
@@ -149,6 +150,15 @@ const FerramentasDominio = () => {
         valores: valoresWhatweb
     });
 
+    const modalWhois = () => abrirModal({
+        comando: "whoisDominio",
+        titulo: "Consultar Whois",
+        descricao: "Buscar informações de registro do domínio.",
+        argsBase: { idDominio: idDominio() },
+        campos: [],
+        valores: {}
+    });
+
     const modalFindomain = () => abrirModal({
         comando: "findomain",
         titulo: "Configurar Findomain",
@@ -230,6 +240,16 @@ const FerramentasDominio = () => {
                 <Card.Meta
                     title="WhatWeb"
                     description="Fingerprint do domínio."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalWhois}>
+                <div className="tool-icon">
+                    <GlobalOutlined />
+                </div>
+                <Card.Meta
+                    title="Whois"
+                    description="Registro e informações do domínio."
                 />
             </Card>
 
