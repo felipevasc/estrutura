@@ -7,7 +7,7 @@
   "types": "dist/src/components/index.d.ts",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "tsc --declaration --emitDeclarationOnly false",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "updatedb": "prisma migrate dev",
