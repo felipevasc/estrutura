@@ -2,9 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/database';
 
-// GET /api/v1/cti/takedown/[id] - (Opcional, se necessário para buscar um único item)
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
+type ContextoTakedown = { params: Promise<{ id: string }> };
+
+export async function GET(request: NextRequest, contexto: ContextoTakedown) {
+    const { id } = await contexto.params;
     try {
         const takedown = await prisma.takedown.findUnique({
             where: { id: parseInt(id, 10) },
@@ -20,9 +21,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 
-// PUT /api/v1/cti/takedown/[id]
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
+export async function PUT(request: NextRequest, contexto: ContextoTakedown) {
+    const { id } = await contexto.params;
     try {
         const { url, solicitadoEm, previsao, derrubadoEm, status, metodoHttp, headers, body, solicitantes } = await request.json();
 
@@ -59,9 +59,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-// DELETE /api/v1/cti/takedown/[id]
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-    const { id } = params;
+export async function DELETE(request: NextRequest, contexto: ContextoTakedown) {
+    const { id } = await contexto.params;
     try {
         await prisma.takedown.delete({
             where: { id: parseInt(id, 10) },

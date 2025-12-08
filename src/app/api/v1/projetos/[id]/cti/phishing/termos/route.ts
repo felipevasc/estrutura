@@ -3,14 +3,15 @@ import prisma from "@/database";
 import { carregarBasePhishing } from "@/utils/basePhishing";
 
 const responderErro = (mensagem: string, status = 400) => NextResponse.json({ error: mensagem }, { status });
+type ContextoProjeto = { params: Promise<{ id: string }> };
 
 const normalizarPalavras = (lista: string[] | undefined) => Array.from(new Set((lista || []).map((termo) => String(termo || "").toLowerCase().trim()).filter(Boolean)));
 const normalizarAuxiliares = (lista: string[] | undefined) => Array.from(new Set((lista || []).map((termo) => String(termo || "").toLowerCase().trim()).filter(Boolean)));
 const normalizarTlds = (lista: string[] | undefined) => Array.from(new Set((lista || []).map((tld) => String(tld || "").toLowerCase().replace(/^\./, "")).filter(Boolean)));
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         const dominioId = parseInt(request.nextUrl.searchParams.get("dominioId") || "", 10);
         if (isNaN(projetoId) || isNaN(dominioId)) return responderErro("Parâmetros inválidos");
 
@@ -27,9 +28,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         const corpo = await request.json() as { dominioId?: number; palavrasChave?: string[]; palavrasAuxiliares?: string[]; tlds?: string[] };
         if (isNaN(projetoId) || !corpo?.dominioId) return responderErro("Parâmetros inválidos");
 

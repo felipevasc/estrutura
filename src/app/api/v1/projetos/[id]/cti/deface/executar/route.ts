@@ -8,13 +8,15 @@ interface ExecutePayload {
     paginas?: number;
 }
 
+type ContextoDeface = { params: Promise<{ id: string }> };
+
 export async function POST(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    contexto: ContextoDeface
 ) {
     try {
-        const resolvedParams = await params;
-        const projetoId = parseInt(resolvedParams.id, 10);
+        const { id } = await contexto.params;
+        const projetoId = parseInt(id, 10);
 
         if (isNaN(projetoId)) {
             return NextResponse.json({ error: "ID do projeto inválido" }, { status: 400 });

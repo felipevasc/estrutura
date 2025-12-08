@@ -3,10 +3,11 @@ import prisma from "@/database";
 import { queueCommand } from "@/service/nano/commandHelper";
 
 const responder = (mensagem: string, status = 400) => NextResponse.json({ error: mensagem }, { status });
+type ContextoProjeto = { params: Promise<{ id: string }> };
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, contexto: ContextoProjeto) {
     try {
-        const projetoId = parseInt((await params).id, 10);
+        const projetoId = parseInt((await contexto.params).id, 10);
         const corpo = await request.json() as { dominioId?: number };
         if (isNaN(projetoId) || !corpo?.dominioId) return responder("Parâmetros inválidos");
 
