@@ -63,9 +63,12 @@ const lerAtualizacoes = async (bot: TelegramBot, parametros?: Record<string, unk
     const destino = obterDestino(parametros);
     const updates = await bot.getUpdates({ allowed_updates: ['message', 'channel_post'] });
     const mensagens = updates
-        .map((atualizacao) => atualizacao.message || atualizacao.channel_post)
-        .filter((msg) => msg && (msg.chat.id === Number(destino) || msg.chat.username === destino || msg.chat.title === destino))
-        .map((msg) => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((atualizacao: any) => atualizacao.message || atualizacao.channel_post)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .filter((msg: any) => msg && (msg.chat.id === Number(destino) || msg.chat.username === destino || msg.chat.title === destino))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .map((msg: any) => ({
             id: msg?.message_id,
             texto: msg?.text || msg?.caption,
             data: msg?.date ? dayjs(msg.date * 1000).toISOString() : undefined,

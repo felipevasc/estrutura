@@ -393,7 +393,8 @@ const VazamentoSenhasView = () => {
             render: ({ fonte }: (typeof linhasBuscaTelegram)[number]) => (
                 <Space direction="vertical" size={0}>
                     <Text strong>{fonte.nome}</Text>
-                    <Text type="secondary">{fonte.parametros?.canalOuGrupo}</Text>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <Text type="secondary">{(fonte.parametros as any)?.canalOuGrupo}</Text>
                 </Space>
             ),
         },

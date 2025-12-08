@@ -24,6 +24,7 @@ const temas: Record<string, DefaultTheme> = {
       success: '#27ae60',
       warning: '#f39c12',
       error: '#c0392b',
+      info: '#2980b9',
       text: '#1a1a1a',
       textSecondary: '#555555'
     },
@@ -66,6 +67,7 @@ const temas: Record<string, DefaultTheme> = {
       success: '#00ff41',
       warning: '#f1c40f',
       error: '#ff0033',
+      info: '#00ffff',
       text: '#e0e0e0',
       textSecondary: '#008f11'
     },
@@ -108,6 +110,7 @@ const temas: Record<string, DefaultTheme> = {
       success: '#06d6a0',
       warning: '#ffbe0b',
       error: '#ef233c',
+      info: '#4361ee',
       text: '#e0aaff',
       textSecondary: '#c77dff'
     },
@@ -150,6 +153,7 @@ const temas: Record<string, DefaultTheme> = {
       success: '#27ae60',
       warning: '#f39c12',
       error: '#c0392b',
+      info: '#95a5a6',
       text: '#e0e0e0',
       textSecondary: '#888888'
     },
@@ -192,6 +196,7 @@ const temas: Record<string, DefaultTheme> = {
       success: '#4ade80',
       warning: '#facc15',
       error: '#f87171',
+      info: '#38bdf8',
       text: '#f1f5f9',
       textSecondary: '#94a3b8'
     },
@@ -234,6 +239,7 @@ const temas: Record<string, DefaultTheme> = {
       success: '#10b981',
       warning: '#f59e0b',
       error: '#ef4444',
+      info: '#3b82f6',
       text: '#111827',
       textSecondary: '#6b7280'
     },
