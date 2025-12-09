@@ -41,19 +41,18 @@ const BlocoDados = styled.div`
 
 type Props = { resultados?: WhatwebResultadoResponse[] };
 
-const normalizarDados = (dados: unknown, valor?: string) => {
-  const fonte = dados ?? valor;
-  if (fonte === null || fonte === undefined) return null;
-  if (typeof fonte === "string") {
-    const valorTratado = fonte.trim();
+const normalizarDados = (dados: unknown) => {
+  if (dados === null || dados === undefined) return null;
+  if (typeof dados === "string") {
+    const valorTratado = dados.trim();
     if (!valorTratado || valorTratado === "undefined" || valorTratado === "null") return null;
     try {
       return JSON.parse(valorTratado);
     } catch {
-      return valorTratado;
+      return valorTratado.startsWith("{") || valorTratado.startsWith("[") ? valorTratado : null;
     }
   }
-  return fonte;
+  return dados;
 };
 
 const obterDadosUnicos = (resultados: WhatwebResultadoResponse[]) => {
@@ -61,7 +60,8 @@ const obterDadosUnicos = (resultados: WhatwebResultadoResponse[]) => {
   const vistos = new Set<string>();
 
   resultados.forEach((resultado) => {
-    const dadoNormalizado = normalizarDados(resultado.dados, resultado.valor);
+    const origem = resultado.dados ?? (resultado.valor?.trim().match(/^[{[]/) ? resultado.valor : null);
+    const dadoNormalizado = normalizarDados(origem);
     if (dadoNormalizado === null) return;
 
     const chave = typeof dadoNormalizado === "string" ? dadoNormalizado : JSON.stringify(dadoNormalizado);
