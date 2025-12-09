@@ -1,1 +1,18 @@
-{}
+{
+  "8438": {
+    "comando": "gobuster",
+    "argumentos": [
+      "dir",
+      "-u",
+      "https://ufu.br/",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/gobuster_9_8438_1765242910838.txt",
+      "-q",
+      "-k",
+      "-x",
+      ".php,.html,.txt,.js,.bak,.zip,.conf"
+    ]
+  }
+}
