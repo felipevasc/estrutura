@@ -42,7 +42,7 @@ const BlocoDados = styled.div`
 type Props = { resultados?: WhatwebResultadoResponse[] };
 
 const normalizarDados = (dados: unknown) => {
-  if (dados === null || dados === undefined) return {};
+  if (dados === null || dados === undefined) return null;
   if (typeof dados === "string") {
     try {
       return JSON.parse(dados);
@@ -53,8 +53,28 @@ const normalizarDados = (dados: unknown) => {
   return dados;
 };
 
+const obterDadosUnicos = (resultados: WhatwebResultadoResponse[]) => {
+  const dados: unknown[] = [];
+  const vistos = new Set<string>();
+
+  resultados.forEach((resultado) => {
+    const dadoNormalizado = normalizarDados(resultado.dados);
+    if (dadoNormalizado === null) return;
+
+    const chave = typeof dadoNormalizado === "string" ? dadoNormalizado : JSON.stringify(dadoNormalizado);
+    if (!chave || vistos.has(chave)) return;
+
+    vistos.add(chave);
+    dados.push(dadoNormalizado);
+  });
+
+  return dados;
+};
+
 const ListaTecnologias = ({ resultados }: Props) => {
   if (!resultados || resultados.length === 0) return <p>Nenhuma tecnologia detectada.</p>;
+
+  const dados = obterDadosUnicos(resultados);
 
   return (
     <Tabela>
@@ -69,18 +89,24 @@ const ListaTecnologias = ({ resultados }: Props) => {
           <Fragment key={resultado.id ?? `${resultado.plugin}-${resultado.valor}`}>
             <tr>
               <td>{resultado.plugin}</td>
-              <td>{resultado.valor}</td>
+              <td>{resultado.valor ?? "-"}</td>
             </tr>
-            <LinhaDados>
-              <td colSpan={2}>
-                <BlocoDados>
-                  <JsonView style={defaultStyles} value={normalizarDados(resultado.dados)} />
-                </BlocoDados>
-              </td>
-            </LinhaDados>
           </Fragment>
         ))}
       </tbody>
+      {dados.length > 0 && (
+        <tfoot>
+          <LinhaDados>
+            <td colSpan={2}>
+              {dados.map((dado, indice) => (
+                <BlocoDados key={indice}>
+                  <JsonView style={defaultStyles} value={dado} />
+                </BlocoDados>
+              ))}
+            </td>
+          </LinhaDados>
+        </tfoot>
+      )}
     </Tabela>
   );
 };
