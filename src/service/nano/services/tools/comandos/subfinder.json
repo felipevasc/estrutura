@@ -9,5 +9,16 @@
       "--all",
       "-silent"
     ]
+  },
+  "8471": {
+    "comando": "subfinder",
+    "argumentos": [
+      "-d",
+      "ufu.br",
+      "-o",
+      "/tmp/subfinder_resultado_9_5592_ufu.br_1765320956293.txt",
+      "--all",
+      "-silent"
+    ]
   }
 }
