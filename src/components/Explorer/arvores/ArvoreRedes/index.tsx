@@ -1,6 +1,6 @@
 "use client";
 import { Button, Tree } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { ReloadOutlined } from "@ant-design/icons";
 import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from "../ArvoreDominios/styles";
 import StoreContext from "@/store";
@@ -10,11 +10,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faNetworkWired } from "@fortawesome/free-solid-svg-icons";
 import { NoCarregavel } from "../../target/tipos";
 import { atualizarFilhos } from "../../target/atualizarArvore";
+import usePaginacaoArvore from "../../target/usePaginacaoArvore";
 
 const ArvoreRedes = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
   const { data: ipsProjeto, refetch: recarregarIps } = api.ips.getIps(projeto?.get()?.id);
+  const paginacao = usePaginacaoArvore();
   const elementoIp = useElementoIp();
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -31,7 +33,10 @@ const ArvoreRedes = () => {
         for (const ip of sorted) {
           elems.push(await elementoIp.getIp(ip));
         }
-        if (ativo) setElementos(elems);
+        if (ativo) {
+          paginacao.resetar();
+          setElementos(elems);
+        }
       } else if (ativo) {
         setElementos([]);
       }
@@ -59,6 +64,8 @@ const ArvoreRedes = () => {
     setExpandedKeys(novasChaves);
   };
 
+  const arvorePaginada = useMemo(() => paginacao.aplicar(elementos, "ips-raiz"), [elementos, paginacao]);
+
   const refresh = async () => {
     const abertas = expandedKeys;
     setCarregando(true);
@@ -69,6 +76,7 @@ const ArvoreRedes = () => {
     if (lista) {
       const sorted = [...lista].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
       const resolvidos = await Promise.all(sorted.map(ip => elementoIp.getIp(ip)));
+      paginacao.resetar();
       setElementos(resolvidos);
       setExpandedKeys(abertas);
     } else {
@@ -85,7 +93,7 @@ const ArvoreRedes = () => {
           <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" />
          </StyledTitleDominioIcon>
       </StyledTitleDominio>
-      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} loadedKeys={chavesCarregadas} />
+      <Tree treeData={arvorePaginada} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} loadedKeys={chavesCarregadas} />
     </StyledArvoreDominio>
   );
 };

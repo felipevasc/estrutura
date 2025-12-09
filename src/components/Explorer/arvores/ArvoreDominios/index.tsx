@@ -9,6 +9,7 @@ import StoreContext from '@/store';
 import useElementoDominio from '../../target/ElementoDominio';
 import { NoCarregavel } from '../../target/tipos';
 import { atualizarFilhos } from '../../target/atualizarArvore';
+import usePaginacaoArvore from '../../target/usePaginacaoArvore';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -18,13 +19,15 @@ const ArvoreDominios = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
   const { data: dominiosProjeto, refetch: recarregarDominios } = api.dominios.getDominios(projeto?.get()?.id);
-  const elementoDominio = useElementoDominio();
+  const paginacao = usePaginacaoArvore();
+  const elementoDominio = useElementoDominio("domain");
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
   useEffect(() => {
     setElementos([]);
     setExpandedKeys([]);
     setChavesCarregadas([]);
+    paginacao.resetar();
   }, [projeto?.get()?.id]);
 
   useEffect(() => {
@@ -32,6 +35,7 @@ const ArvoreDominios = () => {
     const carregar = async () => {
       setCarregando(true);
       if (dominiosProjeto && ativo) {
+        paginacao.resetar();
         const resolvidos = await Promise.all(dominiosProjeto.map(d => elementoDominio.getDominio(d)));
         if (ativo) setElementos(resolvidos);
       } else if (ativo) {
@@ -67,6 +71,8 @@ const ArvoreDominios = () => {
     return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
   }, [elementos]);
 
+  const arvorePaginada = useMemo(() => paginacao.aplicar(sortedElementos, "dominios-raiz"), [sortedElementos, paginacao]);
+
   const refresh = async () => {
     const abertas = expandedKeys;
     setAutoExpandParent(false);
@@ -76,6 +82,7 @@ const ArvoreDominios = () => {
     const resposta = await recarregarDominios();
     const lista = resposta.data || dominiosProjeto;
     if (lista) {
+      paginacao.resetar();
       const resolvidos = await Promise.all(lista.map(d => elementoDominio.getDominio(d)));
       setElementos(resolvidos);
       setExpandedKeys(abertas);
@@ -97,7 +104,7 @@ const ArvoreDominios = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={sortedElementos}
+      treeData={arvorePaginada}
       showIcon={true}
       showLine={true}
       loadData={carregarNo}

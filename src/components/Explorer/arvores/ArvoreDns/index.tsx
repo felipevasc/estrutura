@@ -8,6 +8,7 @@ import StoreContext from '@/store';
 import useElementoDominio from '../../target/ElementoDominio';
 import { NoCarregavel } from '../../target/tipos';
 import { atualizarFilhos } from '../../target/atualizarArvore';
+import usePaginacaoArvore from '../../target/usePaginacaoArvore';
 
 const ArvoreDns = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -17,6 +18,7 @@ const ArvoreDns = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
   const { data: dnsProjeto, refetch: recarregarDns } = api.dns.getDns(projeto?.get()?.id);
+  const paginacao = usePaginacaoArvore();
   const elementoDominio = useElementoDominio("dns");
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
@@ -24,6 +26,7 @@ const ArvoreDns = () => {
     setElementos([]);
     setExpandedKeys([]);
     setChavesCarregadas([]);
+    paginacao.resetar();
   }, [projeto?.get()?.id]);
 
   useEffect(() => {
@@ -31,6 +34,7 @@ const ArvoreDns = () => {
     const carregar = async () => {
       setCarregando(true);
       if (dnsProjeto && ativo) {
+        paginacao.resetar();
         const resolvidos = await Promise.all(dnsProjeto.map(d => elementoDominio.getDominio(d)));
         if (ativo) setElementos(resolvidos);
       } else if (ativo) {
@@ -47,7 +51,7 @@ const ArvoreDns = () => {
     return () => {
       ativo = false;
     };
-  }, [dnsProjeto, elementoDominio]);
+  }, [dnsProjeto]);
 
   const onExpand = (novasChaves: React.Key[]) => {
     setExpandedKeys(novasChaves);
@@ -66,6 +70,8 @@ const ArvoreDns = () => {
     return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
   }, [elementos]);
 
+  const arvorePaginada = useMemo(() => paginacao.aplicar(sortedElementos, "dns-raiz"), [sortedElementos, paginacao]);
+
   const refresh = async () => {
     const abertas = expandedKeys;
     setAutoExpandParent(false);
@@ -75,6 +81,7 @@ const ArvoreDns = () => {
     const resposta = await recarregarDns();
     const lista = resposta.data || dnsProjeto;
     if (lista) {
+      paginacao.resetar();
       const resolvidos = await Promise.all(lista.map(d => elementoDominio.getDominio(d)));
       setElementos(resolvidos);
       setExpandedKeys(abertas);
@@ -95,7 +102,7 @@ const ArvoreDns = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={sortedElementos}
+      treeData={arvorePaginada}
       showIcon={true}
       showLine={true}
       loadData={carregarNo}
