@@ -1,5 +1,8 @@
 "use client";
 import { WhatwebResultadoResponse } from "@/types/WhatwebResultadoResponse";
+import { Fragment } from "react";
+import { JsonView, defaultStyles } from "react-json-view-lite";
+import "react-json-view-lite/dist/index.css";
 import styled from "styled-components";
 
 const Tabela = styled.table`
@@ -23,13 +26,17 @@ const Tabela = styled.table`
   }
 `;
 
-const CelulaDados = styled.td`
-  pre {
-    margin: 0;
-    white-space: pre-wrap;
-    word-break: break-word;
-    font-size: 0.85rem;
+const LinhaDados = styled.tr`
+  td {
+    padding-top: 0;
   }
+`;
+
+const BlocoDados = styled.div`
+  padding: 1rem;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.05));
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
 `;
 
 type Props = { resultados?: WhatwebResultadoResponse[] };
@@ -43,18 +50,23 @@ const ListaTecnologias = ({ resultados }: Props) => {
         <tr>
           <th>Fonte</th>
           <th>Valor</th>
-          <th>Dados</th>
         </tr>
       </thead>
       <tbody>
         {resultados.map((resultado) => (
-          <tr key={resultado.id ?? `${resultado.plugin}-${resultado.valor}`}>
-            <td>{resultado.plugin}</td>
-            <td>{resultado.valor}</td>
-            <CelulaDados>
-              <pre>{JSON.stringify(resultado.dados ?? {}, null, 2)}</pre>
-            </CelulaDados>
-          </tr>
+          <Fragment key={resultado.id ?? `${resultado.plugin}-${resultado.valor}`}>
+            <tr>
+              <td>{resultado.plugin}</td>
+              <td>{resultado.valor}</td>
+            </tr>
+            <LinhaDados>
+              <td colSpan={2}>
+                <BlocoDados>
+                  <JsonView style={defaultStyles} value={resultado.dados ?? {}} />
+                </BlocoDados>
+              </td>
+            </LinhaDados>
+          </Fragment>
         ))}
       </tbody>
     </Tabela>
