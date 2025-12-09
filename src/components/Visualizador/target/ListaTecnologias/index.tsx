@@ -41,6 +41,18 @@ const BlocoDados = styled.div`
 
 type Props = { resultados?: WhatwebResultadoResponse[] };
 
+const normalizarDados = (dados: unknown) => {
+  if (dados === null || dados === undefined) return {};
+  if (typeof dados === "string") {
+    try {
+      return JSON.parse(dados);
+    } catch {
+      return dados;
+    }
+  }
+  return dados;
+};
+
 const ListaTecnologias = ({ resultados }: Props) => {
   if (!resultados || resultados.length === 0) return <p>Nenhuma tecnologia detectada.</p>;
 
@@ -62,7 +74,7 @@ const ListaTecnologias = ({ resultados }: Props) => {
             <LinhaDados>
               <td colSpan={2}>
                 <BlocoDados>
-                  <JsonView style={defaultStyles} value={resultado.dados ?? {}} />
+                  <JsonView style={defaultStyles} value={normalizarDados(resultado.dados)} />
                 </BlocoDados>
               </td>
             </LinhaDados>
