@@ -68,7 +68,7 @@ export class AmassService extends NanoService {
 
       const arquivoJson = path.join(os.tmpdir(), `amass_${op?.projetoId}_${id}_${Date.now()}.json`);
 
-      const argumentos = ['enum', '-d', dominio, '-timeout', `${timeout > 0 ? timeout : 5}m`, '-json', arquivoJson];
+      const argumentos = ['enum', '-d', dominio, '-timeout', String(Number.isFinite(timeout) && timeout > 0 ? Math.ceil(timeout) : 5), '-json', arquivoJson];
       const linhaComando = registrarComandoFerramenta('amass', id, 'amass', argumentos);
       const caminhoLog = obterCaminhoLogExecucao(id);
 

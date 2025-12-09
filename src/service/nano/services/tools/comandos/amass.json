@@ -1,1 +1,14 @@
-{}
+{
+  "8440": {
+    "comando": "amass",
+    "argumentos": [
+      "enum",
+      "-d",
+      "ufu.br",
+      "-timeout",
+      "5",
+      "-json",
+      "/tmp/amass_9_8440_1765278247596.json"
+    ]
+  }
+}
