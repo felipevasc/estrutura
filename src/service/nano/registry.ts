@@ -32,6 +32,7 @@ import InfoDisclosureDorkService from './services/cti/InfoDisclosureDorkService'
 import { WhoisDominioService } from './services/tools/WhoisDominioService';
 import InfoDisclosureCodigoService from './services/cti/InfoDisclosureCodigoService';
 import InfoDisclosurePasteService from './services/cti/InfoDisclosurePasteService';
+import { DetectorServicoService } from './services/tools/DetectorServicoService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -44,6 +45,7 @@ export const registeredServices: NanoService[] = [
     new GobusterService(),
     new WgetRecursivoService(),
     new WhatwebService(),
+    new DetectorServicoService(),
     new DnsenumService(),
     new Enum4linuxService(),
     new FfufService(),

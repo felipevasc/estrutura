@@ -5,6 +5,7 @@ import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import {
     DeploymentUnitOutlined,
+    InfoCircleOutlined,
     NodeIndexOutlined,
     SearchOutlined,
     AimOutlined,
@@ -150,6 +151,15 @@ const FerramentasDominio = () => {
         valores: valoresWhatweb
     });
 
+    const modalDetectarServico = () => abrirModal({
+        comando: "detectarServico",
+        titulo: "Identificar Serviço",
+        descricao: "Descubra o tipo de aplicação em execução.",
+        argsBase: { idDominio: idDominio() },
+        campos: [],
+        valores: {}
+    });
+
     const modalWhois = () => abrirModal({
         comando: "whoisDominio",
         titulo: "Consultar Whois",
@@ -240,6 +250,16 @@ const FerramentasDominio = () => {
                 <Card.Meta
                     title="WhatWeb"
                     description="Fingerprint do domínio."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalDetectarServico}>
+                <div className="tool-icon">
+                    <InfoCircleOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Serviço"
+                    description="Detecta tecnologias do domínio."
                 />
             </Card>
 

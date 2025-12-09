@@ -3,7 +3,7 @@ import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import { StyledToolsGrid } from "../styles";
-import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, SearchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, InfoCircleOutlined, SearchOutlined } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
 type EstadoModal = {
@@ -140,6 +140,15 @@ const FerramentasDiretorio = () => {
         valores: valoresWhatweb
     });
 
+    const modalDetectarServico = () => abrirModal({
+        comando: "detectarServico",
+        titulo: "Identificar Serviço",
+        descricao: "Descubra o tipo de serviço disponível neste caminho.",
+        argsBase: { idDiretorio: idDiretorio() },
+        campos: [],
+        valores: {}
+    });
+
     const modalWgetRecursivo = () => abrirModal({
         comando: "wgetRecursivo",
         titulo: "Configurar Wget Recursivo",
@@ -198,6 +207,16 @@ const FerramentasDiretorio = () => {
                 <Card.Meta
                     title="WhatWeb"
                     description="Fingerprint do caminho."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalDetectarServico}>
+                <div className="tool-icon">
+                    <InfoCircleOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Serviço"
+                    description="Detecta tecnologias do caminho."
                 />
             </Card>
 

@@ -3,7 +3,7 @@ import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import { StyledToolsGrid } from "../styles";
-import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, SearchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, InfoCircleOutlined, SearchOutlined } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
 type EstadoModal = {
@@ -115,6 +115,15 @@ const FerramentasPorta = () => {
         valores: { timeout: 60, agressividade: "1", userAgent: "", autenticacao: "" }
     });
 
+    const modalDetectarServico = () => abrirModal({
+        comando: "detectarServico",
+        titulo: "Identificar Serviço",
+        descricao: "Descobrir o serviço exposto na porta selecionada.",
+        argsBase: { idPorta: idPorta() },
+        campos: [],
+        valores: {}
+    });
+
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
@@ -191,6 +200,16 @@ const FerramentasPorta = () => {
                 <Card.Meta
                     title="Wget Recursivo"
                     description="Rastreamento recursivo de caminhos."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalDetectarServico}>
+                <div className="tool-icon">
+                    <InfoCircleOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Serviço"
+                    description="Detecta tecnologias na porta."
                 />
             </Card>
 

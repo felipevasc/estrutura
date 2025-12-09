@@ -1,6 +1,6 @@
 import { ReactNode, useContext, useMemo, useState } from "react";
 import { Empty, notification } from "antd";
-import { BranchesOutlined, BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, InfoCircleOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import { DescricaoGrupo, InspectorBody, ItemAcao, TituloGrupo } from "./styles";
@@ -47,6 +47,7 @@ export const gruposAcoes: GrupoAcao[] = [
     { chave: "dominios", titulo: "Busca de Domínios", icone: <GlobalOutlined /> },
     { chave: "fuzzing", titulo: "Fuzzing", icone: <BugOutlined /> },
     { chave: "ips", titulo: "Busca de IPs", icone: <RadarChartOutlined /> },
+    { chave: "informacoes", titulo: "Informações", icone: <InfoCircleOutlined /> },
     { chave: "usuarios", titulo: "Busca de Usuários", icone: <UserSwitchOutlined /> },
 ];
 
@@ -177,6 +178,35 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <SearchOutlined />,
         },
     ],
+    informacoes: [
+        {
+            chave: "detectarServicoDominio",
+            titulo: "Identificar Serviço",
+            descricao: "Descobre o tipo de aplicação em execução",
+            comando: "detectarServico",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <InfoCircleOutlined />,
+        },
+        {
+            chave: "detectarServicoPorta",
+            titulo: "Identificar Serviço",
+            descricao: "Descobre o serviço exposto na porta",
+            comando: "detectarServico",
+            tiposAlvo: ["porta"],
+            gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }),
+            icone: <InfoCircleOutlined />,
+        },
+        {
+            chave: "detectarServicoDiretorio",
+            titulo: "Identificar Serviço",
+            descricao: "Detecta tecnologias do caminho",
+            comando: "detectarServico",
+            tiposAlvo: ["diretorio"],
+            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
+            icone: <InfoCircleOutlined />,
+        },
+    ],
     usuarios: [
         {
             chave: "enum4linux",
@@ -284,6 +314,16 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             argsBase: { idDominio: id },
             campos: camposWhatweb,
             valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "detectarServicoDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [],
+            valores: {},
         };
     }
     if (acao.chave === "whoisDominio") {
@@ -516,6 +556,16 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             valores: { ...valoresWhatweb },
         };
     }
+    if (acao.chave === "detectarServicoDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: [],
+            valores: {},
+        };
+    }
     if (acao.chave === "nmap") {
         return {
             comando: acao.comando,
@@ -554,6 +604,16 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             argsBase: { idPorta: id },
             campos: camposWhatweb,
             valores: { ...valoresWhatweb },
+        };
+    }
+    if (acao.chave === "detectarServicoPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
+            campos: [],
+            valores: {},
         };
     }
     if (acao.chave === "enum4linux") {
