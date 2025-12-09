@@ -33,6 +33,8 @@ import { WhoisDominioService } from './services/tools/WhoisDominioService';
 import InfoDisclosureCodigoService from './services/cti/InfoDisclosureCodigoService';
 import InfoDisclosurePasteService from './services/cti/InfoDisclosurePasteService';
 import { DetectorServicoService } from './services/tools/DetectorServicoService';
+import { IdentificarLinguagemService } from './services/tools/IdentificarLinguagemService';
+import { IdentificarFrameworkService } from './services/tools/IdentificarFrameworkService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -46,6 +48,8 @@ export const registeredServices: NanoService[] = [
     new WgetRecursivoService(),
     new WhatwebService(),
     new DetectorServicoService(),
+    new IdentificarLinguagemService(),
+    new IdentificarFrameworkService(),
     new DnsenumService(),
     new Enum4linuxService(),
     new FfufService(),

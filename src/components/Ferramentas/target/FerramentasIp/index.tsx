@@ -10,7 +10,9 @@ import {
     ThunderboltOutlined,
     FolderOpenOutlined,
     SearchOutlined,
-    BranchesOutlined
+    BranchesOutlined,
+    CodeOutlined,
+    ClusterOutlined
 } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
@@ -172,6 +174,24 @@ const FerramentasIp = () => {
         valores: valoresWhatweb
     });
 
+    const modalIdentificarLinguagem = () => abrirModal({
+        comando: "identificarLinguagem",
+        titulo: "Identificar Linguagem",
+        descricao: "Aponta a linguagem predominante do host.",
+        argsBase: { idIp: idIp() },
+        campos: [],
+        valores: {},
+    });
+
+    const modalIdentificarFramework = () => abrirModal({
+        comando: "identificarFramework",
+        titulo: "Identificar Framework/CMS",
+        descricao: "Localiza frameworks ou CMS do host.",
+        argsBase: { idIp: idIp() },
+        campos: [],
+        valores: {},
+    });
+
     const modalEnum4linux = () => abrirModal({
         comando: "enum4linux",
         titulo: "Configurar Enum4linux",
@@ -227,6 +247,26 @@ const FerramentasIp = () => {
                 <Card.Meta
                     title="Rustscan"
                     description="Scan rápido de portas."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalIdentificarLinguagem}>
+                <div className="tool-icon">
+                    <CodeOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Linguagem"
+                    description="Identifica a linguagem ativa."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalIdentificarFramework}>
+                <div className="tool-icon">
+                    <ClusterOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Framework/CMS"
+                    description="Aponta frameworks ou CMS."
                 />
             </Card>
 

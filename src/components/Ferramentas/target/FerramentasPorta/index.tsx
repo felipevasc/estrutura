@@ -3,7 +3,7 @@ import useApi from "@/api";
 import { useContext, useState } from "react";
 import StoreContext from "@/store";
 import { StyledToolsGrid } from "../styles";
-import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, InfoCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, FileSearchOutlined, FolderOpenOutlined, InfoCircleOutlined, SearchOutlined, CodeOutlined, ClusterOutlined } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
 type EstadoModal = {
@@ -124,6 +124,24 @@ const FerramentasPorta = () => {
         valores: {}
     });
 
+    const modalIdentificarLinguagem = () => abrirModal({
+        comando: "identificarLinguagem",
+        titulo: "Identificar Linguagem",
+        descricao: "Aponta a linguagem predominante do serviço.",
+        argsBase: { idPorta: idPorta() },
+        campos: [],
+        valores: {}
+    });
+
+    const modalIdentificarFramework = () => abrirModal({
+        comando: "identificarFramework",
+        titulo: "Identificar Framework/CMS",
+        descricao: "Localiza frameworks ou CMS na porta.",
+        argsBase: { idPorta: idPorta() },
+        campos: [],
+        valores: {}
+    });
+
     const modalFfuf = (tipoFuzz?: string) => abrirModal({
         comando: "ffuf",
         titulo: tipoFuzz === "arquivo" ? "Configurar Ffuf Arquivos" : "Configurar Ffuf",
@@ -210,6 +228,26 @@ const FerramentasPorta = () => {
                 <Card.Meta
                     title="Identificar Serviço"
                     description="Detecta tecnologias na porta."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalIdentificarLinguagem}>
+                <div className="tool-icon">
+                    <CodeOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Linguagem"
+                    description="Identifica a linguagem ativa."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalIdentificarFramework}>
+                <div className="tool-icon">
+                    <ClusterOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Framework/CMS"
+                    description="Aponta frameworks ou CMS."
                 />
             </Card>
 

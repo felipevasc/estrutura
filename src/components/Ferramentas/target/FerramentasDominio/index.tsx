@@ -12,7 +12,9 @@ import {
     FileSearchOutlined,
     FolderOpenOutlined,
     BranchesOutlined,
-    GlobalOutlined
+    GlobalOutlined,
+    CodeOutlined,
+    ClusterOutlined
 } from "@ant-design/icons";
 import ModalConfiguracaoFerramenta, { CampoConfiguracao } from "../ModalConfiguracaoFerramenta";
 
@@ -160,6 +162,24 @@ const FerramentasDominio = () => {
         valores: {}
     });
 
+    const modalIdentificarLinguagem = () => abrirModal({
+        comando: "identificarLinguagem",
+        titulo: "Identificar Linguagem",
+        descricao: "Detecta a linguagem principal da aplicação.",
+        argsBase: { idDominio: idDominio() },
+        campos: [],
+        valores: {}
+    });
+
+    const modalIdentificarFramework = () => abrirModal({
+        comando: "identificarFramework",
+        titulo: "Identificar Framework/CMS",
+        descricao: "Descobre frameworks ou CMS ativos.",
+        argsBase: { idDominio: idDominio() },
+        campos: [],
+        valores: {}
+    });
+
     const modalWhois = () => abrirModal({
         comando: "whoisDominio",
         titulo: "Consultar Whois",
@@ -260,6 +280,26 @@ const FerramentasDominio = () => {
                 <Card.Meta
                     title="Identificar Serviço"
                     description="Detecta tecnologias do domínio."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalIdentificarLinguagem}>
+                <div className="tool-icon">
+                    <CodeOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Linguagem"
+                    description="Aponta a linguagem predominante."
+                />
+            </Card>
+
+            <Card className="interactive" onClick={modalIdentificarFramework}>
+                <div className="tool-icon">
+                    <ClusterOutlined />
+                </div>
+                <Card.Meta
+                    title="Identificar Framework/CMS"
+                    description="Localiza frameworks ou CMS."
                 />
             </Card>
 

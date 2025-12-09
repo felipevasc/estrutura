@@ -1,6 +1,6 @@
 import { ReactNode, useContext, useMemo, useState } from "react";
 import { Empty, notification } from "antd";
-import { BranchesOutlined, BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, InfoCircleOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined } from "@ant-design/icons";
+import { BranchesOutlined, BugOutlined, DeploymentUnitOutlined, FileSearchOutlined, FolderOpenOutlined, GlobalOutlined, InfoCircleOutlined, NodeIndexOutlined, RadarChartOutlined, SearchOutlined, ThunderboltOutlined, UserSwitchOutlined, CodeOutlined, ClusterOutlined } from "@ant-design/icons";
 import StoreContext from "@/store";
 import useApi from "@/api";
 import { DescricaoGrupo, InspectorBody, ItemAcao, TituloGrupo } from "./styles";
@@ -189,6 +189,24 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <InfoCircleOutlined />,
         },
         {
+            chave: "identificarLinguagemDominio",
+            titulo: "Identificar Linguagem",
+            descricao: "Detecta a linguagem da aplicação",
+            comando: "identificarLinguagem",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <CodeOutlined />,
+        },
+        {
+            chave: "identificarFrameworkDominio",
+            titulo: "Identificar Framework/CMS",
+            descricao: "Descobre frameworks ou CMS",
+            comando: "identificarFramework",
+            tiposAlvo: ["domain"],
+            gerarParametros: (alvo) => ({ idDominio: alvo.id.toString() }),
+            icone: <ClusterOutlined />,
+        },
+        {
             chave: "detectarServicoPorta",
             titulo: "Identificar Serviço",
             descricao: "Descobre o serviço exposto na porta",
@@ -198,6 +216,24 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             icone: <InfoCircleOutlined />,
         },
         {
+            chave: "identificarLinguagemPorta",
+            titulo: "Identificar Linguagem",
+            descricao: "Detecta a linguagem do serviço",
+            comando: "identificarLinguagem",
+            tiposAlvo: ["porta"],
+            gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }),
+            icone: <CodeOutlined />,
+        },
+        {
+            chave: "identificarFrameworkPorta",
+            titulo: "Identificar Framework/CMS",
+            descricao: "Aponta frameworks ou CMS na porta",
+            comando: "identificarFramework",
+            tiposAlvo: ["porta"],
+            gerarParametros: (alvo) => ({ idPorta: alvo.id.toString() }),
+            icone: <ClusterOutlined />,
+        },
+        {
             chave: "detectarServicoDiretorio",
             titulo: "Identificar Serviço",
             descricao: "Detecta tecnologias do caminho",
@@ -205,6 +241,42 @@ const acoesPorGrupo: Record<string, AcaoDisponivel[]> = {
             tiposAlvo: ["diretorio"],
             gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
             icone: <InfoCircleOutlined />,
+        },
+        {
+            chave: "identificarLinguagemDiretorio",
+            titulo: "Identificar Linguagem",
+            descricao: "Detecta a linguagem no caminho",
+            comando: "identificarLinguagem",
+            tiposAlvo: ["diretorio"],
+            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
+            icone: <CodeOutlined />,
+        },
+        {
+            chave: "identificarFrameworkDiretorio",
+            titulo: "Identificar Framework/CMS",
+            descricao: "Descobre frameworks ou CMS do caminho",
+            comando: "identificarFramework",
+            tiposAlvo: ["diretorio"],
+            gerarParametros: (alvo) => ({ idDiretorio: alvo.id.toString() }),
+            icone: <ClusterOutlined />,
+        },
+        {
+            chave: "identificarLinguagemIp",
+            titulo: "Identificar Linguagem",
+            descricao: "Detecta a linguagem do host",
+            comando: "identificarLinguagem",
+            tiposAlvo: ["ip"],
+            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <CodeOutlined />,
+        },
+        {
+            chave: "identificarFrameworkIp",
+            titulo: "Identificar Framework/CMS",
+            descricao: "Descobre frameworks ou CMS do host",
+            comando: "identificarFramework",
+            tiposAlvo: ["ip"],
+            gerarParametros: (alvo) => ({ idIp: alvo.id.toString() }),
+            icone: <ClusterOutlined />,
         },
     ],
     usuarios: [
@@ -317,6 +389,26 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
         };
     }
     if (acao.chave === "detectarServicoDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [],
+            valores: {},
+        };
+    }
+    if (acao.chave === "identificarLinguagemDominio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDominio: id },
+            campos: [],
+            valores: {},
+        };
+    }
+    if (acao.chave === "identificarFrameworkDominio") {
         return {
             comando: acao.comando,
             titulo: tituloModal(acao.titulo),
@@ -566,6 +658,26 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             valores: {},
         };
     }
+    if (acao.chave === "identificarLinguagemDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: [],
+            valores: {},
+        };
+    }
+    if (acao.chave === "identificarFrameworkDiretorio") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idDiretorio: id },
+            campos: [],
+            valores: {},
+        };
+    }
     if (acao.chave === "nmap") {
         return {
             comando: acao.comando,
@@ -596,6 +708,26 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
             valores: { ...valoresWhatweb },
         };
     }
+    if (acao.chave === "identificarLinguagemIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: [],
+            valores: {},
+        };
+    }
+    if (acao.chave === "identificarFrameworkIp") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idIp: id },
+            campos: [],
+            valores: {},
+        };
+    }
     if (acao.chave === "whatwebPorta") {
         return {
             comando: acao.comando,
@@ -607,6 +739,26 @@ const criarModalAcao = (acao: AcaoDisponivel, alvo: AlvoSelecionado): EstadoModa
         };
     }
     if (acao.chave === "detectarServicoPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
+            campos: [],
+            valores: {},
+        };
+    }
+    if (acao.chave === "identificarLinguagemPorta") {
+        return {
+            comando: acao.comando,
+            titulo: tituloModal(acao.titulo),
+            descricao: descricaoModal,
+            argsBase: { idPorta: id },
+            campos: [],
+            valores: {},
+        };
+    }
+    if (acao.chave === "identificarFrameworkPorta") {
         return {
             comando: acao.comando,
             titulo: tituloModal(acao.titulo),
