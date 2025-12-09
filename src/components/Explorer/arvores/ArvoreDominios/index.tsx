@@ -22,35 +22,6 @@ const ArvoreDominios = () => {
   const elementoDominio = useElementoDominio();
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
-  useEffect(() => {
-    setElementos([]);
-    setExpandedKeys([]);
-    setChavesCarregadas([]);
-  }, [projeto?.get()?.id]);
-
-  useEffect(() => {
-    let ativo = true;
-    const carregar = async () => {
-      setCarregando(true);
-      if (dominiosProjeto && ativo) {
-        const grupos = await montarElementos(dominiosProjeto);
-        if (ativo) setElementos(grupos);
-      } else if (ativo) {
-        setElementos([]);
-      }
-      if (ativo) {
-        setExpandedKeys([]);
-        setChavesCarregadas([]);
-        setAutoExpandParent(false);
-        setCarregando(false);
-      }
-    };
-    carregar();
-    return () => {
-      ativo = false;
-    };
-  }, [dominiosProjeto, montarElementos]);
-
   const montarElementos = useCallback(async (lista: DominioResponse[]) => {
     const grupos = new Map<string, DominioResponse[]>();
     lista.forEach(d => {
@@ -84,6 +55,35 @@ const ArvoreDominios = () => {
     }
     return nos;
   }, [elementoDominio]);
+
+  useEffect(() => {
+    setElementos([]);
+    setExpandedKeys([]);
+    setChavesCarregadas([]);
+  }, [projeto?.get()?.id]);
+
+  useEffect(() => {
+    let ativo = true;
+    const carregar = async () => {
+      setCarregando(true);
+      if (dominiosProjeto && ativo) {
+        const grupos = await montarElementos(dominiosProjeto);
+        if (ativo) setElementos(grupos);
+      } else if (ativo) {
+        setElementos([]);
+      }
+      if (ativo) {
+        setExpandedKeys([]);
+        setChavesCarregadas([]);
+        setAutoExpandParent(false);
+        setCarregando(false);
+      }
+    };
+    carregar();
+    return () => {
+      ativo = false;
+    };
+  }, [dominiosProjeto, montarElementos]);
 
   const onExpand = (novasChaves: React.Key[]) => {
     setExpandedKeys(novasChaves);
