@@ -24,12 +24,11 @@ const montarIncludeIp = (limite?: number): Prisma.IpFindManyArgs => {
     };
 };
 
-const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2, tipo: TipoDominio = TipoDominio.principal): Prisma.DominioInclude => {
+const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2): Prisma.DominioInclude => {
     const limiteNivelAplicado = limiteNivel ? { take: limiteNivel } : {};
     const incluirSubdominios: Prisma.DominioInclude = profundidade > 0 ? {
         subDominios: {
-            where: { tipo },
-            include: montarIncludeDominio(limiteFilhos, limiteFilhos, profundidade - 1, tipo),
+            include: montarIncludeDominio(limiteFilhos, limiteFilhos, profundidade - 1),
             ...limiteNivelAplicado,
         }
     } : {};

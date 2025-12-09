@@ -20,11 +20,14 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
   const montarFilhos = async (dominio: DominioResponse, anteriores: string[]): Promise<NoCarregavel[]> => {
     const filhos: NoCarregavel[] = [];
 
-    if ((dominio.subDominios?.length ?? 0) > 0) {
-      const subdominios = dominio.subDominios ?? [];
+    const subdominios = dominio.subDominios ?? [];
+    const subdominiosPrincipais = subdominios.filter(s => s.tipo !== "dns");
+    const subdominiosDns = subdominios.filter(s => s.tipo === "dns");
+
+    if (subdominiosPrincipais.length > 0) {
       const filhosSubdominios: NoCarregavel[] = [];
-      for (let i = 0; i < subdominios.length; i++) {
-        const subdominio = subdominios[i];
+      for (let i = 0; i < subdominiosPrincipais.length; i++) {
+        const subdominio = subdominiosPrincipais[i];
         filhosSubdominios.push(await getDominio(subdominio, [...anteriores, "dominio"]));
       }
       filhos.push({
@@ -33,6 +36,21 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
         children: filhosSubdominios,
         className: "folder",
         isLeaf: filhosSubdominios.length === 0
+      });
+    }
+
+    if (subdominiosDns.length > 0) {
+      const filhosDns: NoCarregavel[] = [];
+      for (let i = 0; i < subdominiosDns.length; i++) {
+        const subdominio = subdominiosDns[i];
+        filhosDns.push(await getDominio(subdominio, [...anteriores, "dns"], "dns"));
+      }
+      filhos.push({
+        key: `${dominio.endereco}-${dominio.id}-dns`,
+        title: <div><FontAwesomeIcon icon={faNetworkWired} /> DNS</div>,
+        children: filhosDns,
+        className: "folder",
+        isLeaf: filhosDns.length === 0
       });
     }
 
@@ -79,19 +97,22 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
     return montarFilhos(data, anteriores);
   };
 
-  const getDominio = async (dominio: DominioResponse, anteriores: string[] = []): Promise<NoCarregavel> => {
+  const getDominio = async (dominio: DominioResponse, anteriores: string[] = [], tipo?: TargetType): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
-    const checked = selecionado?.tipo === tipoSelecionado && selecionado?.id === dominio.id;
-    const possuiSubdominios = (dominio.subDominios?.length ?? 0) > 0;
+    const alvoTipo = tipo ?? tipoSelecionado;
+    const checked = selecionado?.tipo === alvoTipo && selecionado?.id === dominio.id;
+    const subdominios = dominio.subDominios ?? [];
+    const possuiSubdominios = subdominios.some(s => s.tipo !== "dns");
+    const possuiDns = subdominios.some(s => s.tipo === "dns");
     const possuiIps = !anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0;
     const possuiDiretorios = !anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0;
     const possuiWhatweb = (dominio.whatwebResultados?.length ?? 0) > 0;
-    const possuiFilhos = possuiSubdominios || possuiIps || possuiDiretorios || possuiWhatweb;
+    const possuiFilhos = possuiSubdominios || possuiDns || possuiIps || possuiDiretorios || possuiWhatweb;
 
     return {
       key: `${dominio.endereco}-${dominio.id}`,
       title: <div onClick={() => {
-        selecaoTarget?.set({ tipo: tipoSelecionado, id: dominio.id });
+        selecaoTarget?.set({ tipo: alvoTipo, id: dominio.id });
       }}>
         <GlobalOutlined /> {dominio.endereco}
       </div>,
