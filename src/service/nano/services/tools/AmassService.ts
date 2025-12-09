@@ -61,7 +61,7 @@ export class AmassService extends NanoService {
         where: { id: Number(idDominio) }
       });
 
-      const dominio = op?.endereco ?? '';
+      const dominio = (op?.endereco ?? '').toLowerCase();
 
       if (!op?.endereco || !this.validarDominio(dominio)) {
         throw new Error('Domínio inválido ou inseguro fornecido.');
@@ -103,7 +103,7 @@ export class AmassService extends NanoService {
       const registrosDns = new Map<string, Set<string>>();
       const emails = new Set<string>();
       const aliases: { origem: string; destino: string }[] = [];
-      const dominioRaiz = op?.endereco ?? '';
+      const dominioRaiz = (op?.endereco ?? '').toLowerCase();
 
       if (fs.existsSync(jsonOutputFile)) {
         const conteudo = fs.readFileSync(jsonOutputFile, 'utf-8');
@@ -113,8 +113,8 @@ export class AmassService extends NanoService {
           try {
             const item = JSON.parse(linha);
 
-            const nomeRegistro = typeof item.name === 'string' ? item.name.trim() : '';
-            const dominioItem = typeof item.domain === 'string' ? item.domain.trim() : '';
+            const nomeRegistro = typeof item.name === 'string' ? item.name.trim().toLowerCase() : '';
+            const dominioItem = typeof item.domain === 'string' ? item.domain.trim().toLowerCase() : '';
             if (this.eSubdominio(nomeRegistro, dominioRaiz)) subdominios.add(nomeRegistro);
             const dominioRelacionado = this.obterDominioRelacionado(nomeRegistro, dominioItem, dominioRaiz);
             if (Array.isArray(item.addresses)) {
@@ -139,7 +139,7 @@ export class AmassService extends NanoService {
             });
             if (Array.isArray(item.emails)) {
               item.emails.forEach((email: any) => {
-                const texto = typeof email === 'string' ? email.trim() : '';
+                const texto = typeof email === 'string' ? email.trim().toLowerCase() : '';
                 if (texto) emails.add(texto);
               });
             }
@@ -147,6 +147,17 @@ export class AmassService extends NanoService {
         }
 
         fs.unlinkSync(jsonOutputFile);
+      }
+
+      const logSaida = lerLogExecucao(jobId) || output || '';
+      if (logSaida.trim().length > 0) {
+        logSaida
+          .split('\n')
+          .map((linha) => linha.trim())
+          .filter(Boolean)
+          .forEach((linha) =>
+            this.extrairInformacoesTexto(linha, dominioRaiz, subdominios, ips, registrosDns, emails, aliases)
+          );
       }
 
       const subdominiosUnicos = [...subdominios];
@@ -211,14 +222,19 @@ export class AmassService extends NanoService {
 
   private eSubdominio(valor: string, dominioRaiz: string) {
     if (!valor || !dominioRaiz) return false;
-    if (valor === dominioRaiz) return false;
-    return valor.endsWith(`.${dominioRaiz}`);
+    const alvo = valor.toLowerCase();
+    const raiz = dominioRaiz.toLowerCase();
+    if (alvo === raiz) return false;
+    return alvo.endsWith(`.${raiz}`);
   }
 
   private obterDominioRelacionado(nome: string, dominioItem: string, dominioRaiz: string) {
-    if (this.eSubdominio(nome, dominioRaiz)) return nome;
-    if (this.eSubdominio(dominioItem, dominioRaiz)) return dominioItem;
-    if (nome === dominioRaiz || dominioItem === dominioRaiz) return dominioRaiz;
+    const nomeNormalizado = nome.toLowerCase();
+    const dominioNormalizado = dominioItem.toLowerCase();
+    const raiz = dominioRaiz.toLowerCase();
+    if (this.eSubdominio(nomeNormalizado, raiz)) return nomeNormalizado;
+    if (this.eSubdominio(dominioNormalizado, raiz)) return dominioNormalizado;
+    if (nomeNormalizado === raiz || dominioNormalizado === raiz) return raiz;
     return '';
   }
 
@@ -229,7 +245,7 @@ export class AmassService extends NanoService {
         const nome = typeof registro.name === 'string' ? registro.name : typeof registro.rrname === 'string' ? registro.rrname : '';
         const tipo = typeof registro.type === 'string' ? registro.type : typeof registro.rrtype === 'string' ? registro.rrtype : '';
         const valor = typeof registro.value === 'string' ? registro.value : typeof registro.rrdata === 'string' ? registro.rrdata : '';
-        return { nome: nome.trim(), tipo: tipo.trim(), valor: valor.trim() };
+        return { nome: nome.trim().toLowerCase(), tipo: tipo.trim(), valor: valor.trim().toLowerCase() };
       })
       .filter((registro: any) => registro.tipo && registro.valor);
   }
@@ -238,6 +254,39 @@ export class AmassService extends NanoService {
     const chave = tipo.toLowerCase();
     if (!mapa.has(chave)) mapa.set(chave, new Set());
     mapa.get(chave)?.add(valor);
+  }
+
+  private extrairInformacoesTexto(
+    linha: string,
+    dominioRaiz: string,
+    subdominios: Set<string>,
+    ips: TipoIp[],
+    registrosDns: Map<string, Set<string>>,
+    emails: Set<string>,
+    aliases: { origem: string; destino: string }[]
+  ) {
+    const texto = linha.toLowerCase();
+    const registro = texto.match(/^([\w.-]+)[^\w-]+([a-z]+)_record[^\w-]+([\w.-]+)/i);
+    if (registro) {
+      const origem = registro[1].toLowerCase();
+      const tipo = registro[2].toUpperCase();
+      const destino = registro[3].toLowerCase();
+      if (this.eSubdominio(origem, dominioRaiz)) subdominios.add(origem);
+      if (this.eSubdominio(destino, dominioRaiz)) subdominios.add(destino);
+      const dominioRelacionado = this.obterDominioRelacionado(origem, origem, dominioRaiz);
+      if (dominioRelacionado && destino && tipo === 'A' && destino.match(/^(?:\d{1,3}\.){3}\d{1,3}$/)) {
+        ips.push({ endereco: destino, dominio: dominioRelacionado });
+      }
+      if (origem && destino) {
+        this.agruparRegistroDns(registrosDns, tipo, `${origem} -> ${destino}`);
+        if (tipo === 'MX') emails.add(destino);
+        if (tipo === 'CNAME') aliases.push({ origem, destino });
+      }
+      return;
+    }
+
+    const dominio = texto.split(' ')[0];
+    if (this.eSubdominio(dominio, dominioRaiz)) subdominios.add(dominio);
   }
 
   private async salvarAliases(aliases: { origem: string; destino: string }[], projetoId: number, dominioRaiz: string) {
