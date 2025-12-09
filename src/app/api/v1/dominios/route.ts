@@ -4,8 +4,17 @@ import { DominioResponse } from "@/types/DominioResponse";
 import { NextResponse } from "next/server";
 import { TipoDominio } from "@prisma/client";
 
-export async function GET(): ApiResponse<DominioResponse[]> {
-    const ret = await prisma.dominio.findMany({ where: { tipo: TipoDominio.principal } });
+const parseTipos = (valor?: string | null) => {
+    const tiposDisponiveis = new Set(Object.values(TipoDominio));
+    const tipos = valor?.split(',').map(t => t.trim()).filter(Boolean) as TipoDominio[] | undefined;
+    const filtrados = tipos?.filter(t => tiposDisponiveis.has(t));
+    return filtrados && filtrados.length > 0 ? filtrados : [TipoDominio.principal];
+};
+
+export async function GET(request: Request): ApiResponse<DominioResponse[]> {
+    const url = new URL(request.url);
+    const tipos = parseTipos(url.searchParams.get('tipos'));
+    const ret = await prisma.dominio.findMany({ where: { tipo: { in: tipos } } });
     return NextResponse.json(ret);
 }
 

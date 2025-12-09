@@ -10,6 +10,13 @@ const parseNumero = (valor?: string | null) => {
     return Number.isNaN(numero) ? undefined : numero;
 };
 
+const parseTipos = (valor?: string | null) => {
+    const tiposDisponiveis = new Set(Object.values(TipoDominio));
+    const tipos = valor?.split(',').map(t => t.trim()).filter(Boolean) as TipoDominio[] | undefined;
+    const filtrados = tipos?.filter(t => tiposDisponiveis.has(t));
+    return filtrados && filtrados.length > 0 ? filtrados : [TipoDominio.principal];
+};
+
 const montarIncludeIp = (limite?: number): Prisma.IpFindManyArgs => {
     const limiteAplicado = limite ? { take: limite } : {};
     return {
@@ -24,12 +31,12 @@ const montarIncludeIp = (limite?: number): Prisma.IpFindManyArgs => {
     };
 };
 
-const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2, tipo: TipoDominio = TipoDominio.principal): Prisma.DominioInclude => {
+const montarIncludeDominio = (limiteNivel?: number, limiteFilhos?: number, profundidade: number = 2, tipos: TipoDominio[] = [TipoDominio.principal]): Prisma.DominioInclude => {
     const limiteNivelAplicado = limiteNivel ? { take: limiteNivel } : {};
     const incluirSubdominios: Prisma.DominioInclude = profundidade > 0 ? {
         subDominios: {
-            where: { tipo },
-            include: montarIncludeDominio(limiteFilhos, limiteFilhos, profundidade - 1, tipo),
+            where: { tipo: { in: tipos } },
+            include: montarIncludeDominio(limiteFilhos, limiteFilhos, profundidade - 1, tipos),
             ...limiteNivelAplicado,
         }
     } : {};
@@ -47,13 +54,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const p = await params;
     const limiteNivel = parseNumero(req.nextUrl.searchParams.get("limite"));
     const limiteFilhos = parseNumero(req.nextUrl.searchParams.get("limiteFilhos"));
-    const include = montarIncludeDominio(limiteNivel, limiteFilhos);
+    const tipos = parseTipos(req.nextUrl.searchParams.get("tipos"));
+    const include = montarIncludeDominio(limiteNivel, limiteFilhos, undefined, tipos);
 
     const ret = await prisma.dominio.findMany({
         where: {
             projetoId: Number(p.id),
             pai: null,
-            tipo: TipoDominio.principal,
+            tipo: { in: tipos },
         },
         include,
     });

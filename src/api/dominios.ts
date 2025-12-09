@@ -8,7 +8,7 @@ import { useCallback, useMemo } from "react";
 const useDominiosProjeto = (idProjeto?: number) => useQuery({
     queryKey: ["dominios", idProjeto],
     queryFn: async (): Promise<DominioResponse[]> => {
-        const res = await fetch(`/api/v1/projetos/${idProjeto}/dominios?limite=1&limiteFilhos=1`);
+        const res = await fetch(`/api/v1/projetos/${idProjeto}/dominios?limite=1&limiteFilhos=1&tipos=principal,dns,alias`);
         const data = await res.json();
         return data;
     },
@@ -18,7 +18,7 @@ const useDominiosProjeto = (idProjeto?: number) => useQuery({
 const useDominio = (idDominio?: number) => useQuery({
     queryKey: ["get-dominio", idDominio],
     queryFn: async (): Promise<DominioResponse> => {
-        const res = await fetch("/api/v1/dominios/" + idDominio);
+        const res = await fetch(`/api/v1/dominios/${idDominio}?tipos=principal,dns,alias`);
         const data = await res.json();
         return data;
     },
