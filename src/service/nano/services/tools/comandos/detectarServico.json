@@ -1,1 +1,8 @@
-{}
+{
+  "8439": {
+    "comando": "detectarServico",
+    "argumentos": [
+      "{\"idDominio\":\"5592\"}"
+    ]
+  }
+}
