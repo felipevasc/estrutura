@@ -102,6 +102,42 @@ export default function Configuracoes() {
         });
     };
 
+    const abrirAjudaGoogleApiKey = () => {
+        Modal.info({
+            title: 'Como criar uma Google API Key',
+            content: (
+                <div>
+                    <p>A chave permite usar a API Custom Search JSON.</p>
+                    <ol>
+                        <li>Acesse https://console.cloud.google.com/ e selecione ou crie um projeto.</li>
+                        <li>Em APIs e Serviços, clique em Bibliotecas e ative a Custom Search API.</li>
+                        <li>No menu Credenciais, escolha Criar credencial &gt; Chave de API.</li>
+                        <li>Copie a chave gerada e insira no campo Google API Key.</li>
+                    </ol>
+                </div>
+            ),
+            okText: 'Entendi',
+        });
+    };
+
+    const abrirAjudaGoogleSearchEngine = () => {
+        Modal.info({
+            title: 'Como obter o Google Search Engine ID',
+            content: (
+                <div>
+                    <p>O ID vem do mecanismo criado no Programmable Search Engine.</p>
+                    <ol>
+                        <li>Acesse https://programmablesearchengine.google.com/create e crie um novo mecanismo.</li>
+                        <li>Defina os sites ou use a opção para pesquisar toda a web.</li>
+                        <li>Abra Configurações &gt; Básico e copie o campo ID do mecanismo de pesquisa.</li>
+                        <li>Insira o ID no campo Google Search Engine ID e utilize com a mesma chave de API.</li>
+                    </ol>
+                </div>
+            ),
+            okText: 'Entendi',
+        });
+    };
+
     const rotuloComAjuda = (texto: string, onClick: () => void) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span>{texto}</span>
@@ -176,7 +212,7 @@ export default function Configuracoes() {
                         <Col span={12}>
                             <Form.Item
                                 name="googleApiKey"
-                                label="Google API Key"
+                                label={rotuloComAjuda('Google API Key', abrirAjudaGoogleApiKey)}
                                 validateStatus={!configData?.googleApiKey ? 'error' : ''}
                             >
                                 <Input.Password
@@ -188,7 +224,7 @@ export default function Configuracoes() {
                         <Col span={12}>
                             <Form.Item
                                 name="googleSearchEngineId"
-                                label="Google Search Engine ID"
+                                label={rotuloComAjuda('Google Search Engine ID', abrirAjudaGoogleSearchEngine)}
                                 validateStatus={!configData?.googleSearchEngineId ? 'error' : ''}
                                 help={!configData?.googleApiKey || !configData?.googleSearchEngineId ? 'Chave ou ID do Google não configurado' : ''}
                             >
