@@ -7,14 +7,14 @@ import React, { useContext } from "react";
 import useElementoPorta from "../ElementoPorta";
 import useElementoUsuario from "../ElementoUsuario";
 import useElementoDiretorio from "../ElementoDiretorio";
-import { NoCarregavel } from "../tipos";
+import { LimitadorArvore, NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
 import { construirArvoreDiretorios, NodoDiretorio } from "../construirArvoreDiretorios";
 
-const useElementoIp = () => {
+const useElementoIp = (limitar?: LimitadorArvore) => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoPorta = useElementoPorta();
-  const elementoDiretorio = useElementoDiretorio();
+  const elementoDiretorio = useElementoDiretorio(limitar);
   const elementoUsuario = useElementoUsuario();
   const elementoWhatweb = useElementoWhatweb();
 
@@ -24,7 +24,11 @@ const useElementoIp = () => {
     if (!anteriores.includes("dominio") && (ip.dominios?.length ?? 0) > 0) {
       const dominios = ip.dominios ?? [];
       if (dominios.length) {
-        const filhosDominio: NoCarregavel[] = dominios.map(dom => ({
+        const filhosDominio: NoCarregavel[] = limitar ? limitar(`${ip.endereco}-${ip.id}-dominios-filhos`, dominios.map(dom => ({
+          key: `ip-domain-${dom.id}`,
+          title: <div><GlobalOutlined /> {dom.endereco}</div>,
+          isLeaf: true
+        }))) : dominios.map(dom => ({
           key: `ip-domain-${dom.id}`,
           title: <div><GlobalOutlined /> {dom.endereco}</div>,
           isLeaf: true
@@ -42,11 +46,12 @@ const useElementoIp = () => {
     if (!anteriores.includes("portas") && (ip.portas?.length ?? 0) > 0) {
       const portas = ip.portas ?? [];
       if (portas.length) {
-        const filhosPorta: NoCarregavel[] = [];
+        const filhosPortaResolvidos: NoCarregavel[] = [];
         for (let i = 0; i < portas.length; i++) {
           const porta = portas[i];
-          filhosPorta.push(await elementoPorta.getPorta(porta));
+          filhosPortaResolvidos.push(await elementoPorta.getPorta(porta));
         }
+        const filhosPorta = limitar ? limitar(`${ip.endereco}-${ip.id}-portas-filhos`, filhosPortaResolvidos) : filhosPortaResolvidos;
         filhos.push({
           key: `${ip.endereco}-${ip.id}-portas`,
           title: <div><FontAwesomeIcon icon={faEthernet} /> Portas</div>,
@@ -60,11 +65,12 @@ const useElementoIp = () => {
     if (!anteriores.includes("usuarios") && (ip.usuarios?.length ?? 0) > 0) {
       const usuarios = ip.usuarios ?? [];
       if (usuarios.length) {
-        const filhosUsuarios: NoCarregavel[] = [];
+        const filhosUsuariosResolvidos: NoCarregavel[] = [];
         for (let i = 0; i < usuarios.length; i++) {
           const usuario = usuarios[i];
-          filhosUsuarios.push(await elementoUsuario.getUsuario(usuario));
+          filhosUsuariosResolvidos.push(await elementoUsuario.getUsuario(usuario));
         }
+        const filhosUsuarios = limitar ? limitar(`${ip.endereco}-${ip.id}-usuarios-filhos`, filhosUsuariosResolvidos) : filhosUsuariosResolvidos;
         filhos.push({
           key: `${ip.endereco}-${ip.id}-usuarios`,
           title: <div><FontAwesomeIcon icon={faUserFriends} /> Usuários</div>,
@@ -79,12 +85,13 @@ const useElementoIp = () => {
       const diretorios = construirArvoreDiretorios(ip.diretorios ?? []);
       if (diretorios.length) {
         const filhosDiretorios = await montarDiretorios(diretorios);
+        const filhosDiretoriosLimitados = limitar ? limitar(`${ip.endereco}-${ip.id}-diretorios-filhos`, filhosDiretorios) : filhosDiretorios;
         filhos.push({
           key: `${ip.endereco}-${ip.id}-diretorios`,
           title: <div><FontAwesomeIcon icon={faFolderOpen} /> Diretórios</div>,
-          children: filhosDiretorios,
+          children: filhosDiretoriosLimitados,
           className: "folder",
-          isLeaf: filhosDiretorios.length === 0
+          isLeaf: filhosDiretoriosLimitados.length === 0
         });
       }
     }

@@ -9,6 +9,7 @@ import StoreContext from '@/store';
 import useElementoDominio from '../../target/ElementoDominio';
 import { NoCarregavel } from '../../target/tipos';
 import { atualizarFilhos } from '../../target/atualizarArvore';
+import useLimiteArvore from '../../target/useLimiteArvore';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -18,14 +19,16 @@ const ArvoreDominios = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
   const { data: dominiosProjeto, refetch: recarregarDominios } = api.dominios.getDominios(projeto?.get()?.id);
-  const elementoDominio = useElementoDominio();
+  const { limitar, resetar } = useLimiteArvore();
+  const elementoDominio = useElementoDominio("domain", limitar);
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
   useEffect(() => {
     setElementos([]);
     setExpandedKeys([]);
     setChavesCarregadas([]);
-  }, [projeto?.get()?.id]);
+    resetar();
+  }, [projeto?.get()?.id, resetar]);
 
   useEffect(() => {
     let ativo = true;
@@ -41,6 +44,7 @@ const ArvoreDominios = () => {
         setExpandedKeys([]);
         setChavesCarregadas([]);
         setAutoExpandParent(false);
+        resetar();
         setCarregando(false);
       }
     };
@@ -48,7 +52,7 @@ const ArvoreDominios = () => {
     return () => {
       ativo = false;
     };
-  }, [dominiosProjeto]);
+  }, [dominiosProjeto, resetar, elementoDominio]);
 
   const onExpand = (novasChaves: React.Key[]) => {
     setExpandedKeys(novasChaves);
@@ -67,11 +71,14 @@ const ArvoreDominios = () => {
     return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
   }, [elementos]);
 
+  const elementosLimitados = useMemo(() => limitar("dominios", sortedElementos), [limitar, sortedElementos]);
+
   const refresh = async () => {
     const abertas = expandedKeys;
     setAutoExpandParent(false);
     setExpandedKeys([]);
     setChavesCarregadas([]);
+    resetar();
     setCarregando(true);
     const resposta = await recarregarDominios();
     const lista = resposta.data || dominiosProjeto;
@@ -97,7 +104,7 @@ const ArvoreDominios = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={sortedElementos}
+      treeData={elementosLimitados}
       showIcon={true}
       showLine={true}
       loadData={carregarNo}

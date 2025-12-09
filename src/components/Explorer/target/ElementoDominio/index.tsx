@@ -6,15 +6,15 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
 import useElementoIp from "../ElementoIp";
 import useElementoDiretorio from "../ElementoDiretorio";
-import { NoCarregavel } from "../tipos";
+import { LimitadorArvore, NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
 import { TargetType } from "@/types/TargetType";
 import { construirArvoreDiretorios, NodoDiretorio } from "../construirArvoreDiretorios";
 
-const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
+const useElementoDominio = (tipoSelecionado: TargetType = "domain", limitar?: LimitadorArvore) => {
   const { selecaoTarget } = useContext(StoreContext);
-  const elementoIp = useElementoIp();
-  const elementoDiretorio = useElementoDiretorio();
+  const elementoIp = useElementoIp(limitar);
+  const elementoDiretorio = useElementoDiretorio(limitar);
   const elementoWhatweb = useElementoWhatweb();
 
   const montarFilhos = async (dominio: DominioResponse, anteriores: string[]): Promise<NoCarregavel[]> => {
@@ -22,11 +22,12 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
 
     if ((dominio.subDominios?.length ?? 0) > 0) {
       const subdominios = dominio.subDominios ?? [];
-      const filhosSubdominios: NoCarregavel[] = [];
+      const filhosSubdominiosResolvidos: NoCarregavel[] = [];
       for (let i = 0; i < subdominios.length; i++) {
         const subdominio = subdominios[i];
-        filhosSubdominios.push(await getDominio(subdominio, [...anteriores, "dominio"]));
+        filhosSubdominiosResolvidos.push(await getDominio(subdominio, [...anteriores, "dominio"]));
       }
+      const filhosSubdominios = limitar ? limitar(`${dominio.endereco}-${dominio.id}-subdominios-filhos`, filhosSubdominiosResolvidos) : filhosSubdominiosResolvidos;
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}-subdominios`,
         title: <div><FontAwesomeIcon icon={faRoute} /> Subdomínios</div>,
@@ -38,11 +39,12 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
 
     if (!anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0) {
       const ips = dominio.ips ?? [];
-      const filhosIp: NoCarregavel[] = [];
+      const filhosIpResolvidos: NoCarregavel[] = [];
       for (let i = 0; i < ips.length; i++) {
         const ip = ips[i];
-        filhosIp.push(await elementoIp.getIp(ip, ["dominio", ...anteriores]));
+        filhosIpResolvidos.push(await elementoIp.getIp(ip, ["dominio", ...anteriores]));
       }
+      const filhosIp = limitar ? limitar(`${dominio.endereco}-${dominio.id}-ips-filhos`, filhosIpResolvidos) : filhosIpResolvidos;
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}-ips`,
         title: <div><FontAwesomeIcon icon={faNetworkWired} /> IPs</div>,
@@ -54,7 +56,8 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
 
     if (!anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0) {
       const diretorios = construirArvoreDiretorios(dominio.diretorios ?? []);
-      const filhosDiretorios = await montarDiretorios(diretorios);
+      const filhosDiretoriosResolvidos = await montarDiretorios(diretorios);
+      const filhosDiretorios = limitar ? limitar(`${dominio.endereco}-${dominio.id}-diretorios-filhos`, filhosDiretoriosResolvidos) : filhosDiretoriosResolvidos;
       filhos.push({
         key: `${dominio.endereco}-${dominio.id}-diretorios`,
         title: <div><FontAwesomeIcon icon={faFolderOpen} /> Diretórios</div>,

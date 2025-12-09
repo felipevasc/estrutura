@@ -3,10 +3,10 @@ import { DiretorioResponse } from "@/types/DiretorioResponse";
 import { faFile, faFolder } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
-import { NoCarregavel } from "../tipos";
+import { LimitadorArvore, NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
 
-const useElementoDiretorio = () => {
+const useElementoDiretorio = (limitar?: LimitadorArvore) => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoWhatweb = useElementoWhatweb();
 
@@ -20,7 +20,8 @@ const useElementoDiretorio = () => {
     const classeTipo = diretorio.tipo === "arquivo" ? "arquivo" : "pasta";
 
     const pasta = elementoWhatweb.getResultados(diretorio.whatwebResultados ?? [], `diretorio-${diretorio.id}`);
-    const children: NoCarregavel[] = [...filhos];
+    const filhosLimitados = limitar ? limitar(`diretorio-${diretorio.id}-filhos`, filhos) : filhos;
+    const children: NoCarregavel[] = [...filhosLimitados];
     if (pasta) children.push(pasta);
 
     return {
