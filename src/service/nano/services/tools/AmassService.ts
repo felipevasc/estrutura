@@ -67,9 +67,10 @@ export class AmassService extends NanoService {
         throw new Error('Domínio inválido ou inseguro fornecido.');
       }
 
-      const arquivoJson = path.join(os.tmpdir(), `amass_${op?.projetoId}_${id}_${Date.now()}.json`);
+      const baseArquivo = path.join(os.tmpdir(), `amass_${op?.projetoId}_${id}_${Date.now()}`);
+      const arquivoJson = `${baseArquivo}.json`;
 
-      const argumentos = ['enum', '-d', dominio, '-timeout', String(timeout), '-json', arquivoJson];
+      const argumentos = ['enum', '-d', dominio, '-timeout', String(timeout), '-oA', baseArquivo];
       const linhaComando = registrarComandoFerramenta('amass', id, 'amass', argumentos);
       const caminhoLog = obterCaminhoLogExecucao(id);
 
