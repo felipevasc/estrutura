@@ -1,6 +1,6 @@
 "use client";
 import { Button, Tree } from "antd";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { ReloadOutlined } from "@ant-design/icons";
 import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from "../ArvoreDominios/styles";
 import StoreContext from "@/store";
@@ -10,12 +10,14 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faNetworkWired } from "@fortawesome/free-solid-svg-icons";
 import { NoCarregavel } from "../../target/tipos";
 import { atualizarFilhos } from "../../target/atualizarArvore";
+import useLimiteArvore from "../../target/useLimiteArvore";
 
 const ArvoreRedes = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
   const { data: ipsProjeto, refetch: recarregarIps } = api.ips.getIps(projeto?.get()?.id);
-  const elementoIp = useElementoIp();
+  const { limitar, resetar } = useLimiteArvore();
+  const elementoIp = useElementoIp(limitar);
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
   const [chavesCarregadas, setChavesCarregadas] = useState<React.Key[]>([]);
@@ -25,6 +27,7 @@ const ArvoreRedes = () => {
     let ativo = true;
     const carregar = async () => {
       setCarregando(true);
+      resetar();
       if (ipsProjeto && ativo) {
         const sorted = [...ipsProjeto].sort((a, b) => a.endereco.localeCompare(b.endereco, undefined, { numeric: true }));
         const elems: NoCarregavel[] = [];
@@ -45,7 +48,14 @@ const ArvoreRedes = () => {
     return () => {
       ativo = false;
     };
-  }, [ipsProjeto]);
+  }, [ipsProjeto, resetar, elementoIp]);
+
+  useEffect(() => {
+    setElementos([]);
+    setExpandedKeys([]);
+    setChavesCarregadas([]);
+    resetar();
+  }, [projeto?.get()?.id, resetar]);
 
   const carregarNo = async (no: any) => {
     const alvo = no as NoCarregavel;
@@ -59,11 +69,14 @@ const ArvoreRedes = () => {
     setExpandedKeys(novasChaves);
   };
 
+  const elementosLimitados = useMemo(() => limitar("ips", elementos), [elementos, limitar]);
+
   const refresh = async () => {
     const abertas = expandedKeys;
     setCarregando(true);
     setExpandedKeys([]);
     setChavesCarregadas([]);
+    resetar();
     const resposta = await recarregarIps();
     const lista = resposta.data || ipsProjeto;
     if (lista) {
@@ -81,11 +94,11 @@ const ArvoreRedes = () => {
     <StyledArvoreDominio>
       <StyledTitleDominio>
          rede <FontAwesomeIcon icon={faNetworkWired} style={{marginLeft: 10, fontSize: 12}} />
-         <StyledTitleDominioIcon>
-          <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" />
-         </StyledTitleDominioIcon>
+        <StyledTitleDominioIcon>
+         <Button icon={<ReloadOutlined />} onClick={refresh} loading={carregando} type="text" />
+        </StyledTitleDominioIcon>
       </StyledTitleDominio>
-      <Tree treeData={elementos} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} loadedKeys={chavesCarregadas} />
+      <Tree treeData={elementosLimitados} showIcon={true} showLine={true} loadData={carregarNo} expandedKeys={expandedKeys} onExpand={onExpand} loadedKeys={chavesCarregadas} />
     </StyledArvoreDominio>
   );
 };

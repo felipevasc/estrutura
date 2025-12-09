@@ -8,6 +8,7 @@ import StoreContext from '@/store';
 import useElementoDominio from '../../target/ElementoDominio';
 import { NoCarregavel } from '../../target/tipos';
 import { atualizarFilhos } from '../../target/atualizarArvore';
+import useLimiteArvore from '../../target/useLimiteArvore';
 
 const ArvoreDns = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -17,14 +18,16 @@ const ArvoreDns = () => {
   const api = useApi();
   const { projeto } = useContext(StoreContext);
   const { data: dnsProjeto, refetch: recarregarDns } = api.dns.getDns(projeto?.get()?.id);
-  const elementoDominio = useElementoDominio("dns");
+  const { limitar, resetar } = useLimiteArvore();
+  const elementoDominio = useElementoDominio("dns", limitar);
   const [elementos, setElementos] = useState<NoCarregavel[]>([]);
 
   useEffect(() => {
     setElementos([]);
     setExpandedKeys([]);
     setChavesCarregadas([]);
-  }, [projeto?.get()?.id]);
+    resetar();
+  }, [projeto?.get()?.id, resetar]);
 
   useEffect(() => {
     let ativo = true;
@@ -40,6 +43,7 @@ const ArvoreDns = () => {
         setExpandedKeys([]);
         setChavesCarregadas([]);
         setAutoExpandParent(false);
+        resetar();
         setCarregando(false);
       }
     };
@@ -47,7 +51,7 @@ const ArvoreDns = () => {
     return () => {
       ativo = false;
     };
-  }, [dnsProjeto, elementoDominio]);
+  }, [dnsProjeto, elementoDominio, resetar]);
 
   const onExpand = (novasChaves: React.Key[]) => {
     setExpandedKeys(novasChaves);
@@ -66,11 +70,14 @@ const ArvoreDns = () => {
     return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
   }, [elementos]);
 
+  const elementosLimitados = useMemo(() => limitar("dns", sortedElementos), [limitar, sortedElementos]);
+
   const refresh = async () => {
     const abertas = expandedKeys;
     setAutoExpandParent(false);
     setExpandedKeys([]);
     setChavesCarregadas([]);
+    resetar();
     setCarregando(true);
     const resposta = await recarregarDns();
     const lista = resposta.data || dnsProjeto;
@@ -95,7 +102,7 @@ const ArvoreDns = () => {
       onExpand={onExpand}
       expandedKeys={expandedKeys}
       autoExpandParent={autoExpandParent}
-      treeData={sortedElementos}
+      treeData={elementosLimitados}
       showIcon={true}
       showLine={true}
       loadData={carregarNo}
