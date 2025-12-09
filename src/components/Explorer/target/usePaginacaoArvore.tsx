@@ -52,7 +52,8 @@ const usePaginacaoArvore = (): RetornoPaginacaoArvore => {
   }, [criarBotao, limites, tipoDoNo]);
 
   const prepararNo = useCallback((no: NoCarregavel): NoCarregavel => {
-    const filhos = no.children?.map(filho => prepararNo(filho)) ?? [];
+    const filhos = no.children?.map(filho => prepararNo(filho));
+    if (!filhos) return no;
     const chave = `${no.key}-filhos`;
     const filhosPaginados = filhos.length ? paginarLista(filhos, chave) : filhos;
     return { ...no, children: filhosPaginados };
