@@ -5,6 +5,7 @@ import { useContext } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { RedeResponse } from "@/types/RedeResponse";
+import ListaTecnologias from "../ListaTecnologias";
 import VisualizarPortas from "./VisualizarPortas";
 
 // NOTE: These styled components are duplicated from VisualizarDominio.
@@ -88,6 +89,11 @@ const VisualizarIp = () => {
                 <h1>{ip.endereco}</h1>
                 <p>Dashboard de informações do Endereço IP</p>
             </Header>
+
+            <Card>
+                <CardTitle>Tecnologias Detectadas</CardTitle>
+                <ListaTecnologias resultados={ip.whatwebResultados} />
+            </Card>
 
             <Card>
                 <CardTitle>Portas Abertas</CardTitle>

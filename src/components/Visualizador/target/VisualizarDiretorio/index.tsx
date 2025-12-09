@@ -1,5 +1,6 @@
 "use client";
 import useApi from "@/api";
+import ListaTecnologias from "../ListaTecnologias";
 import StoreContext from "@/store";
 import { useContext } from "react";
 import styled from "styled-components";
@@ -136,6 +137,11 @@ const VisualizarDiretorio = () => {
                         <span>{diretorio.ip?.endereco || "N/A"}</span>
                     </Item>
                 </Grade>
+            </Cartao>
+
+            <Cartao>
+                <Titulo>Tecnologias Detectadas</Titulo>
+                <ListaTecnologias resultados={diretorio.whatwebResultados} />
             </Cartao>
         </Painel>
     );

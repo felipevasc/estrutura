@@ -5,6 +5,7 @@ import { useContext } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { IpResponse } from "@/types/IpResponse";
+import ListaTecnologias from "../ListaTecnologias";
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -281,6 +282,11 @@ const VisualizarDominio = () => {
                 ) : (
                     <p>Nenhuma informação de registro disponível.</p>
                 )}
+            </Card>
+
+            <Card>
+                <CardTitle>Tecnologias Detectadas</CardTitle>
+                <ListaTecnologias resultados={dominio.whatwebResultados} />
             </Card>
 
             <Card>
