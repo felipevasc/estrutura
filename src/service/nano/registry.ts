@@ -30,6 +30,8 @@ import { WgetRecursivoService } from './services/tools/WgetRecursivoService';
 import DefaceCapturaService from './services/cti/DefaceCapturaService';
 import InfoDisclosureDorkService from './services/cti/InfoDisclosureDorkService';
 import { WhoisDominioService } from './services/tools/WhoisDominioService';
+import InfoDisclosureCodigoService from './services/cti/InfoDisclosureCodigoService';
+import InfoDisclosurePasteService from './services/cti/InfoDisclosurePasteService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -51,6 +53,8 @@ export const registeredServices: NanoService[] = [
     new DefaceForumHackDbService(),
     new DefaceCapturaService(),
     new InfoDisclosureDorkService(),
+    new InfoDisclosureCodigoService(),
+    new InfoDisclosurePasteService(),
     new PhishingDnstwistService(),
     new PhishingCatcherService(),
     new PhishingCrtshService(),

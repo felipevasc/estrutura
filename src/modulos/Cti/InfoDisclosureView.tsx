@@ -5,7 +5,7 @@ import { Table, Alert, Tag, Button, Select, message, Space, Typography, Popconfi
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio } from '@prisma/client';
-import { SettingOutlined, ReloadOutlined, RadarChartOutlined } from '@ant-design/icons';
+import { SettingOutlined, ReloadOutlined, RadarChartOutlined, SearchOutlined, GithubOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { Title, Text } = Typography;
@@ -24,7 +24,7 @@ const Container = styled.div`
 
 const Grade = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+  grid-template-columns: minmax(0, 2.4fr) minmax(280px, 1fr);
   gap: 16px;
   align-items: start;
   width: 100%;
@@ -89,7 +89,14 @@ const AreaTabela = styled.div`
 
 const PainelFerramentas = styled(PainelVidro)`
   background: ${({ theme }) => theme.glass.default};
-  gap: 12px;
+  gap: 10px;
+`;
+
+const CabecalhoFerramentas = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 `;
 
 const AbasFerramentas = styled(Tabs)`
@@ -100,103 +107,66 @@ const AbasFerramentas = styled(Tabs)`
   .ant-tabs-nav-list {
     width: 100%;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 6px;
   }
 
   .ant-tabs-tab {
     justify-content: center;
     margin: 0;
-    font-weight: 600;
+    font-weight: 700;
   }
 `;
 
 const ListaFerramentas = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 14px;
-`;
-
-const CartaoFerramenta = styled.div`
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px 16px 14px 16px;
-  background: ${({ theme }) => theme.glass.card};
-  border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  border-radius: ${({ theme }) => theme.borders.radius};
-  box-shadow: ${({ theme }) => theme.shadows.soft};
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    inset: -1px auto -1px -1px;
-    width: 4px;
-    background: linear-gradient(180deg, ${({ theme }) => theme.colors.primary} 0%, ${({ theme }) => theme.colors.info} 100%);
-  }
-`;
-
-const CabecalhoFerramenta = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
 `;
 
-const BlocoInfoFerramenta = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const RotuloFerramenta = styled.span`
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-`;
-
-const DescricaoFerramenta = styled.span`
-  font-size: 12px;
-  color: ${({ theme }) => theme.colors.textSecondary};
-`;
-
-const GrupoAcoes = styled.div`
-  display: flex;
-  align-items: center;
+const BlocoFerramenta = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 44px;
   gap: 8px;
+  align-items: center;
 `;
 
-const TagCategoria = styled(Tag)`
-  margin: 0;
+const BotaoFerramenta = styled(Button)`
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  border-radius: ${({ theme }) => theme.borders.radius};
+  background: ${({ theme }) => theme.glass.card};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  box-shadow: ${({ theme }) => theme.shadows.soft};
 `;
 
-const BotaoConfiguracao = styled(Button)`
-  width: 40px;
-  height: 40px;
+const BotaoIcone = styled(Button)`
+  width: 44px;
+  height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: ${({ theme }) => theme.borders.radius};
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
-  background: ${({ theme }) => theme.glass.default};
   box-shadow: ${({ theme }) => theme.shadows.soft};
 `;
 
-const RodapeFerramenta = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+const EtiquetaSecao = styled.span`
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.textSecondary};
 `;
 
-const Acionador = styled(Button)`
-  flex: 1;
-  font-weight: 700;
+const Centralizador = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 0;
 `;
 
 interface InfoDisclosureRecord {
@@ -360,6 +330,38 @@ const InfoDisclosureView = () => {
         }
     };
 
+    const ferramentasFixas = [
+        {
+            chave: 'codigo',
+            grupo: 'repositorios',
+            rotulo: 'Código Aberto',
+            descricao: 'Busca por menções ao domínio em GitHub, GitLab e Bitbucket.',
+            icone: <GithubOutlined />
+        },
+        {
+            chave: 'pastes',
+            grupo: 'pastes',
+            rotulo: 'Pastes',
+            descricao: 'Identificação de colagens públicas contendo o domínio.',
+            icone: <FileTextOutlined />
+        }
+    ];
+
+    const ferramentasDork = categoriasDork.map(categoria => ({
+        chave: categoria,
+        grupo: 'dorks',
+        rotulo: formatarCategoria(categoria),
+        descricao: gerarDescricao(formatarCategoria(categoria)),
+        icone: <SearchOutlined />,
+        configuravel: true
+    }));
+
+    const gruposFerramentas = [
+        { chave: 'dorks', titulo: 'Dorks', itens: ferramentasDork },
+        { chave: 'repositorios', titulo: 'Repositórios', itens: [ferramentasFixas[0]] },
+        { chave: 'pastes', titulo: 'Pastes', itens: [ferramentasFixas[1]] }
+    ];
+
     const colunas = [
         {
             title: 'URL',
@@ -434,46 +436,49 @@ const InfoDisclosureView = () => {
                     </AreaTabela>
                 </PainelVidro>
                 <PainelFerramentas>
+                    <CabecalhoFerramentas>
+                        <div>
+                            <EtiquetaSecao>Ferramentas</EtiquetaSecao>
+                            <Title level={5} style={{ margin: 0 }}>Ações rápidas</Title>
+                        </div>
+                        <Tag color="processing">CTI</Tag>
+                    </CabecalhoFerramentas>
                     <AbasFerramentas defaultActiveKey="dorks">
-                        <TabPane tab="Dorks" key="dorks">
-                            <Subtitulo style={{ display: 'block', marginBottom: 8 }}>Selecione a busca desejada.</Subtitulo>
-                            <ListaFerramentas>
-                                {categoriasDork.length === 0 && <Spin />}
-                                {categoriasDork.map(categoria => {
-                                    const rotulo = formatarCategoria(categoria);
-                                    const descricao = gerarDescricao(rotulo);
-                                    return (
-                                        <CartaoFerramenta key={categoria}>
-                                            <CabecalhoFerramenta>
-                                                <BlocoInfoFerramenta>
-                                                    <RotuloFerramenta>{rotulo}</RotuloFerramenta>
-                                                    <DescricaoFerramenta>{descricao}</DescricaoFerramenta>
-                                                </BlocoInfoFerramenta>
-                                                <GrupoAcoes>
-                                                    <TagCategoria color="blue">{categoria.toUpperCase()}</TagCategoria>
-                                                    <BotaoConfiguracao
-                                                        icon={<SettingOutlined />}
-                                                        onClick={() => abrirModalConfiguracao(categoria)}
-                                                        loading={salvandoConfiguracao && categoriaAtualConfiguracao === categoria}
-                                                    />
-                                                </GrupoAcoes>
-                                            </CabecalhoFerramenta>
-                                            <RodapeFerramenta>
-                                                    <Acionador
-                                                        type="primary"
-                                                        icon={<RadarChartOutlined />}
-                                                        onClick={() => executarFerramenta(categoria, 'dorks')}
-                                                        loading={executando === `dorks-${categoria}`}
+                        {gruposFerramentas.map(grupo => (
+                            <TabPane tab={grupo.titulo} key={grupo.chave}>
+                                {grupo.chave === 'dorks' && categoriasDork.length === 0 ? (
+                                    <Centralizador><Spin /></Centralizador>
+                                ) : (
+                                    <ListaFerramentas>
+                                        {grupo.itens.map(item => (
+                                            <BlocoFerramenta key={item.chave}>
+                                                <Tooltip title={item.descricao}>
+                                                    <BotaoFerramenta
+                                                        icon={item.icone}
+                                                        onClick={() => executarFerramenta(item.chave, item.grupo)}
+                                                        loading={executando === `${item.grupo}-${item.chave}`}
                                                         disabled={!!executando || !dominioSelecionado}
+                                                        type={item.grupo === 'dorks' ? 'default' : 'primary'}
                                                     >
-                                                        Executar
-                                                </Acionador>
-                                            </RodapeFerramenta>
-                                        </CartaoFerramenta>
-                                    );
-                                })}
-                            </ListaFerramentas>
-                        </TabPane>
+                                                        {item.rotulo}
+                                                    </BotaoFerramenta>
+                                                </Tooltip>
+                                                {item.configuravel && (
+                                                    <Tooltip title="Configurar lista">
+                                                        <BotaoIcone
+                                                            icon={<SettingOutlined />}
+                                                            onClick={() => abrirModalConfiguracao(item.chave)}
+                                                            loading={salvandoConfiguracao && categoriaAtualConfiguracao === item.chave}
+                                                            disabled={!!executando}
+                                                        />
+                                                    </Tooltip>
+                                                )}
+                                            </BlocoFerramenta>
+                                        ))}
+                                    </ListaFerramentas>
+                                )}
+                            </TabPane>
+                        ))}
                     </AbasFerramentas>
                 </PainelFerramentas>
             </Grade>

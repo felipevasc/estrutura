@@ -1,8 +1,8 @@
 import { Dominio } from "@prisma/client";
 import { CtiSearchService } from "./CtiSearchService";
-import prisma from "@/database";
 import fs from 'fs/promises';
 import path from 'path';
+import { salvarVazamentos } from "./infoDisclosureProcessador";
 
 // Caminho para o arquivo de configuração
 const CONFIG_PATH = path.join(process.cwd(), 'src/config/dorks_disclosure.json');
@@ -13,30 +13,7 @@ class InfoDisclosureDorkService extends CtiSearchService {
     }
 
     protected async processResults(items: any[], dominio: Dominio, fonte: string): Promise<any[]> {
-        const createdItems = [];
-        for (const item of items) {
-            // Evitar duplicatas óbvias
-            const exists = await prisma.vazamentoInformacao.findFirst({
-                where: {
-                    url: item.link,
-                    dominioId: dominio.id
-                }
-            });
-
-            if (!exists) {
-                const created = await prisma.vazamentoInformacao.create({
-                    data: {
-                        url: item.link,
-                        fonte,
-                        titulo: item.title,
-                        snippet: item.snippet,
-                        dominioId: dominio.id,
-                    }
-                });
-                createdItems.push(created);
-            }
-        }
-        return createdItems;
+        return salvarVazamentos(items, dominio, fonte);
     }
 
     protected async getDork(dominio: Dominio, args: any): Promise<string> {

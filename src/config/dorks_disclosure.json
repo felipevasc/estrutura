@@ -47,5 +47,23 @@
     "filetype:txt",
     "filetype:ora",
     "filetype:ini"
+  ],
+  "chaves_api": [
+    "filetype:env api_key",
+    "filetype:js \"apiKey\"",
+    "filetype:yaml secret",
+    "filetype:json \"access_token\""
+  ],
+  "logs_servidor": [
+    "filetype:log \"exception\"",
+    "filetype:txt \"stack trace\"",
+    "intext:\"error.log\"",
+    "filetype:log warning"
+  ],
+  "backup_exposto": [
+    "ext:zip backup",
+    "ext:tar backup",
+    "ext:gz backup",
+    "intitle:\"index of\" backup"
   ]
 }

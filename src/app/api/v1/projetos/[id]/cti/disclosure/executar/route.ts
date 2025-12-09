@@ -22,8 +22,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         if (grupo === 'dorks') {
             command = 'info_disclosure_check';
             args.category = ferramenta;
+        } else if (grupo === 'repositorios') {
+            command = 'info_disclosure_codigo';
+        } else if (grupo === 'pastes') {
+            command = 'info_disclosure_paste';
         } else {
-             return NextResponse.json({ error: 'Ferramenta desconhecida.' }, { status: 400 });
+            return NextResponse.json({ error: 'Ferramenta desconhecida.' }, { status: 400 });
         }
 
         await queueCommand(command, JSON.stringify(args), parseInt(id));
