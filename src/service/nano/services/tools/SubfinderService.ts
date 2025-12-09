@@ -92,7 +92,7 @@ export class SubfinderService extends NanoService {
       const fileContent = await fs.readFile(outputFile!, 'utf-8');
       await fs.unlink(outputFile!);
       const subdominios = fileContent?.split("\n").map((s: string) => s.trim()).filter((s: string) => !!s && s.includes('.')) ?? [];
-      await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0, TipoDominio.dns);
+      await Database.adicionarSubdominio(subdominios, op?.projetoId ?? 0, TipoDominio.principal);
       this.bus.emit(NanoEvents.JOB_COMPLETED, {
           id: id!,
           result: subdominios,
