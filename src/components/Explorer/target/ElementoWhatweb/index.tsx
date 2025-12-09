@@ -3,20 +3,19 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { WhatwebResultadoResponse } from "@/types/WhatwebResultadoResponse";
 import { NoCarregavel } from "../tipos";
 import { Tooltip } from "antd";
+import { useCallback, useMemo } from "react";
 
 const useElementoWhatweb = () => {
-  const getResultados = (resultados: WhatwebResultadoResponse[], chave: string): NoCarregavel | null => {
+  const getResultados = useCallback((resultados: WhatwebResultadoResponse[], chave: string): NoCarregavel | null => {
     if (!resultados?.length) return null;
 
-    // Group results by Plugin Name
     const grupos: Record<string, WhatwebResultadoResponse[]> = {};
-    resultados.forEach((res) => {
+    resultados.forEach(res => {
       if (!grupos[res.plugin]) grupos[res.plugin] = [];
       grupos[res.plugin].push(res);
     });
 
     const filhos: NoCarregavel[] = Object.entries(grupos).map(([plugin, itens]) => {
-      // If there are multiple items for the same plugin, create a folder
       if (itens.length > 1) {
         return {
           key: `${chave}-outros-${plugin}`,
@@ -35,7 +34,6 @@ const useElementoWhatweb = () => {
         };
       }
 
-      // Single item, display directly
       const item = itens[0];
       return {
         key: `${chave}-outros-${plugin}-${item.id}`,
@@ -55,9 +53,9 @@ const useElementoWhatweb = () => {
       className: "folder",
       isLeaf: filhos.length === 0
     };
-  };
+  }, []);
 
-  return { getResultados };
+  return useMemo(() => ({ getResultados }), [getResultados]);
 };
 
 export default useElementoWhatweb;

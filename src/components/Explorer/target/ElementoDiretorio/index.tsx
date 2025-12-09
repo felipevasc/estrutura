@@ -2,7 +2,7 @@ import StoreContext from "@/store";
 import { DiretorioResponse } from "@/types/DiretorioResponse";
 import { faFile, faFolder } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useContext } from "react";
+import React, { useCallback, useContext, useMemo } from "react";
 import { NoCarregavel } from "../tipos";
 import useElementoWhatweb from "../ElementoWhatweb";
 
@@ -10,7 +10,7 @@ const useElementoDiretorio = () => {
   const { selecaoTarget } = useContext(StoreContext);
   const elementoWhatweb = useElementoWhatweb();
 
-  const getDiretorio = async (diretorio: DiretorioResponse, nome?: string, filhos: NoCarregavel[] = []): Promise<NoCarregavel> => {
+  const getDiretorio = useCallback(async (diretorio: DiretorioResponse, nome?: string, filhos: NoCarregavel[] = []): Promise<NoCarregavel> => {
     const selecionado = selecaoTarget?.get();
     const checked = selecionado?.tipo === "diretorio" && selecionado?.id === diretorio.id;
 
@@ -36,11 +36,11 @@ const useElementoDiretorio = () => {
       children: children,
       isLeaf: children.length === 0
     };
-  };
+  }, [elementoWhatweb, selecaoTarget]);
 
-  return {
+  return useMemo(() => ({
     getDiretorio
-  };
+  }), [getDiretorio]);
 };
 
 export default useElementoDiretorio;
