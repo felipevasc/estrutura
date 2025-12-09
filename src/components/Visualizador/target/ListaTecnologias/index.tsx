@@ -41,10 +41,11 @@ const BlocoDados = styled.div`
 
 type Props = { resultados?: WhatwebResultadoResponse[] };
 
-const normalizarDados = (dados: unknown) => {
-  if (dados === null || dados === undefined) return null;
-  if (typeof dados === "string") {
-    const valorTratado = dados.trim();
+const normalizarDados = (dados: unknown, valor?: string) => {
+  const fonte = dados ?? valor;
+  if (fonte === null || fonte === undefined) return null;
+  if (typeof fonte === "string") {
+    const valorTratado = fonte.trim();
     if (!valorTratado || valorTratado === "undefined" || valorTratado === "null") return null;
     try {
       return JSON.parse(valorTratado);
@@ -52,7 +53,7 @@ const normalizarDados = (dados: unknown) => {
       return valorTratado;
     }
   }
-  return dados;
+  return fonte;
 };
 
 const obterDadosUnicos = (resultados: WhatwebResultadoResponse[]) => {
@@ -60,7 +61,7 @@ const obterDadosUnicos = (resultados: WhatwebResultadoResponse[]) => {
   const vistos = new Set<string>();
 
   resultados.forEach((resultado) => {
-    const dadoNormalizado = normalizarDados(resultado.dados);
+    const dadoNormalizado = normalizarDados(resultado.dados, resultado.valor);
     if (dadoNormalizado === null) return;
 
     const chave = typeof dadoNormalizado === "string" ? dadoNormalizado : JSON.stringify(dadoNormalizado);
@@ -78,6 +79,12 @@ const ListaTecnologias = ({ resultados }: Props) => {
 
   const dados = obterDadosUnicos(resultados);
 
+  const formatarValor = (valor?: string) => {
+    if (!valor) return "-";
+    const valorTratado = valor.trim();
+    return !valorTratado || valorTratado === "undefined" || valorTratado === "null" ? "-" : valorTratado;
+  };
+
   return (
     <Tabela>
       <thead>
@@ -91,7 +98,7 @@ const ListaTecnologias = ({ resultados }: Props) => {
           <Fragment key={resultado.id ?? `${resultado.plugin}-${resultado.valor}`}>
             <tr>
               <td>{resultado.plugin}</td>
-              <td>{resultado.valor ?? "-"}</td>
+              <td>{formatarValor(resultado.valor)}</td>
             </tr>
           </Fragment>
         ))}
