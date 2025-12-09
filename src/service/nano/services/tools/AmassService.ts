@@ -106,48 +106,31 @@ export class AmassService extends NanoService {
       const aliases: { origem: string; destino: string }[] = [];
       const dominioRaiz = (op?.endereco ?? '').toLowerCase();
 
+      const arquivoBase = jsonOutputFile?.replace(/\.json$/, '') ?? '';
+
       if (fs.existsSync(jsonOutputFile)) {
         const conteudo = fs.readFileSync(jsonOutputFile, 'utf-8');
-        const linhas = conteudo.split('\n').filter((linha) => linha.trim());
+        const itens = this.obterItensJson(conteudo);
 
-        for (const linha of linhas) {
-          try {
-            const item = JSON.parse(linha);
-
-            const nomeRegistro = typeof item.name === 'string' ? item.name.trim().toLowerCase() : '';
-            const dominioItem = typeof item.domain === 'string' ? item.domain.trim().toLowerCase() : '';
-            if (this.eSubdominio(nomeRegistro, dominioRaiz)) subdominios.add(nomeRegistro);
-            const dominioRelacionado = this.obterDominioRelacionado(nomeRegistro, dominioItem, dominioRaiz);
-            if (Array.isArray(item.addresses)) {
-              for (const endereco of item.addresses) {
-                if (endereco.ip && dominioRelacionado) {
-                  ips.push({
-                    endereco: endereco.ip,
-                    dominio: dominioRelacionado
-                  });
-                }
-              }
-            }
-            this.extrairRegistros(item).forEach((registro) => {
-              const nome = registro.nome || dominioRelacionado;
-              if (!nome || (!this.eSubdominio(nome, dominioRaiz) && nome !== dominioRaiz)) return;
-              const tipo = registro.tipo.toUpperCase();
-              const valor = registro.valor;
-              if (!tipo || !valor) return;
-              this.agruparRegistroDns(registrosDns, tipo, `${nome} -> ${valor}`);
-              if (tipo === 'MX') emails.add(valor);
-              if (tipo === 'CNAME') aliases.push({ origem: nome, destino: valor });
-            });
-            if (Array.isArray(item.emails)) {
-              item.emails.forEach((email: any) => {
-                const texto = typeof email === 'string' ? email.trim().toLowerCase() : '';
-                if (texto) emails.add(texto);
-              });
-            }
-          } catch {}
+        for (const item of itens) {
+          this.processarItemJson(item, dominioRaiz, subdominios, ips, registrosDns, emails, aliases);
         }
 
         fs.unlinkSync(jsonOutputFile);
+      }
+
+      const arquivoTexto = arquivoBase ? `${arquivoBase}.txt` : '';
+      if (arquivoTexto && fs.existsSync(arquivoTexto)) {
+        fs
+          .readFileSync(arquivoTexto, 'utf-8')
+          .split('\n')
+          .map((linha) => linha.trim().toLowerCase())
+          .filter(Boolean)
+          .forEach((linha) => {
+            if (this.eSubdominio(linha, dominioRaiz)) subdominios.add(linha);
+          });
+
+        fs.unlinkSync(arquivoTexto);
       }
 
       const logSaida = lerLogExecucao(jobId) || output || '';
@@ -237,6 +220,69 @@ export class AmassService extends NanoService {
     if (this.eSubdominio(dominioNormalizado, raiz)) return dominioNormalizado;
     if (nomeNormalizado === raiz || dominioNormalizado === raiz) return raiz;
     return '';
+  }
+
+  private processarItemJson(
+    item: any,
+    dominioRaiz: string,
+    subdominios: Set<string>,
+    ips: TipoIp[],
+    registrosDns: Map<string, Set<string>>,
+    emails: Set<string>,
+    aliases: { origem: string; destino: string }[]
+  ) {
+    const nomeRegistro = typeof item?.name === 'string' ? item.name.trim().toLowerCase() : '';
+    const dominioItem = typeof item?.domain === 'string' ? item.domain.trim().toLowerCase() : '';
+    if (this.eSubdominio(nomeRegistro, dominioRaiz)) subdominios.add(nomeRegistro);
+    const dominioRelacionado = this.obterDominioRelacionado(nomeRegistro, dominioItem, dominioRaiz);
+    if (Array.isArray(item?.addresses)) {
+      for (const endereco of item.addresses) {
+        if (endereco.ip && dominioRelacionado) {
+          ips.push({
+            endereco: endereco.ip,
+            dominio: dominioRelacionado
+          });
+        }
+      }
+    }
+    this.extrairRegistros(item).forEach((registro) => {
+      const nome = registro.nome || dominioRelacionado;
+      if (!nome || (!this.eSubdominio(nome, dominioRaiz) && nome !== dominioRaiz)) return;
+      const tipo = registro.tipo.toUpperCase();
+      const valor = registro.valor;
+      if (!tipo || !valor) return;
+      this.agruparRegistroDns(registrosDns, tipo, `${nome} -> ${valor}`);
+      if (tipo === 'MX') emails.add(valor);
+      if (tipo === 'CNAME') aliases.push({ origem: nome, destino: valor });
+    });
+    if (Array.isArray(item?.emails)) {
+      item.emails.forEach((email: any) => {
+        const texto = typeof email === 'string' ? email.trim().toLowerCase() : '';
+        if (texto) emails.add(texto);
+      });
+    }
+  }
+
+  private obterItensJson(conteudo: string) {
+    const texto = conteudo.trim();
+    if (!texto) return [] as any[];
+    try {
+      const dados = JSON.parse(texto);
+      if (Array.isArray(dados)) return dados;
+      if (Array.isArray((dados as any).results)) return (dados as any).results;
+    } catch {}
+    const itens: any[] = [];
+    texto
+      .split('\n')
+      .map((linha) => linha.trim())
+      .filter(Boolean)
+      .forEach((linha) => {
+        try {
+          const item = JSON.parse(linha);
+          itens.push(item);
+        } catch {}
+      });
+    return itens;
   }
 
   private extrairRegistros(item: any) {
