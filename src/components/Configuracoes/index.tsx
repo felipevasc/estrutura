@@ -127,7 +127,7 @@ export default function Configuracoes() {
                 <div>
                     <p>O ID vem do mecanismo criado no Programmable Search Engine.</p>
                     <ol>
-                        <li>Acesse https://programmablesearchengine.google.com/create e crie um novo mecanismo.</li>
+                        <li>Acesse https://programmablesearchengine.google.com/controlpanel/create e crie um novo mecanismo.</li>
                         <li>Defina os sites ou use a opção para pesquisar toda a web.</li>
                         <li>Abra Configurações &gt; Básico e copie o campo ID do mecanismo de pesquisa.</li>
                         <li>Insira o ID no campo Google Search Engine ID e utilize com a mesma chave de API.</li>
