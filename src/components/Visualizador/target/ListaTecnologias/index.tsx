@@ -44,10 +44,12 @@ type Props = { resultados?: WhatwebResultadoResponse[] };
 const normalizarDados = (dados: unknown) => {
   if (dados === null || dados === undefined) return null;
   if (typeof dados === "string") {
+    const valorTratado = dados.trim();
+    if (!valorTratado || valorTratado === "undefined" || valorTratado === "null") return null;
     try {
-      return JSON.parse(dados);
+      return JSON.parse(valorTratado);
     } catch {
-      return dados;
+      return valorTratado;
     }
   }
   return dados;
