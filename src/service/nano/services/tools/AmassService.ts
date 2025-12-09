@@ -345,14 +345,14 @@ export class AmassService extends NanoService {
       const pai = mapa.get(alias.destino) ?? (this.eSubdominio(alias.destino, dominioRaiz) ? mapa.get(alias.destino) : undefined);
       const atual = mapa.get(alias.origem);
       if (atual) {
-        const precisaAtualizar = atual.alias !== alias.destino || (pai?.id && atual.paiId !== pai.id);
+        const precisaAtualizar = atual.alias !== alias.destino || (pai?.id && atual.paiId !== pai.id) || atual.tipo !== TipoDominio.alias;
         if (precisaAtualizar) {
-          const atualizado = await prisma.dominio.update({ where: { id: atual.id }, data: { alias: alias.destino, paiId: pai?.id ?? atual.paiId ?? null } });
+          const atualizado = await prisma.dominio.update({ where: { id: atual.id }, data: { alias: alias.destino, paiId: pai?.id ?? atual.paiId ?? null, tipo: TipoDominio.alias } });
           mapa.set(atualizado.endereco, atualizado);
         }
         continue;
       }
-      const criado = await prisma.dominio.create({ data: { endereco: alias.origem, alias: alias.destino, projetoId, paiId: pai?.id ?? null, tipo: TipoDominio.dns } });
+      const criado = await prisma.dominio.create({ data: { endereco: alias.origem, alias: alias.destino, projetoId, paiId: pai?.id ?? null, tipo: TipoDominio.alias } });
       mapa.set(criado.endereco, criado);
     }
   }

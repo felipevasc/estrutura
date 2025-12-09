@@ -22,18 +22,43 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
 
     if ((dominio.subDominios?.length ?? 0) > 0) {
       const subdominios = dominio.subDominios ?? [];
-      const filhosSubdominios: NoCarregavel[] = [];
-      for (let i = 0; i < subdominios.length; i++) {
-        const subdominio = subdominios[i];
-        filhosSubdominios.push(await getDominio(subdominio, [...anteriores, "dominio"]));
-      }
-      filhos.push({
-        key: `${dominio.endereco}-${dominio.id}-subdominios`,
-        title: <div><FontAwesomeIcon icon={faRoute} /> Subdomínios</div>,
-        children: filhosSubdominios,
-        className: "folder",
-        isLeaf: filhosSubdominios.length === 0
+      const grupos = new Map<string, DominioResponse[]>();
+      subdominios.forEach(sub => {
+        const chave = sub.tipo ?? "subdominio";
+        const atual = grupos.get(chave) ?? [];
+        grupos.set(chave, [...atual, sub]);
       });
+
+      const ordem = ["principal", "dns", "alias"];
+      const rotulos: Record<string, string> = { principal: "Subdomínios", dns: "DNS", alias: "Alias", subdominio: "Subdomínios" };
+      const icones: Record<string, any> = { principal: faRoute, dns: faNetworkWired, alias: faFolderOpen, subdominio: faRoute };
+
+      const chaves = [...grupos.keys()].sort((a, b) => {
+        const ia = ordem.indexOf(a);
+        const ib = ordem.indexOf(b);
+        if (ia === -1 && ib === -1) return a.localeCompare(b);
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+
+      for (const chave of chaves) {
+        const lista = grupos.get(chave) ?? [];
+        const filhosSubdominios: NoCarregavel[] = [];
+        for (let i = 0; i < lista.length; i++) {
+          const subdominio = lista[i];
+          filhosSubdominios.push(await getDominio(subdominio, [...anteriores, chave]));
+        }
+        const icone = icones[chave] ?? faRoute;
+        const titulo = rotulos[chave] ?? "Subdomínios";
+        filhos.push({
+          key: `${dominio.endereco}-${dominio.id}-${chave}`,
+          title: <div><FontAwesomeIcon icon={icone} /> {titulo}</div>,
+          children: filhosSubdominios,
+          className: "folder",
+          isLeaf: filhosSubdominios.length === 0
+        });
+      }
     }
 
     if (!anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0) {
@@ -74,6 +99,7 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
 
   const carregarDominio = async (dominio: DominioResponse, anteriores: string[]) => {
     const params = new URLSearchParams({ limiteFilhos: "1", limite: "0" });
+    params.set("tipos", "principal,dns,alias");
     const res = await fetch(`/api/v1/dominios/${dominio.id}?${params.toString()}`);
     const data: DominioResponse = await res.json();
     return montarFilhos(data, anteriores);

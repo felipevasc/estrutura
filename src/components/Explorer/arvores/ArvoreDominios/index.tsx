@@ -1,6 +1,6 @@
 "use client"
 import { Button, Tree } from 'antd';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ReloadOutlined, SendOutlined } from '@ant-design/icons';
 import { StyledArvoreDominio, StyledTitleDominio, StyledTitleDominioIcon } from './styles';
 import NovoDominio from './NovoDominio';
@@ -9,6 +9,7 @@ import StoreContext from '@/store';
 import useElementoDominio from '../../target/ElementoDominio';
 import { NoCarregavel } from '../../target/tipos';
 import { atualizarFilhos } from '../../target/atualizarArvore';
+import { DominioResponse } from '@/types/DominioResponse';
 
 const ArvoreDominios = () => {
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([]);
@@ -32,8 +33,8 @@ const ArvoreDominios = () => {
     const carregar = async () => {
       setCarregando(true);
       if (dominiosProjeto && ativo) {
-        const resolvidos = await Promise.all(dominiosProjeto.map(d => elementoDominio.getDominio(d)));
-        if (ativo) setElementos(resolvidos);
+        const grupos = await montarElementos(dominiosProjeto);
+        if (ativo) setElementos(grupos);
       } else if (ativo) {
         setElementos([]);
       }
@@ -48,7 +49,41 @@ const ArvoreDominios = () => {
     return () => {
       ativo = false;
     };
-  }, [dominiosProjeto]);
+  }, [dominiosProjeto, montarElementos]);
+
+  const montarElementos = useCallback(async (lista: DominioResponse[]) => {
+    const grupos = new Map<string, DominioResponse[]>();
+    lista.forEach(d => {
+      const chave = d.tipo ?? 'subdominio';
+      const atual = grupos.get(chave) ?? [];
+      grupos.set(chave, [...atual, d]);
+    });
+
+    const ordem = ['principal', 'dns', 'alias'];
+    const rotulos: Record<string, string> = { principal: 'Domínios', dns: 'DNS', alias: 'Alias', subdominio: 'Subdomínios' };
+
+    const chaves = [...grupos.keys()].sort((a, b) => {
+      const ia = ordem.indexOf(a);
+      const ib = ordem.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+
+    const nos: NoCarregavel[] = [];
+    for (const chave of chaves) {
+      const filhos = await Promise.all((grupos.get(chave) ?? []).map(d => elementoDominio.getDominio(d, [chave])));
+      nos.push({
+        key: `grupo-${chave}`,
+        title: rotulos[chave] ?? 'Domínios',
+        children: filhos,
+        className: 'folder',
+        isLeaf: filhos.length === 0
+      });
+    }
+    return nos;
+  }, [elementoDominio]);
 
   const onExpand = (novasChaves: React.Key[]) => {
     setExpandedKeys(novasChaves);
@@ -64,7 +99,15 @@ const ArvoreDominios = () => {
   };
 
   const sortedElementos = useMemo(() => {
-    return [...elementos].sort((a, b) => a.key && b.key && a.key > b?.key ? 1 : -1)
+    const ordem = ['grupo-principal', 'grupo-dns', 'grupo-alias'];
+    return [...elementos].sort((a, b) => {
+      const ia = ordem.indexOf(String(a.key));
+      const ib = ordem.indexOf(String(b.key));
+      if (ia === -1 && ib === -1) return String(a.key).localeCompare(String(b.key));
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
   }, [elementos]);
 
   const refresh = async () => {
@@ -76,8 +119,8 @@ const ArvoreDominios = () => {
     const resposta = await recarregarDominios();
     const lista = resposta.data || dominiosProjeto;
     if (lista) {
-      const resolvidos = await Promise.all(lista.map(d => elementoDominio.getDominio(d)));
-      setElementos(resolvidos);
+      const grupos = await montarElementos(lista);
+      setElementos(grupos);
       setExpandedKeys(abertas);
     } else {
       setElementos([]);
