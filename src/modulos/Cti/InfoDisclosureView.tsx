@@ -120,33 +120,69 @@ const AbasFerramentas = styled(Tabs)`
 
 const ListaFerramentas = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 10px;
 `;
 
-const BlocoFerramenta = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 44px;
-  gap: 8px;
+const CartaoFerramenta = styled.div`
+  display: flex;
   align-items: center;
-`;
-
-const BotaoFerramenta = styled(Button)`
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  font-weight: 700;
+  gap: 12px;
+  padding: 12px;
   border-radius: ${({ theme }) => theme.borders.radius};
-  background: ${({ theme }) => theme.glass.card};
   border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  background: ${({ theme }) => theme.glass.card};
   box-shadow: ${({ theme }) => theme.shadows.soft};
 `;
 
+const IconeFerramenta = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: ${({ theme }) => theme.glass.default};
+  color: ${({ theme }) => theme.colors.textPrimary};
+`;
+
+const CorpoFerramenta = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+`;
+
+const NomeFerramenta = styled.span`
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const DescricaoFerramenta = styled.span`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 12px;
+  line-height: 1.4;
+`;
+
+const AcoesFerramenta = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+`;
+
+const BotaoAcao = styled(Button)`
+  min-width: 96px;
+  height: 36px;
+  font-weight: 700;
+  border-radius: ${({ theme }) => theme.borders.radius};
+`;
+
 const BotaoIcone = styled(Button)`
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -451,29 +487,36 @@ const InfoDisclosureView = () => {
                                 ) : (
                                     <ListaFerramentas>
                                         {grupo.itens.map(item => (
-                                            <BlocoFerramenta key={item.chave}>
-                                                <Tooltip title={item.descricao}>
-                                                    <BotaoFerramenta
-                                                        icon={item.icone}
-                                                        onClick={() => executarFerramenta(item.chave, item.grupo)}
-                                                        loading={executando === `${item.grupo}-${item.chave}`}
-                                                        disabled={!!executando || !dominioSelecionado}
-                                                        type={item.grupo === 'dorks' ? 'default' : 'primary'}
-                                                    >
-                                                        {item.rotulo}
-                                                    </BotaoFerramenta>
-                                                </Tooltip>
-                                                {item.configuravel && (
-                                                    <Tooltip title="Configurar lista">
-                                                        <BotaoIcone
-                                                            icon={<SettingOutlined />}
-                                                            onClick={() => abrirModalConfiguracao(item.chave)}
-                                                            loading={salvandoConfiguracao && categoriaAtualConfiguracao === item.chave}
-                                                            disabled={!!executando}
-                                                        />
+                                            <CartaoFerramenta key={item.chave}>
+                                                <IconeFerramenta>{item.icone}</IconeFerramenta>
+                                                <CorpoFerramenta>
+                                                    <NomeFerramenta>{item.rotulo}</NomeFerramenta>
+                                                    <DescricaoFerramenta>{item.descricao}</DescricaoFerramenta>
+                                                </CorpoFerramenta>
+                                                <AcoesFerramenta>
+                                                    <Tooltip title={`Executar ${item.rotulo}`}>
+                                                        <BotaoAcao
+                                                            type={item.grupo === 'dorks' ? 'default' : 'primary'}
+                                                            onClick={() => executarFerramenta(item.chave, item.grupo)}
+                                                            loading={executando === `${item.grupo}-${item.chave}`}
+                                                            disabled={!!executando || !dominioSelecionado}
+                                                            icon={<SearchOutlined />}
+                                                        >
+                                                            Executar
+                                                        </BotaoAcao>
                                                     </Tooltip>
-                                                )}
-                                            </BlocoFerramenta>
+                                                    {item.configuravel && (
+                                                        <Tooltip title="Configurar lista">
+                                                            <BotaoIcone
+                                                                icon={<SettingOutlined />}
+                                                                onClick={() => abrirModalConfiguracao(item.chave)}
+                                                                loading={salvandoConfiguracao && categoriaAtualConfiguracao === item.chave}
+                                                                disabled={!!executando}
+                                                            />
+                                                        </Tooltip>
+                                                    )}
+                                                </AcoesFerramenta>
+                                            </CartaoFerramenta>
                                         ))}
                                     </ListaFerramentas>
                                 )}
