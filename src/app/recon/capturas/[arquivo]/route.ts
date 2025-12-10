@@ -22,5 +22,5 @@ export async function GET(_: NextRequest, contexto: { params: Promise<{ arquivo:
     const conteudo = await lerArquivo(destino, pasta);
     if (!conteudo) return NextResponse.json({ error: "Captura não encontrada" }, { status: 404 });
     const tipo = tipos[path.extname(nome).toLowerCase()] || "image/png";
-    return new NextResponse(conteudo, { status: 200, headers: { "content-type": tipo } });
+    return new NextResponse(new Uint8Array(conteudo), { status: 200, headers: { "content-type": tipo } });
 }
