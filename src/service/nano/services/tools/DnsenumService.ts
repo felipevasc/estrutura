@@ -133,14 +133,16 @@ export class DnsenumService extends NanoService {
         const conteudoXml = fs.readFileSync(outputFile, 'utf-8');
         const hosts = /<host>([\s\S]*?)<\/host>/g;
         let grupo;
-        const subdominios: string[] = [];
+        const tiposSubdominio = new Map<string, TipoDominio>();
         const ips: TipoIp[] = [];
         while ((grupo = hosts.exec(conteudoXml)) !== null) {
             const trecho = grupo[1];
             const hostEncontrado = /<hostname>(.*?)<\/hostname>/.exec(trecho);
             if (hostEncontrado) {
                 const host = hostEncontrado[1].trim();
-                subdominios.push(host);
+                const tipo = this.identificarTipoDominio(trecho);
+                const tipoAtual = tiposSubdominio.get(host);
+                if (!tipoAtual || this.prioridadeTipo(tipo) > this.prioridadeTipo(tipoAtual)) tiposSubdominio.set(host, tipo);
                 const ipRegex = /<ip>(.*?)<\/ip>/g;
                 let captura;
                 while ((captura = ipRegex.exec(trecho)) !== null) {
@@ -156,14 +158,29 @@ export class DnsenumService extends NanoService {
             const ipsArquivo = this.extrairIpsArquivo(arquivo, meta?.dominio);
             for (const ip of ipsArquivo) ips.push(ip);
         }
-        const subdominiosUnicos = Array.from(new Set(subdominios));
+        const subdominiosPrincipais: string[] = [];
+        const subdominiosDns: string[] = [];
+        const subdominiosMail: string[] = [];
+        for (const [dominio, tipo] of tiposSubdominio.entries()) {
+            if (tipo === TipoDominio.mail) {
+                subdominiosMail.push(dominio);
+                continue;
+            }
+            if (tipo === TipoDominio.dns) {
+                subdominiosDns.push(dominio);
+                continue;
+            }
+            subdominiosPrincipais.push(dominio);
+        }
         const ipsUnicos = Array.from(new Map(ips.map((ip) => [`${ip.endereco}|${ip.dominio}`, ip])).values());
-        if (subdominiosUnicos.length > 0) await Database.adicionarSubdominio(subdominiosUnicos, projectId, TipoDominio.dns);
+        if (subdominiosPrincipais.length > 0) await Database.adicionarSubdominio(subdominiosPrincipais, projectId, TipoDominio.principal);
+        if (subdominiosDns.length > 0) await Database.adicionarSubdominio(subdominiosDns, projectId, TipoDominio.dns);
+        if (subdominiosMail.length > 0) await Database.adicionarSubdominio(subdominiosMail, projectId, TipoDominio.mail);
         if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projectId);
         this.limparArquivos([outputFile, ...arquivosIps]);
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id!,
-            result: { subdominios: subdominiosUnicos.length, ips: ipsUnicos.length }
+            result: { subdominios: tiposSubdominio.size, ips: ipsUnicos.length }
         });
       } catch (e: unknown) {
           this.limparArquivos([outputFile, ...this.localizarArquivosIps(meta?.dominio)]);
@@ -190,6 +207,19 @@ export class DnsenumService extends NanoService {
           id: id,
           error: mensagemErro
       });
+  }
+
+  private identificarTipoDominio(trecho: string) {
+    const tipos = Array.from(trecho.matchAll(/<type>(.*?)<\/type>/gi)).map((captura) => captura[1]?.trim().toUpperCase()).filter((tipo) => !!tipo);
+    if (tipos.some((tipo) => tipo === 'MX')) return TipoDominio.mail;
+    if (tipos.some((tipo) => tipo === 'NS')) return TipoDominio.dns;
+    return TipoDominio.principal;
+  }
+
+  private prioridadeTipo(tipo: TipoDominio) {
+    if (tipo === TipoDominio.mail) return 3;
+    if (tipo === TipoDominio.dns) return 2;
+    return 1;
   }
 
   private localizarArquivosIps(dominio?: string) {

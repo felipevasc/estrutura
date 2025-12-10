@@ -55,6 +55,7 @@ model Dominio {
 enum TipoDominio {
   principal
   dns
+  mail
 }
 
 model Rede {
