@@ -50,5 +50,18 @@
       "/opt/dev/estrutura/db/wordlists/subdomains.txt",
       "ufu.br"
     ]
+  },
+  "8591": {
+    "comando": "dnsenum",
+    "argumentos": [
+      "--noreverse",
+      "-o",
+      "/tmp/dnsenum_10_8591_1765384950944.xml",
+      "--threads",
+      "5",
+      "-f",
+      "/opt/estrutura/db/wordlists/subdomains.txt",
+      "inbtec.com.br"
+    ]
   }
 }
