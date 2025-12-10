@@ -143,7 +143,7 @@ const IconeFerramenta = styled.div`
   align-items: center;
   justify-content: center;
   background: ${({ theme }) => theme.glass.default};
-  color: ${({ theme }) => theme.colors.textPrimary};
+  color: ${({ theme }) => theme.colors.text};
 `;
 
 const CorpoFerramenta = styled.div`
@@ -372,14 +372,16 @@ const InfoDisclosureView = () => {
             grupo: 'repositorios',
             rotulo: 'Código Aberto',
             descricao: 'Busca por menções ao domínio em GitHub, GitLab e Bitbucket.',
-            icone: <GithubOutlined />
+            icone: <GithubOutlined />,
+            configuravel: false
         },
         {
             chave: 'pastes',
             grupo: 'pastes',
             rotulo: 'Pastes',
             descricao: 'Identificação de colagens públicas contendo o domínio.',
-            icone: <FileTextOutlined />
+            icone: <FileTextOutlined />,
+            configuravel: false
         }
     ];
 
