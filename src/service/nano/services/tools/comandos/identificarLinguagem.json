@@ -1,1 +1,8 @@
-{}
+{
+  "8473": {
+    "comando": "identificarLinguagem",
+    "argumentos": [
+      "{\"idDominio\":\"5592\"}"
+    ]
+  }
+}

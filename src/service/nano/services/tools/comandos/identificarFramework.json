@@ -1,1 +1,8 @@
-{}
+{
+  "8474": {
+    "comando": "identificarFramework",
+    "argumentos": [
+      "{\"idDominio\":\"5592\"}"
+    ]
+  }
+}
