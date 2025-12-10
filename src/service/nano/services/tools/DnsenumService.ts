@@ -53,6 +53,8 @@ export class DnsenumService extends NanoService {
         const registroDominio = await prisma.dominio.findFirst({ where: { id: Number(idDominio) } });
         const dominioNormalizado = this.normalizarDominio(registroDominio?.endereco ?? '');
         if (!dominioNormalizado) throw new Error('Domínio não encontrado');
+        const projetoAlvo = registroDominio?.projetoId ?? projectId;
+        if (!projetoAlvo) throw new Error('Projeto não encontrado');
         await this.validarDominio(dominioNormalizado);
         const caminhoWordlist = await this.resolverWordlist(wordlist);
         const nomeArquivoSaida = `dnsenum_${projectId}_${id}_${Date.now()}.xml`;
@@ -65,7 +67,7 @@ export class DnsenumService extends NanoService {
             outputFile: caminhoSaida,
             replyTo: NanoEvents.DNSENUM_TERMINAL_RESULT,
             errorTo: NanoEvents.DNSENUM_TERMINAL_ERROR,
-            meta: { projectId, dominio: dominioNormalizado, outputFile: caminhoSaida }
+            meta: { projectId: projetoAlvo, dominio: dominioNormalizado, outputFile: caminhoSaida, idDominio: Number(idDominio) }
         });
     } catch (e: unknown) {
         this.bus.emit(NanoEvents.JOB_FAILED, {
@@ -125,8 +127,9 @@ export class DnsenumService extends NanoService {
 
   private async processarResultado(payload: TerminalResultPayload) {
       const { id, meta } = payload;
-      const { projectId, outputFile } = meta;
+      const { outputFile } = meta;
       try {
+        const projetoId = await this.obterProjetoId(meta);
         if (!fs.existsSync(outputFile)) {
              throw new Error('Arquivo de saída não encontrado');
         }
@@ -139,6 +142,8 @@ export class DnsenumService extends NanoService {
             const ipsArquivo = this.extrairIpsArquivo(arquivo, meta?.dominio);
             for (const ip of ipsArquivo) ips.push(ip);
         }
+        const paiDominio = Number(meta?.idDominio);
+        const paiValido = Number.isNaN(paiDominio) ? undefined : paiDominio;
         const subdominiosPrincipais: string[] = [];
         const subdominiosDns: string[] = [];
         const subdominiosMail: string[] = [];
@@ -154,10 +159,10 @@ export class DnsenumService extends NanoService {
             subdominiosPrincipais.push(dominio);
         }
         const ipsUnicos = Array.from(new Map(ips.map((ip) => [`${ip.endereco}|${ip.dominio}`, ip])).values());
-        if (subdominiosPrincipais.length > 0) await Database.adicionarSubdominio(subdominiosPrincipais, projectId, TipoDominio.principal);
-        if (subdominiosDns.length > 0) await Database.adicionarSubdominio(subdominiosDns, projectId, TipoDominio.dns);
-        if (subdominiosMail.length > 0) await Database.adicionarSubdominio(subdominiosMail, projectId, TipoDominio.mail);
-        if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projectId);
+        if (subdominiosPrincipais.length > 0) await Database.adicionarSubdominio(subdominiosPrincipais, projetoId, TipoDominio.principal, paiValido);
+        if (subdominiosDns.length > 0) await Database.adicionarSubdominio(subdominiosDns, projetoId, TipoDominio.dns, paiValido);
+        if (subdominiosMail.length > 0) await Database.adicionarSubdominio(subdominiosMail, projetoId, TipoDominio.mail, paiValido);
+        if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projetoId);
         this.limparArquivos([outputFile, ...arquivosIps]);
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
             id: id!,
@@ -251,8 +256,9 @@ export class DnsenumService extends NanoService {
         if (comparacao.includes('brute forcing')) { secao = TipoDominio.principal; continue; }
         if (comparacao.includes('trying zone transfers') || comparacao.includes('class c netranges:') || comparacao.includes('ip blocks:')) { secao = null; continue; }
         if (!secao) continue;
-        const dominio = this.normalizarHost(linha.split(/\s+/)[0]);
-        console.log(secao, linha, dominio)
+        const partes = linha.split(/\s+/).filter((parte) => !!parte);
+        const posicaoDominio = ['dns', 'mail', 'principal'].includes(partes[0]?.toLowerCase()) ? 1 : 0;
+        const dominio = this.normalizarHost(partes[posicaoDominio] || '');
         if (!dominio || dominio.match(/^\d{1,3}(?:\.\d{1,3}){3}$/) || /^_+$/.test(dominio) || /^-+$/.test(dominio)) continue;
         this.definirTipo(tipos, dominio, secao);
     }
@@ -285,5 +291,16 @@ export class DnsenumService extends NanoService {
         if (!caminho) continue;
         if (fs.existsSync(caminho)) fs.unlinkSync(caminho);
     }
+  }
+
+  private async obterProjetoId(meta: any) {
+    const projetoMeta = Number(meta?.projectId);
+    if (!Number.isNaN(projetoMeta) && projetoMeta > 0) return projetoMeta;
+    const idDominio = Number(meta?.idDominio);
+    if (Number.isNaN(idDominio)) throw new Error('Projeto não encontrado');
+    const dominio = await prisma.dominio.findUnique({ where: { id: idDominio } });
+    const projetoRelacionado = dominio?.projetoId;
+    if (!projetoRelacionado) throw new Error('Projeto não encontrado');
+    return projetoRelacionado;
   }
 }
