@@ -254,8 +254,9 @@ export class DnsenumService extends NanoService {
         if (comparacao.includes('brute forcing')) { secao = TipoDominio.principal; continue; }
         if (comparacao.includes('trying zone transfers') || comparacao.includes('class c netranges:') || comparacao.includes('ip blocks:')) { secao = null; continue; }
         if (!secao) continue;
-        const dominio = this.normalizarHost(linha.split(/\s+/)[0]);
-        console.log(secao, linha, dominio)
+        const partes = linha.split(/\s+/).filter((parte) => !!parte);
+        const posicaoDominio = ['dns', 'mail', 'principal'].includes(partes[0]?.toLowerCase()) ? 1 : 0;
+        const dominio = this.normalizarHost(partes[posicaoDominio] || '');
         if (!dominio || dominio.match(/^\d{1,3}(?:\.\d{1,3}){3}$/) || /^_+$/.test(dominio) || /^-+$/.test(dominio)) continue;
         this.definirTipo(tipos, dominio, secao);
     }
