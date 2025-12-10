@@ -21,7 +21,7 @@ export type DiretorioResponse = {
     tipo?: 'diretorio' | 'arquivo';
     criadoEm?: string;
     captura?: string | null;
-    capturadoEm?: string | null;
+    capturadoEm?: Date | null;
     dominio?: DominioDiretorioResponse | null;
     ip?: IpDiretorioResponse | null;
     whatwebResultados?: WhatwebResultadoResponse[];

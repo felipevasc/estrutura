@@ -1,8 +1,8 @@
 import prisma from "@/database";
 import { ApiResponse } from "@/types/ApiResponse";
 import { DominioResponse } from "@/types/DominioResponse";
-import { NextResponse } from "next/server";
 import { TipoDominio } from "@prisma/client";
+import { NextResponse } from "next/server";
 
 export async function GET(): ApiResponse<DominioResponse[]> {
     const ret = await prisma.dominio.findMany({ where: { tipo: TipoDominio.principal } });

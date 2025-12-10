@@ -26,5 +26,12 @@
       "www.consultacpnu.com.br",
       "8.8.8.8"
     ]
+  },
+  "8480": {
+    "comando": "nslookup",
+    "argumentos": [
+      "gov.br",
+      "8.8.8.8"
+    ]
   }
 }

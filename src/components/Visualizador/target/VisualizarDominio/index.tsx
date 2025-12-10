@@ -260,9 +260,11 @@ const VisualizarDominio = () => {
     const capturar = async () => {
         setCapturando(true);
         try {
-            await api.recon.capturar(projetoId, { alvos: [{ tipo: "dominio", id: dominio.id }] });
-            message.success("Captura enfileirada.");
-            refetch();
+	    if (dominio.id) {
+	      await api.recon.capturar(projetoId, { alvos: [{ tipo: "dominio", id: dominio.id }] });
+              message.success("Captura enfileirada.");
+              refetch();
+	    }
         } catch {
             message.error("Não foi possível enfileirar a captura.");
         } finally {

@@ -1,6 +1,6 @@
 import prisma from "@/database";
-import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { NextRequest, NextResponse } from "next/server";
 
 const parseNumero = (valor?: string | null) => {
     if (!valor) return undefined;

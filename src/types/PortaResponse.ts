@@ -10,6 +10,6 @@ export type PortaResponse = {
     ipId: number | null;
     ip?: IpResponse | null; // Allow null from Prisma
     captura?: string | null;
-    capturadoEm?: string | null;
+    capturadoEm?: Date | null;
     whatwebResultados?: WhatwebResultadoResponse[];
 }
