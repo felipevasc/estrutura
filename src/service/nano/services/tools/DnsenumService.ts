@@ -204,7 +204,8 @@ export class DnsenumService extends NanoService {
   }
 
   private normalizarHost(host: string) {
-    return host.replace(/\.$/, '').toLowerCase();
+    const limpo = host.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '').replace(/[\x00-\x1f\x7f]/g, '');
+    return limpo.replace(/\.$/, '').toLowerCase();
   }
 
   private definirTipo(tipos: Map<string, TipoDominio>, dominio: string, tipo: TipoDominio) {
@@ -239,20 +240,25 @@ export class DnsenumService extends NanoService {
   private extrairDominiosTexto(saida: string) {
     const tipos = new Map<string, TipoDominio>();
     if (!saida) return tipos;
-    const linhas = saida.split('\n').map((linha) => linha.trim()).filter((linha) => !!linha);
+    const texto = this.removerAnsi(saida);
+    const linhas = texto.split('\n').map((linha) => linha.trim()).filter((linha) => !!linha);
     let secao: TipoDominio | null = null;
     for (const linha of linhas) {
-        if (/^Host's addresses:/i.test(linha)) { secao = TipoDominio.principal; continue; }
-        if (/^Name Servers:/i.test(linha)) { secao = TipoDominio.dns; continue; }
-        if (/^Mail \(MX\) Servers:/i.test(linha)) { secao = TipoDominio.mail; continue; }
-        if (/^Brute forcing/i.test(linha)) { secao = TipoDominio.principal; continue; }
-        if (/^Trying Zone Transfers/i.test(linha) || /class C netranges:/i.test(linha) || /ip blocks:/i.test(linha)) { secao = null; continue; }
+        if (/Host's addresses:/i.test(linha)) { secao = TipoDominio.principal; continue; }
+        if (/Name Servers:/i.test(linha)) { secao = TipoDominio.dns; continue; }
+        if (/Mail \(MX\) Servers:/i.test(linha)) { secao = TipoDominio.mail; continue; }
+        if (/Brute forcing/i.test(linha)) { secao = TipoDominio.principal; continue; }
+        if (/Trying Zone Transfers/i.test(linha) || /class C netranges:/i.test(linha) || /ip blocks:/i.test(linha)) { secao = null; continue; }
         if (!secao) continue;
         const dominio = this.normalizarHost(linha.split(/\s+/)[0]);
         if (!dominio || dominio.match(/^\d{1,3}(?:\.\d{1,3}){3}$/) || /^_+$/.test(dominio) || /^-+$/.test(dominio)) continue;
         this.definirTipo(tipos, dominio, secao);
     }
     return tipos;
+  }
+
+  private removerAnsi(texto: string) {
+    return texto.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '');
   }
 
   private localizarArquivosIps(dominio?: string) {
