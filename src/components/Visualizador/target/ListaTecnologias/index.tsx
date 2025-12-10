@@ -109,7 +109,7 @@ const ListaTecnologias = ({ resultados }: Props) => {
             <td colSpan={2}>
               {dados.map((dado, indice) => (
                 <BlocoDados key={indice}>
-                  <JsonView style={defaultStyles} data={dado} />
+                  <JsonView style={defaultStyles} data={dado ?? []} />
                 </BlocoDados>
               ))}
             </td>
