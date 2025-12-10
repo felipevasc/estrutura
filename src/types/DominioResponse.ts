@@ -8,6 +8,8 @@ export type DominioResponse = {
     id?: number;
     endereco?: string;
     alias?: string | null;
+    captura?: string | null;
+    capturadoEm?: string | null;
     tipo?: $Enums.TipoDominio;
     projetoId?: number;
     paiId?: number | null;

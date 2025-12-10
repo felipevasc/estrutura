@@ -27,6 +27,8 @@ model Dominio {
   id       Int     @id @default(autoincrement())
   endereco String
   alias    String?
+  captura   String?
+  capturadoEm DateTime?
   tipo     TipoDominio @default(principal)
 
   projetoId Int
@@ -123,6 +125,8 @@ model Porta {
   protocolo String?
   servico String?
   versao  String?
+  captura   String?
+  capturadoEm DateTime?
   ipId  Int?
   ip    Ip?   @relation(fields: [ipId], references: [id])
 
@@ -146,6 +150,8 @@ model Diretorio {
   status      Int?
   tamanho     Int?
   tipo        TipoDiretorio @default(diretorio)
+  captura   String?
+  capturadoEm DateTime?
 
   dominioId   Int?
   dominio     Dominio? @relation(fields: [dominioId], references: [id])

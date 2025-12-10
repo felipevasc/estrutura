@@ -10,13 +10,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         where: { id: Number(id) },
         include: {
             dominio: { select: { id: true, endereco: true, alias: true } },
-            ip: { select: { id: true, endereco: true } }
+            ip: { select: { id: true, endereco: true } },
+            whatwebResultados: true,
         }
     });
 
     if (!diretorio) return NextResponse.json({ error: "Diretório não encontrado" }, { status: 404 });
 
-    const { createdAt, ...dados } = diretorio;
+    const { createdAt, capturadoEm, ...dados } = diretorio;
 
-    return NextResponse.json({ ...dados, criadoEm: createdAt });
+    return NextResponse.json({ ...dados, criadoEm: createdAt, capturadoEm });
 }

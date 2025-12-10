@@ -9,5 +9,7 @@ export type PortaResponse = {
     versao: string | null;
     ipId: number | null;
     ip?: IpResponse | null; // Allow null from Prisma
+    captura?: string | null;
+    capturadoEm?: string | null;
     whatwebResultados?: WhatwebResultadoResponse[];
 }
