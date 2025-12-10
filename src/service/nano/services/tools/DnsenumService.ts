@@ -245,13 +245,14 @@ export class DnsenumService extends NanoService {
     let secao: TipoDominio | null = null;
     for (const linha of linhas) {
         const comparacao = linha.toLowerCase();
-        if (comparacao.includes("host's addresses:")) { secao = TipoDominio.principal; continue; }
-        if (comparacao.includes('name servers:')) { secao = TipoDominio.dns; continue; }
-        if (comparacao.includes('mail (mx) servers:')) { secao = TipoDominio.mail; continue; }
+        if (comparacao.includes("host") && comparacao.includes("addresses")) { secao = TipoDominio.principal; continue; }
+        if (comparacao.includes('name') && comparacao.includes('servers')) { secao = TipoDominio.dns; continue; }
+        if (comparacao.includes('mail') && comparacao.includes('servers')) { secao = TipoDominio.mail; continue; }
         if (comparacao.includes('brute forcing')) { secao = TipoDominio.principal; continue; }
         if (comparacao.includes('trying zone transfers') || comparacao.includes('class c netranges:') || comparacao.includes('ip blocks:')) { secao = null; continue; }
         if (!secao) continue;
         const dominio = this.normalizarHost(linha.split(/\s+/)[0]);
+        console.log(secao, linha, dominio)
         if (!dominio || dominio.match(/^\d{1,3}(?:\.\d{1,3}){3}$/) || /^_+$/.test(dominio) || /^-+$/.test(dominio)) continue;
         this.definirTipo(tipos, dominio, secao);
     }

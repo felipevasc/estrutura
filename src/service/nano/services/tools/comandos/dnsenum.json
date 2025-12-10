@@ -11,5 +11,31 @@
       "/opt/estrutura/db/wordlists/subdomains.txt",
       "ufu.br"
     ]
+  },
+  "8475": {
+    "comando": "dnsenum",
+    "argumentos": [
+      "--noreverse",
+      "-o",
+      "/tmp/dnsenum_9_8475_1765328129866.xml",
+      "--threads",
+      "5",
+      "-f",
+      "/opt/dev/estrutura/db/wordlists/subdomains.txt",
+      "ufu.br"
+    ]
+  },
+  "8476": {
+    "comando": "dnsenum",
+    "argumentos": [
+      "--noreverse",
+      "-o",
+      "/tmp/dnsenum_9_8476_1765328270827.xml",
+      "--threads",
+      "5",
+      "-f",
+      "/opt/dev/estrutura/db/wordlists/subdomains.txt",
+      "ufu.br"
+    ]
   }
 }
