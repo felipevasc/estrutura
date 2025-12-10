@@ -126,6 +126,7 @@ export class DnsenumService extends NanoService {
   private async processarResultado(payload: TerminalResultPayload) {
       const { id, meta } = payload;
       const { projectId, outputFile } = meta;
+      const { dnsServidores, mailServidores } = this.extrairServidores(payload.output);
       try {
         if (!fs.existsSync(outputFile)) {
              throw new Error('Arquivo de saída não encontrado');
@@ -156,6 +157,7 @@ export class DnsenumService extends NanoService {
             const ipsArquivo = this.extrairIpsArquivo(arquivo, meta?.dominio);
             for (const ip of ipsArquivo) ips.push(ip);
         }
+        subdominios.push(...dnsServidores, ...mailServidores);
         const subdominiosUnicos = Array.from(new Set(subdominios));
         const ipsUnicos = Array.from(new Map(ips.map((ip) => [`${ip.endereco}|${ip.dominio}`, ip])).values());
         if (subdominiosUnicos.length > 0) await Database.adicionarSubdominio(subdominiosUnicos, projectId, TipoDominio.dns);
@@ -203,6 +205,22 @@ export class DnsenumService extends NanoService {
     const conteudo = fs.readFileSync(caminho, 'utf-8');
     const encontrados = conteudo.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) || [];
     return encontrados.map((ip) => ({ endereco: ip, dominio: dominio || '' }));
+  }
+
+  private extrairServidores(saida?: string) {
+    const dnsServidores: string[] = [];
+    const mailServidores: string[] = [];
+    if (!saida) return { dnsServidores, mailServidores };
+    const linhas = saida.split('\n');
+    for (const linha of linhas) {
+        const partes = linha.trim().split(/\s+/);
+        if (partes.length < 5) continue;
+        const tipo = (partes[3] || '').toUpperCase();
+        const destino = partes[4].replace(/\.$/, '');
+        if (tipo === 'NS') dnsServidores.push(destino);
+        if (tipo === 'MX') mailServidores.push(destino);
+    }
+    return { dnsServidores, mailServidores };
   }
 
   private limparArquivos(caminhos: (string | undefined)[]) {
