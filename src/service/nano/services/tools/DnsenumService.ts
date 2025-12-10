@@ -131,28 +131,9 @@ export class DnsenumService extends NanoService {
              throw new Error('Arquivo de saída não encontrado');
         }
         const conteudoXml = fs.readFileSync(outputFile, 'utf-8');
-        const hosts = /<host>([\s\S]*?)<\/host>/g;
-        let grupo;
-        const tiposSubdominio = new Map<string, TipoDominio>();
-        const ips: TipoIp[] = [];
-        while ((grupo = hosts.exec(conteudoXml)) !== null) {
-            const trecho = grupo[1];
-            const hostEncontrado = /<hostname>(.*?)<\/hostname>/.exec(trecho);
-            if (hostEncontrado) {
-                const host = hostEncontrado[1].trim();
-                const tipo = this.identificarTipoDominio(trecho);
-                const tipoAtual = tiposSubdominio.get(host);
-                if (!tipoAtual || this.prioridadeTipo(tipo) > this.prioridadeTipo(tipoAtual)) tiposSubdominio.set(host, tipo);
-                const ipRegex = /<ip>(.*?)<\/ip>/g;
-                let captura;
-                while ((captura = ipRegex.exec(trecho)) !== null) {
-                    const ip = captura[1].trim();
-                    if (ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) {
-                         ips.push({ endereco: ip, dominio: host });
-                    }
-                }
-            }
-        }
+        const { tiposSubdominio, ips } = this.analisarXml(conteudoXml);
+        const tiposTexto = this.extrairDominiosTexto(payload.output || '');
+        for (const [dominio, tipo] of tiposTexto.entries()) this.definirTipo(tiposSubdominio, dominio, tipo);
         const arquivosIps = this.localizarArquivosIps(meta?.dominio);
         for (const arquivo of arquivosIps) {
             const ipsArquivo = this.extrairIpsArquivo(arquivo, meta?.dominio);
@@ -220,6 +201,58 @@ export class DnsenumService extends NanoService {
     if (tipo === TipoDominio.mail) return 3;
     if (tipo === TipoDominio.dns) return 2;
     return 1;
+  }
+
+  private normalizarHost(host: string) {
+    return host.replace(/\.$/, '').toLowerCase();
+  }
+
+  private definirTipo(tipos: Map<string, TipoDominio>, dominio: string, tipo: TipoDominio) {
+    const atual = tipos.get(dominio);
+    if (!atual || this.prioridadeTipo(tipo) > this.prioridadeTipo(atual)) tipos.set(dominio, tipo);
+  }
+
+  private analisarXml(conteudo: string) {
+    const hosts = /<host>([\s\S]*?)<\/host>/g;
+    let grupo;
+    const tiposSubdominio = new Map<string, TipoDominio>();
+    const ips: TipoIp[] = [];
+    while ((grupo = hosts.exec(conteudo)) !== null) {
+        const trecho = grupo[1];
+        const hostEncontrado = /<hostname>(.*?)<\/hostname>/.exec(trecho);
+        if (hostEncontrado) {
+            const host = this.normalizarHost(hostEncontrado[1].trim());
+            if (!host) continue;
+            const tipo = this.identificarTipoDominio(trecho);
+            this.definirTipo(tiposSubdominio, host, tipo);
+            const ipRegex = /<ip>(.*?)<\/ip>/g;
+            let captura;
+            while ((captura = ipRegex.exec(trecho)) !== null) {
+                const ip = captura[1].trim();
+                if (ip.match(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/)) ips.push({ endereco: ip, dominio: host });
+            }
+        }
+    }
+    return { tiposSubdominio, ips };
+  }
+
+  private extrairDominiosTexto(saida: string) {
+    const tipos = new Map<string, TipoDominio>();
+    if (!saida) return tipos;
+    const linhas = saida.split('\n').map((linha) => linha.trim()).filter((linha) => !!linha);
+    let secao: TipoDominio | null = null;
+    for (const linha of linhas) {
+        if (/^Host's addresses:/i.test(linha)) { secao = TipoDominio.principal; continue; }
+        if (/^Name Servers:/i.test(linha)) { secao = TipoDominio.dns; continue; }
+        if (/^Mail \(MX\) Servers:/i.test(linha)) { secao = TipoDominio.mail; continue; }
+        if (/^Brute forcing/i.test(linha)) { secao = TipoDominio.principal; continue; }
+        if (/^Trying Zone Transfers/i.test(linha) || /class C netranges:/i.test(linha) || /ip blocks:/i.test(linha)) { secao = null; continue; }
+        if (!secao) continue;
+        const dominio = this.normalizarHost(linha.split(/\s+/)[0]);
+        if (!dominio || dominio.match(/^\d{1,3}(?:\.\d{1,3}){3}$/) || /^_+$/.test(dominio) || /^-+$/.test(dominio)) continue;
+        this.definirTipo(tipos, dominio, secao);
+    }
+    return tipos;
   }
 
   private localizarArquivosIps(dominio?: string) {
