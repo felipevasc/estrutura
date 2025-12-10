@@ -34,7 +34,7 @@ export const coletarRespostaTecnologia = async (alvo: string): Promise<RespostaT
     cabecalhos[chave.toLowerCase()] = valor;
   });
   const cookies = typeof (resposta.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie === 'function'
-    ? (resposta.headers as unknown as { getSetCookie?: () => string[] }).getSetCookie() ?? []
+    ? resposta?.headers?.getSetCookie() ?? []
     : [];
   const corpoCompleto = await resposta.text();
   const corpo = corpoCompleto.slice(0, 20000);

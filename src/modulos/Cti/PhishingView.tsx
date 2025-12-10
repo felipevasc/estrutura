@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Alert, Badge, Skeleton, Input, InputNumber, Row, Col, Popconfirm, Segmented, Card, Image, Pagination, Empty, Flex } from 'antd';
+import { Button, Table, Typography, Space, Select, Tag, message, Modal, Divider, Tooltip, Skeleton, Input, InputNumber, Row, Col, Popconfirm, Segmented, Image, Empty, Flex } from 'antd';
 import styled from 'styled-components';
 import { useStore } from '@/hooks/useStore';
 import { Dominio, PhishingStatus } from '@prisma/client';

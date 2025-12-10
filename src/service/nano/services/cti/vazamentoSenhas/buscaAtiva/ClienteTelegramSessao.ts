@@ -142,7 +142,6 @@ export const clienteTelegramSessao = {
     descricao: 'Autentica com sessão de usuário e baixa arquivos filtrando extensões.',
     async executar(payload: DadosExecucao): Promise<ResultadoFluxoTelegram> {
         validarCredenciais(payload.credenciais);
-        const inicio = Date.now();
         const inicioConexao = Date.now();
         const { cliente, usuario } = await prepararCliente(payload.credenciais as CredenciaisSessao);
         const passoConexao = registrarPasso(

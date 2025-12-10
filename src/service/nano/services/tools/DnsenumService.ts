@@ -85,6 +85,7 @@ export class DnsenumService extends NanoService {
         const url = enderecoLimpo.includes('://') ? new URL(enderecoLimpo) : new URL(`http://${enderecoLimpo}`);
         return url.hostname.toLowerCase();
     } catch (e) {
+        console.error(e)
         return enderecoLimpo.split('/')[0].toLowerCase();
     }
   }

@@ -2,7 +2,6 @@ import { ContainerRecon, ConteudoPrincipal, PainelLateral, PainelInspector } fro
 import Explorer from "@/components/Explorer";
 import Workspace from "@/components/Workspace";
 import Inspector from "@/components/Inspector";
-import StatusBar from "@/components/StatusBar";
 
 export default function Reconhecimento() {
   return (

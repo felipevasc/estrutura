@@ -42,6 +42,7 @@ export class TakedownService extends NanoService {
                         try {
                             headers = JSON.parse(takedown.headers);
                         } catch (e) {
+                            console.error(e)
                             this.bus.emit('JOB_FAILED', { id: jobId, error: `JSON de headers inválido para Takedown ID ${takedown.id}` });
                             return;
                         }

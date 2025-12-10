@@ -49,6 +49,7 @@ export abstract class CtiSearchService extends NanoService {
                 try {
                     parsedArgs = JSON.parse(args);
                 } catch (e) {
+                    console.error(e)
                     throw new Error("Falha ao fazer parse dos argumentos JSON");
                 }
             } else {

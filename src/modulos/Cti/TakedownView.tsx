@@ -101,6 +101,7 @@ const TakedownView = () => {
             }
             setIsModalVisible(false);
         } catch (error) {
+            console.error(error)
             message.error('Falha ao salvar. Verifique os campos.');
         }
     };
