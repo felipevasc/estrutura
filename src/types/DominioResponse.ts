@@ -7,7 +7,7 @@ export type DominioResponse = {
     id?: number;
     endereco?: string;
     alias?: string | null;
-    tipo?: "principal" | "dns";
+    tipo?: "principal" | "dns" | "mail";
     projetoId?: number;
     paiId?: number | null;
     subDominios?: DominioResponse[];

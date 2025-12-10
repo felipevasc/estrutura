@@ -5,6 +5,12 @@ export async function adicionarSubdominio(subdominios: string[], projetoId: numb
   const uniqueSubs = [...new Set(subdominios)].filter(s => s && s.trim().length > 0);
   if (uniqueSubs.length === 0) return;
 
+  const prioridadeTipo = (valor: TipoDominio) => {
+    if (valor === TipoDominio.mail) return 3;
+    if (valor === TipoDominio.dns) return 2;
+    return 1;
+  };
+
   const dominiosExistentes = await prisma.dominio.findMany({
     where: {
       projetoId: projetoId,
@@ -16,7 +22,13 @@ export async function adicionarSubdominio(subdominios: string[], projetoId: numb
   uniqueSubs.sort((a, b) => a.length - b.length);
 
   for (const s of uniqueSubs) {
-    if (todosDominios.some(d => d.endereco === s)) {
+    const existente = todosDominios.find(d => d.endereco === s);
+    if (existente) {
+      if (prioridadeTipo(tipo) > prioridadeTipo(existente.tipo)) {
+        const atualizado = await prisma.dominio.update({ where: { id: existente.id }, data: { tipo } });
+        const indice = todosDominios.findIndex(d => d.id === existente.id);
+        if (indice >= 0) todosDominios[indice] = atualizado;
+      }
       continue;
     }
 
