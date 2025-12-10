@@ -241,14 +241,15 @@ export class DnsenumService extends NanoService {
     const tipos = new Map<string, TipoDominio>();
     if (!saida) return tipos;
     const texto = this.removerAnsi(saida);
-    const linhas = texto.split('\n').map((linha) => linha.trim()).filter((linha) => !!linha);
+    const linhas = texto.split('\n').map((linha) => this.removerControle(linha).trim()).filter((linha) => !!linha);
     let secao: TipoDominio | null = null;
     for (const linha of linhas) {
-        if (/Host's addresses:/i.test(linha)) { secao = TipoDominio.principal; continue; }
-        if (/Name Servers:/i.test(linha)) { secao = TipoDominio.dns; continue; }
-        if (/Mail \(MX\) Servers:/i.test(linha)) { secao = TipoDominio.mail; continue; }
-        if (/Brute forcing/i.test(linha)) { secao = TipoDominio.principal; continue; }
-        if (/Trying Zone Transfers/i.test(linha) || /class C netranges:/i.test(linha) || /ip blocks:/i.test(linha)) { secao = null; continue; }
+        const comparacao = linha.toLowerCase();
+        if (comparacao.includes("host's addresses:")) { secao = TipoDominio.principal; continue; }
+        if (comparacao.includes('name servers:')) { secao = TipoDominio.dns; continue; }
+        if (comparacao.includes('mail (mx) servers:')) { secao = TipoDominio.mail; continue; }
+        if (comparacao.includes('brute forcing')) { secao = TipoDominio.principal; continue; }
+        if (comparacao.includes('trying zone transfers') || comparacao.includes('class c netranges:') || comparacao.includes('ip blocks:')) { secao = null; continue; }
         if (!secao) continue;
         const dominio = this.normalizarHost(linha.split(/\s+/)[0]);
         if (!dominio || dominio.match(/^\d{1,3}(?:\.\d{1,3}){3}$/) || /^_+$/.test(dominio) || /^-+$/.test(dominio)) continue;
@@ -258,7 +259,11 @@ export class DnsenumService extends NanoService {
   }
 
   private removerAnsi(texto: string) {
-    return texto.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '');
+    return texto.replace(/\u001b\[[0-9;]*[A-Za-z]/g, '').replace(/[\u001b\x00-\x09\x0b-\x1f\x7f]/g, '');
+  }
+
+  private removerControle(texto: string) {
+    return texto.replace(/[\u001b\x00-\x09\x0b-\x1f\x7f]/g, '');
   }
 
   private localizarArquivosIps(dominio?: string) {
