@@ -1,7 +1,7 @@
 import StoreContext from "@/store";
 import { DominioResponse } from "@/types/DominioResponse";
 import { GlobalOutlined } from "@ant-design/icons";
-import { faFolderOpen, faNetworkWired, faRoute } from "@fortawesome/free-solid-svg-icons";
+import { faEnvelope, faFolderOpen, faNetworkWired, faRoute } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useContext } from "react";
 import useElementoIp from "../ElementoIp";
@@ -21,8 +21,9 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
     const filhos: NoCarregavel[] = [];
 
     const subdominios = dominio.subDominios ?? [];
-    const subdominiosPrincipais = subdominios.filter(s => s.tipo !== "dns");
+    const subdominiosPrincipais = subdominios.filter(s => s.tipo !== "dns" && s.tipo !== "mail");
     const subdominiosDns = subdominios.filter(s => s.tipo === "dns");
+    const subdominiosMail = subdominios.filter(s => s.tipo === "mail");
 
     if (subdominiosPrincipais.length > 0) {
       const filhosSubdominios: NoCarregavel[] = [];
@@ -51,6 +52,21 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
         children: filhosDns,
         className: "folder",
         isLeaf: filhosDns.length === 0
+      });
+    }
+
+    if (subdominiosMail.length > 0) {
+      const filhosMail: NoCarregavel[] = [];
+      for (let i = 0; i < subdominiosMail.length; i++) {
+        const subdominio = subdominiosMail[i];
+        filhosMail.push(await getDominio(subdominio, [...anteriores, "mail"], "mail"));
+      }
+      filhos.push({
+        key: `${dominio.endereco}-${dominio.id}-mail`,
+        title: <div><FontAwesomeIcon icon={faEnvelope} /> Mail</div>,
+        children: filhosMail,
+        className: "folder",
+        isLeaf: filhosMail.length === 0
       });
     }
 
@@ -102,12 +118,13 @@ const useElementoDominio = (tipoSelecionado: TargetType = "domain") => {
     const alvoTipo = tipo ?? tipoSelecionado;
     const checked = selecionado?.tipo === alvoTipo && selecionado?.id === dominio.id;
     const subdominios = dominio.subDominios ?? [];
-    const possuiSubdominios = subdominios.some(s => s.tipo !== "dns");
+    const possuiSubdominios = subdominios.some(s => s.tipo !== "dns" && s.tipo !== "mail");
     const possuiDns = subdominios.some(s => s.tipo === "dns");
+    const possuiMail = subdominios.some(s => s.tipo === "mail");
     const possuiIps = !anteriores.includes("ip") && (dominio.ips?.length ?? 0) > 0;
     const possuiDiretorios = !anteriores.includes("diretorios") && (dominio.diretorios?.length ?? 0) > 0;
     const possuiWhatweb = (dominio.whatwebResultados?.length ?? 0) > 0;
-    const possuiFilhos = possuiSubdominios || possuiDns || possuiIps || possuiDiretorios || possuiWhatweb;
+    const possuiFilhos = possuiSubdominios || possuiDns || possuiMail || possuiIps || possuiDiretorios || possuiWhatweb;
 
     return {
       key: `${dominio.endereco}-${dominio.id}`,
