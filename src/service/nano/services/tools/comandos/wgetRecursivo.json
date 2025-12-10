@@ -28,5 +28,11 @@
     "argumentos": [
       "{\"idDominio\":\"5592\",\"profundidade\":20,\"limite\":200}"
     ]
+  },
+  "8479": {
+    "comando": "wgetRecursivo",
+    "argumentos": [
+      "{\"idDominio\":\"6851\",\"profundidade\":200,\"limite\":2000}"
+    ]
   }
 }

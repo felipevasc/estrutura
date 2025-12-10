@@ -14,5 +14,35 @@
       "-x",
       ".php,.html,.txt,.js,.bak,.zip,.conf"
     ]
+  },
+  "8490": {
+    "comando": "gobuster",
+    "argumentos": [
+      "dir",
+      "-u",
+      "https://servicos.ufu.br/",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/gobuster_9_8490_1765367703127.txt",
+      "-q",
+      "-k"
+    ]
+  },
+  "8491": {
+    "comando": "gobuster",
+    "argumentos": [
+      "dir",
+      "-u",
+      "https://servicos.ufu.br/",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/gobuster_9_8491_1765367724611.txt",
+      "-q",
+      "-k",
+      "-x",
+      ".php,.html,.txt,.js,.bak,.zip,.conf"
+    ]
   }
 }
