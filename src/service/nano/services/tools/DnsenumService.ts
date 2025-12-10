@@ -142,6 +142,8 @@ export class DnsenumService extends NanoService {
             const ipsArquivo = this.extrairIpsArquivo(arquivo, meta?.dominio);
             for (const ip of ipsArquivo) ips.push(ip);
         }
+        const paiDominio = Number(meta?.idDominio);
+        const paiValido = Number.isNaN(paiDominio) ? undefined : paiDominio;
         const subdominiosPrincipais: string[] = [];
         const subdominiosDns: string[] = [];
         const subdominiosMail: string[] = [];
@@ -157,9 +159,9 @@ export class DnsenumService extends NanoService {
             subdominiosPrincipais.push(dominio);
         }
         const ipsUnicos = Array.from(new Map(ips.map((ip) => [`${ip.endereco}|${ip.dominio}`, ip])).values());
-        if (subdominiosPrincipais.length > 0) await Database.adicionarSubdominio(subdominiosPrincipais, projetoId, TipoDominio.principal);
-        if (subdominiosDns.length > 0) await Database.adicionarSubdominio(subdominiosDns, projetoId, TipoDominio.dns);
-        if (subdominiosMail.length > 0) await Database.adicionarSubdominio(subdominiosMail, projetoId, TipoDominio.mail);
+        if (subdominiosPrincipais.length > 0) await Database.adicionarSubdominio(subdominiosPrincipais, projetoId, TipoDominio.principal, paiValido);
+        if (subdominiosDns.length > 0) await Database.adicionarSubdominio(subdominiosDns, projetoId, TipoDominio.dns, paiValido);
+        if (subdominiosMail.length > 0) await Database.adicionarSubdominio(subdominiosMail, projetoId, TipoDominio.mail, paiValido);
         if (ipsUnicos.length > 0) await Database.adicionarIp(ipsUnicos, projetoId);
         this.limparArquivos([outputFile, ...arquivosIps]);
         this.bus.emit(NanoEvents.JOB_COMPLETED, {
