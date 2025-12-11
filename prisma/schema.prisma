@@ -17,6 +17,7 @@ model Projeto {
   redes    Rede[]
   ips      Ip[]
   commands Command[]
+  sentinelas Sentinela[]
   takedowns Takedown[]
   fontesVazamento FonteVazamento[]
 
@@ -112,11 +113,34 @@ model Command {
   @@map("commands")
 }
 
+model Sentinela {
+  id              Int             @id @default(autoincrement())
+  nome            String
+  modulo          SentinelaModulo
+  ferramenta      String
+  parametros      Json
+  cron            String
+  habilitado      Boolean         @default(true)
+  proximaExecucao DateTime?
+  ultimaExecucao  DateTime?
+  projetoId       Int
+  projeto         Projeto         @relation(fields: [projetoId], references: [id])
+  criadoEm        DateTime        @default(now())
+  atualizadoEm    DateTime        @updatedAt
+
+  @@map("sentinelas")
+}
+
 enum CommandStatus {
   PENDING
   RUNNING
   COMPLETED
   FAILED
+}
+
+enum SentinelaModulo {
+  RECON
+  CTI
 }
 
 model Porta {

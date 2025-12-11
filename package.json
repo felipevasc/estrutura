@@ -30,6 +30,7 @@
     "@xterm/xterm": "^5.5.0",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.26.7",
+    "cron-parser": "^5.4.0",
     "next": "^15.4.8",
     "node-telegram-bot-api": "^0.63.0",
     "openai": "^6.9.1",

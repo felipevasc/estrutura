@@ -11,6 +11,7 @@ const Reconhecimento = dynamic(() => import("@/modulos/Reconhecimento"));
 const Exploracao = dynamic(() => import("@/modulos/Exploracao"));
 const Cti = dynamic(() => import("@/modulos/Cti"));
 const Relatorios = dynamic(() => import("@/modulos/Relatorios"));
+const Sentinela = dynamic(() => import("@/modulos/Sentinela"));
 const ChatDinamico = dynamic(() => import("@/components/Chat"), { ssr: false });
 const ConfiguracoesDinamicas = dynamic(() => import("@/components/Configuracoes"), { ssr: false });
 
@@ -25,6 +26,8 @@ export default function Aplicacao() {
         return <Cti />;
       case 'RELATORIOS':
         return <Relatorios />;
+      case 'SENTINELA':
+        return <Sentinela />;
       default:
         return <Reconhecimento />;
     }

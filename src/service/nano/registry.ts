@@ -36,10 +36,12 @@ import { DetectorServicoService } from './services/tools/DetectorServicoService'
 import { IdentificarLinguagemService } from './services/tools/IdentificarLinguagemService';
 import { IdentificarFrameworkService } from './services/tools/IdentificarFrameworkService';
 import ReconCapturaService from './services/tools/ReconCapturaService';
+import { SentinelaService } from "./services/SentinelaService";
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
     new TerminalService(),
+    new SentinelaService(),
     new AmassService(),
     new SubfinderService(),
     new NslookupService(),

@@ -10,6 +10,7 @@ export default function Navegacao({ abaAtiva, aoTrocarAba }: Props) {
     { id: 'RECONHECIMENTO', label: 'RECON' },
     { id: 'EXPLORACAO', label: 'EXPLOITATION' },
     { id: 'CTI', label: 'CTI' },
+    { id: 'SENTINELA', label: 'SENTINELA' },
     { id: 'RELATORIOS', label: 'REPORTS' },
   ];
 
