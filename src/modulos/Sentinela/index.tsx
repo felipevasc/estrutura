@@ -2,12 +2,15 @@
 
 import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { AutoComplete, Button, Form, Input, Space, Switch, Table, Tag, Typography, message, Popconfirm, Select } from "antd";
+import { useWatch } from "antd/es/form/Form";
 import dayjs from "dayjs";
 import { SentinelaModulo } from "@prisma/client";
 import { AtualizacaoSentinela, NovoSentinela, SentinelaRegistro } from "@/types/Sentinela";
 import useApi from "@/api";
 import StoreContext from "@/store";
 import { AreaConteudo, CartaoFormulario, CartaoLista, ContainerSentinela } from "./styles";
+
+type FormularioSentinela = NovoSentinela & { parametrosTexto?: string };
 
 const ferramentasRecon = [
     'amass',
@@ -59,26 +62,192 @@ const opcoesModulos = [
     { valor: 'CTI' as SentinelaModulo, rotulo: 'CTI' },
 ];
 
+const camposFerramentas: Record<SentinelaModulo, Record<string, { chave: string; rotulo: string; tipo?: 'numero' | 'booleano' | 'textoLongo' }[]>> = {
+    RECON: {
+        amass: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'timeoutMinutos', rotulo: 'Timeout em minutos', tipo: 'numero' },
+        ],
+        subfinder: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'todasFontes', rotulo: 'Todas as fontes', tipo: 'booleano' },
+            { chave: 'modoSilencioso', rotulo: 'Modo silencioso', tipo: 'booleano' },
+        ],
+        dnsenum: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'threads', rotulo: 'Threads', tipo: 'numero' },
+            { chave: 'wordlist', rotulo: 'Wordlist' },
+        ],
+        nslookup: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'servidorDns', rotulo: 'Servidor DNS' },
+        ],
+        nmap: [
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'faixaPortas', rotulo: 'Faixa de portas' },
+        ],
+        rustscan: [
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'faixaPortas', rotulo: 'Faixa de portas' },
+        ],
+        ffuf: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'rota', rotulo: 'Rota' },
+            { chave: 'wordlist', rotulo: 'Wordlist' },
+            { chave: 'statusDesejados', rotulo: 'Status desejados' },
+        ],
+        gobuster: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'wordlist', rotulo: 'Wordlist' },
+        ],
+        wgetRecursivo: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        whatweb: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        detectarServico: [
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'faixaPortas', rotulo: 'Faixa de portas' },
+        ],
+        identificarLinguagem: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'rota', rotulo: 'Rota' },
+        ],
+        identificarFramework: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'rota', rotulo: 'Rota' },
+        ],
+        enum4linux: [
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+        ],
+        whoisDominio: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        recon_capturar: [
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'rota', rotulo: 'Rota' },
+        ],
+    },
+    CTI: {
+        phishing_dnstwist_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        phishing_dnstwist_termo: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        phishing_crtsh_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        phishing_crtsh_termo: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        phishing_verificar: [
+            { chave: 'id', rotulo: 'ID da captura', tipo: 'numero' },
+        ],
+        phishing_capturar: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'ids', rotulo: 'IDs das capturas' },
+        ],
+        phishing_catcher_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        phishing_analise_pagina: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'alvo', rotulo: 'URL alvo' },
+            { chave: 'html', rotulo: 'HTML', tipo: 'textoLongo' },
+        ],
+        deface_capturar: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'ids', rotulo: 'IDs das capturas' },
+        ],
+        deface_dork_check: [
+            { chave: 'termos', rotulo: 'Termos' },
+        ],
+        deface_forum_zone_xsec_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        deface_forum_hack_db_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        takedown_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        info_disclosure_check: [
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+        ],
+        info_disclosure_paste: [
+            { chave: 'url', rotulo: 'URL' },
+        ],
+        info_disclosure_codigo: [
+            { chave: 'url', rotulo: 'URL' },
+        ],
+        busca_ativa_vazamento_telegram: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        busca_ativa_vazamento_telegram_teste: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        fontes_dados_vazamento: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        tratamento_vazamento: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        base_vazamentos: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        comunicacao_vazamentos: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+        google_custom_search: [
+            { chave: 'termo', rotulo: 'Termo' },
+        ],
+    },
+};
+
 const Sentinela = () => {
     const api = useApi();
     const { projeto } = useContext(StoreContext);
-    const [form] = Form.useForm<NovoSentinela>();
+    const [form] = Form.useForm<FormularioSentinela>();
     const [moduloSelecionado, definirModuloSelecionado] = useState<SentinelaModulo>('RECON');
-    const [parametrosTexto, definirParametrosTexto] = useState('{}');
     const [registros, definirRegistros] = useState<SentinelaRegistro[]>([]);
     const [carregando, definirCarregando] = useState(false);
     const [criando, definirCriando] = useState(false);
 
     const projetoId = projeto?.get()?.id;
+    const ferramentaSelecionada = useWatch('ferramenta', form);
 
     useEffect(() => {
-        form.setFieldsValue({ modulo: 'RECON', habilitado: true });
+        form.setFieldsValue({ modulo: 'RECON', habilitado: true, parametrosTexto: '{}' });
     }, [form]);
 
     const opcoesFerramentas = useMemo(() => {
         const base = moduloSelecionado === 'CTI' ? ferramentasCti : ferramentasRecon;
         return base.map(valor => ({ value: valor }));
     }, [moduloSelecionado]);
+
+    const renderizarCampo = (campo: { chave: string; rotulo: string; tipo?: 'numero' | 'booleano' | 'textoLongo' }) => {
+        if (campo.tipo === 'booleano') {
+            return (
+                <Form.Item key={campo.chave} name={["parametros", campo.chave]} label={campo.rotulo} valuePropName="checked">
+                    <Switch />
+                </Form.Item>
+            );
+        }
+        if (campo.tipo === 'textoLongo') {
+            return (
+                <Form.Item key={campo.chave} name={["parametros", campo.chave]} label={campo.rotulo} rules={[{ required: true, message: 'Informe ' + campo.rotulo.toLowerCase() }]}>
+                    <Input.TextArea rows={4} />
+                </Form.Item>
+            );
+        }
+        return (
+            <Form.Item key={campo.chave} name={["parametros", campo.chave]} label={campo.rotulo} rules={[{ required: true, message: 'Informe ' + campo.rotulo.toLowerCase() }]}>
+                <Input type={campo.tipo === 'numero' ? 'number' : 'text'} />
+            </Form.Item>
+        );
+    };
 
     const carregar = useCallback(async () => {
         if (!projetoId) {
@@ -100,32 +269,43 @@ const Sentinela = () => {
         carregar();
     }, [carregar]);
 
-    const interpretarParametros = () => {
-        try {
-            return parametrosTexto ? JSON.parse(parametrosTexto) : {};
-        } catch {
-            message.error('Parâmetros precisam estar em JSON válido');
-            throw new Error('json_invalido');
+    useEffect(() => {
+        form.setFieldsValue({ parametros: {}, parametrosTexto: '{}' });
+    }, [form, ferramentaSelecionada, moduloSelecionado]);
+
+    const tratarParametrosLivres = (entrada: unknown) => {
+        if (typeof entrada === 'string') {
+            try {
+                return entrada ? JSON.parse(entrada) : {};
+            } catch {
+                message.error('Parâmetros precisam estar em JSON válido');
+                throw new Error('json_invalido');
+            }
         }
+        if (entrada && typeof entrada === 'object') return entrada as Record<string, unknown>;
+        return {};
     };
 
-    const aoSubmeter = async (valores: NovoSentinela) => {
+    const camposSelecionados = useMemo(() => camposFerramentas[moduloSelecionado]?.[ferramentaSelecionada as string] ?? [], [moduloSelecionado, ferramentaSelecionada]);
+
+    const aoSubmeter = async (valores: FormularioSentinela) => {
         if (!projetoId) {
             message.error('Selecione um projeto para agendar comandos');
             return;
         }
-        let parametros;
+        let parametros: Record<string, unknown>;
         try {
-            parametros = interpretarParametros();
+            parametros = camposSelecionados.length > 0 ? valores.parametros ?? {} : tratarParametrosLivres(valores.parametrosTexto);
         } catch {
             return;
         }
         definirCriando(true);
         try {
-            await api.sentinela.criar(projetoId, { ...valores, parametros });
+            const dadosEnvio = { ...valores, parametros } as Record<string, unknown>;
+            delete dadosEnvio.parametrosTexto;
+            await api.sentinela.criar(projetoId, dadosEnvio as NovoSentinela);
             message.success('Agendamento criado');
             form.resetFields(['nome', 'ferramenta', 'cron']);
-            definirParametrosTexto('{}');
             await carregar();
         } catch (erro) {
             message.error(erro instanceof Error ? erro.message : 'Erro ao criar agendamento');
@@ -212,27 +392,29 @@ const Sentinela = () => {
             <AreaConteudo>
                 <CartaoFormulario>
                     <Typography.Title level={5}>Novo agendamento</Typography.Title>
-                    <Form form={form} layout="vertical" onFinish={aoSubmeter} initialValues={{ habilitado: true, modulo: 'RECON' }}>
+                    <Form form={form} layout="vertical" onFinish={aoSubmeter} initialValues={{ habilitado: true, modulo: 'RECON', parametros: {}, parametrosTexto: '{}' }}>
                         <Form.Item name="nome" label="Nome" rules={[{ required: true, message: 'Informe um nome' }]}>
                             <Input placeholder="Identificador do agendamento" />
                         </Form.Item>
                         <Form.Item name="modulo" label="Módulo" rules={[{ required: true, message: 'Selecione o módulo' }]}>
                             <Select
                                 options={opcoesModulos.map(item => ({ value: item.valor, label: item.rotulo }))}
-                                onChange={(valor: SentinelaModulo) => definirModuloSelecionado(valor)}
+                                onChange={(valor: SentinelaModulo) => {
+                                    definirModuloSelecionado(valor);
+                                    form.setFieldsValue({ ferramenta: undefined, parametros: {}, parametrosTexto: '{}' });
+                                }}
                             />
                         </Form.Item>
                         <Form.Item name="ferramenta" label="Ferramenta" rules={[{ required: true, message: 'Informe a ferramenta' }]}>
                             <AutoComplete options={opcoesFerramentas} placeholder="Nome do comando" allowClear filterOption />
                         </Form.Item>
-                        <Form.Item label="Parâmetros (JSON)">
-                            <Input.TextArea
-                                value={parametrosTexto}
-                                onChange={(e) => definirParametrosTexto(e.target.value)}
-                                rows={4}
-                                placeholder='{"idDominio": 1}'
-                            />
-                        </Form.Item>
+                        {camposSelecionados.length > 0 ? (
+                            camposSelecionados.map(renderizarCampo)
+                        ) : (
+                            <Form.Item name="parametrosTexto" label="Parâmetros (JSON)">
+                                <Input.TextArea rows={4} placeholder='{"idDominio": 1}' />
+                            </Form.Item>
+                        )}
                         <Form.Item name="cron" label="Cron" rules={[{ required: true, message: 'Defina a expressão de cron' }]}>
                             <Input placeholder="minuto hora dia mes diaSemana" />
                         </Form.Item>
