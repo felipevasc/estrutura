@@ -313,7 +313,7 @@ interface RegistroPhishing {
     dominio: { id: number; endereco: string };
     status?: PhishingStatus;
     captura?: string | null;
-    capturadoEm?: string | null;
+    capturadoEm?: Date | null;
 }
 
 type PalavraCatcher = { termo: string; peso: number };

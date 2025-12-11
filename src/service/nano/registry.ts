@@ -35,6 +35,7 @@ import InfoDisclosurePasteService from './services/cti/InfoDisclosurePasteServic
 import { DetectorServicoService } from './services/tools/DetectorServicoService';
 import { IdentificarLinguagemService } from './services/tools/IdentificarLinguagemService';
 import { IdentificarFrameworkService } from './services/tools/IdentificarFrameworkService';
+import ReconCapturaService from './services/tools/ReconCapturaService';
 
 export const registeredServices: NanoService[] = [
     new QueueService(),
@@ -50,6 +51,7 @@ export const registeredServices: NanoService[] = [
     new DetectorServicoService(),
     new IdentificarLinguagemService(),
     new IdentificarFrameworkService(),
+    new ReconCapturaService(),
     new DnsenumService(),
     new Enum4linuxService(),
     new FfufService(),

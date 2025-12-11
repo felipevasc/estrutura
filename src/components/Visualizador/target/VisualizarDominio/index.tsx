@@ -1,11 +1,14 @@
 "use client";
 import useApi from "@/api";
 import StoreContext from "@/store";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { IpResponse } from "@/types/IpResponse";
+import { DiretorioResponse } from "@/types/DiretorioResponse";
 import ListaTecnologias from "../ListaTecnologias";
+import { Button, Dropdown, Image, Modal, Space, message, MenuProps } from "antd";
+import { FolderOpenOutlined, PictureOutlined } from "@ant-design/icons";
 
 const DashboardContainer = styled.div`
   padding: 2rem;
@@ -36,6 +39,13 @@ const Card = styled.div`
   padding: 1.5rem;
   margin-bottom: 1.5rem;
   transition: background-color 0.3s, border-color 0.3s;
+`;
+
+const LinhaTitulo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 `;
 
 const CardTitle = styled.h2`
@@ -87,6 +97,17 @@ const ListItem = styled.li`
   &:hover {
     background-color: ${({ theme }) => theme.colors.hoverBackground};
   }
+`;
+
+const Figura = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: ${({ theme }) => theme.glass.card};
+  border: 1px solid ${({ theme }) => theme.colors.borderColor};
+  border-radius: 10px;
+  padding: 12px;
+  min-height: 240px;
 `;
 
 const Bandeiras = styled.div`
@@ -210,10 +231,14 @@ const normalizarEstado = (valor: string) => {
 const emojiPais = (codigo: string) => String.fromCodePoint(...codigo.split('').map((c) => c.charCodeAt(0) + 127397));
 
 const VisualizarDominio = () => {
-    const { selecaoTarget } = useContext(StoreContext);
+    const { selecaoTarget, projeto } = useContext(StoreContext);
     const api = useApi();
     const idDominio = selecaoTarget?.get()?.id;
-    const { data: dominio, isLoading, error } = api.dominios.getDominio(idDominio);
+    const projetoId = projeto?.get()?.id;
+    const { data: dominio, isLoading, error, refetch } = api.dominios.getDominio(idDominio);
+    const [capturando, setCapturando] = useState(false);
+    const [capturandoSubdominios, setCapturandoSubdominios] = useState(false);
+    const [capturandoDiretorios, setCapturandoDiretorios] = useState(false);
 
     const informacoes = dominio?.informacoes ?? [];
     const valorCampo = (chave: string) => informacoes.find((info) => normalizarCampo(info.campo) === normalizarCampo(chave))?.valor ?? '';
@@ -228,12 +253,93 @@ const VisualizarDominio = () => {
     if (error) return <DashboardContainer><h2>Erro ao carregar dados do domínio.</h2></DashboardContainer>;
     if (!dominio) return <DashboardContainer><h2>Nenhum domínio selecionado.</h2></DashboardContainer>;
 
+    const capturadoEm = dominio.capturadoEm ? new Date(dominio.capturadoEm).toLocaleString() : "Nunca";
+    const subdominios = dominio.subDominios ?? [];
+    const diretorios = (dominio.diretorios ?? []) as DiretorioResponse[];
+
+    const capturar = async () => {
+        setCapturando(true);
+        try {
+	    if (dominio.id) {
+	      await api.recon.capturar(projetoId, { alvos: [{ tipo: "dominio", id: dominio.id }] });
+              message.success("Captura enfileirada.");
+              refetch();
+	    }
+        } catch {
+            message.error("Não foi possível enfileirar a captura.");
+        } finally {
+            setCapturando(false);
+        }
+    };
+
+    const capturarSubdominios = async () => {
+        setCapturandoSubdominios(true);
+        try {
+            await api.recon.capturar(projetoId, { abrangencia: "subdominios", dominioId: dominio.id });
+            message.success("Capturas enfileiradas.");
+            refetch();
+        } catch {
+            message.error("Não foi possível enfileirar capturas.");
+        } finally {
+            setCapturandoSubdominios(false);
+        }
+    };
+
+    const capturarDiretorios = async () => {
+        setCapturandoDiretorios(true);
+        try {
+            await api.recon.capturar(projetoId, { abrangencia: "diretorios", dominioId: dominio.id });
+            message.success("Capturas enfileiradas.");
+            refetch();
+        } catch {
+            message.error("Não foi possível enfileirar capturas.");
+        } finally {
+            setCapturandoDiretorios(false);
+        }
+    };
+
+    const confirmarSubdominios = () => {
+        Modal.confirm({
+            title: "Capturar subdomínios",
+            content: "Deseja capturar prints de todos os subdomínios?",
+            okText: "Confirmar",
+            cancelText: "Cancelar",
+            onOk: capturarSubdominios,
+        });
+    };
+
+    const confirmarDiretorios = () => {
+        Modal.confirm({
+            title: "Capturar diretórios",
+            content: "Deseja capturar prints de todos os diretórios deste domínio?",
+            okText: "Confirmar",
+            cancelText: "Cancelar",
+            onOk: capturarDiretorios,
+        });
+    };
+
+    const menuSubdominios: MenuProps = { items: [{ key: "capturar", label: "Capturar prints dos subdomínios" }], onClick: confirmarSubdominios };
+    const menuDiretorios: MenuProps = { items: [{ key: "capturar", label: "Capturar prints dos diretórios" }], onClick: confirmarDiretorios };
+
     return (
         <DashboardContainer>
             <Header>
                 <h1>{dominio.alias || dominio.endereco}</h1>
                 <p>Dashboard de informações do domínio</p>
             </Header>
+
+            <Card>
+                <LinhaTitulo>
+                    <CardTitle>Captura</CardTitle>
+                    <Space>
+                        <Button type="primary" icon={<PictureOutlined />} loading={capturando} onClick={capturar}>Capturar</Button>
+                    </Space>
+                </LinhaTitulo>
+                <Figura>
+                    {dominio.captura ? <Image src={dominio.captura} alt="Captura do domínio" style={{ maxHeight: 320 }} /> : <span>Sem captura</span>}
+                </Figura>
+                <p style={{ marginTop: 12 }}>Última captura: {capturadoEm}</p>
+            </Card>
 
             <Card>
                 <CardTitle>Informações Gerais</CardTitle>
@@ -290,15 +396,38 @@ const VisualizarDominio = () => {
             </Card>
 
             <Card>
-                <CardTitle>Subdomínios</CardTitle>
-                {dominio.subDominios && dominio.subDominios.length > 0 ? (
+                <LinhaTitulo>
+                    <CardTitle>Subdomínios</CardTitle>
+                    <Dropdown menu={menuSubdominios} trigger={["hover"]}>
+                        <Button size="small" icon={<PictureOutlined />} loading={capturandoSubdominios}>Ações</Button>
+                    </Dropdown>
+                </LinhaTitulo>
+                {subdominios.length > 0 ? (
                     <List>
-                        {dominio.subDominios.map((sub: DominioResponse) => (
+                        {subdominios.map((sub: DominioResponse) => (
                             <ListItem key={sub.id}>{sub.endereco}</ListItem>
                         ))}
                     </List>
                 ) : (
                     <p>Nenhum subdomínio encontrado.</p>
+                )}
+            </Card>
+
+            <Card>
+                <LinhaTitulo>
+                    <CardTitle>Diretórios</CardTitle>
+                    <Dropdown menu={menuDiretorios} trigger={["hover"]}>
+                        <Button size="small" icon={<FolderOpenOutlined />} loading={capturandoDiretorios}>Ações</Button>
+                    </Dropdown>
+                </LinhaTitulo>
+                {diretorios.length > 0 ? (
+                    <List>
+                        {diretorios.map((dir) => (
+                            <ListItem key={dir.id}>{dir.caminho}</ListItem>
+                        ))}
+                    </List>
+                ) : (
+                    <p>Nenhum diretório encontrado.</p>
                 )}
             </Card>
 

@@ -20,6 +20,8 @@ export type DiretorioResponse = {
     ipId?: number | null;
     tipo?: 'diretorio' | 'arquivo';
     criadoEm?: string;
+    captura?: string | null;
+    capturadoEm?: Date | null;
     dominio?: DominioDiretorioResponse | null;
     ip?: IpDiretorioResponse | null;
     whatwebResultados?: WhatwebResultadoResponse[];

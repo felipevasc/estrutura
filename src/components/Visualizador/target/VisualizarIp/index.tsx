@@ -1,12 +1,14 @@
 "use client";
 import useApi from "@/api";
 import StoreContext from "@/store";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import styled from 'styled-components';
 import { DominioResponse } from "@/types/DominioResponse";
 import { RedeResponse } from "@/types/RedeResponse";
 import ListaTecnologias from "../ListaTecnologias";
 import VisualizarPortas from "./VisualizarPortas";
+import { Button, Dropdown, message, MenuProps } from "antd";
+import { PictureOutlined } from "@ant-design/icons";
 
 // NOTE: These styled components are duplicated from VisualizarDominio.
 // In a real-world refactor, they should be moved to a common/shared file
@@ -43,6 +45,13 @@ const Card = styled.div`
   transition: background-color 0.3s, border-color 0.3s;
 `;
 
+const LinhaTitulo = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
 const CardTitle = styled.h2`
   font-size: 1.25rem;
   font-weight: 500;
@@ -74,14 +83,32 @@ const ListItem = styled.li`
 `;
 
 const VisualizarIp = () => {
-    const { selecaoTarget } = useContext(StoreContext);
+    const { selecaoTarget, projeto } = useContext(StoreContext);
     const api = useApi();
     const idIp = selecaoTarget?.get()?.id;
-    const { data: ip, isLoading, error } = api.ips.getIp(idIp);
+    const projetoId = projeto?.get()?.id;
+    const { data: ip, isLoading, error, refetch } = api.ips.getIp(idIp);
+    const [capturandoPortas, setCapturandoPortas] = useState(false);
 
     if (isLoading) return <DashboardContainer><h2>Carregando...</h2></DashboardContainer>;
     if (error) return <DashboardContainer><h2>Erro ao carregar dados do IP.</h2></DashboardContainer>;
     if (!ip) return <DashboardContainer><h2>Nenhum IP selecionado.</h2></DashboardContainer>;
+
+    const capturarPortas = async () => {
+        if (!ip) return;
+        setCapturandoPortas(true);
+        try {
+            await api.recon.capturar(projetoId, { abrangencia: "portas", ipId: ip.id });
+            message.success("Capturas enfileiradas.");
+            refetch();
+        } catch {
+            message.error("Não foi possível enfileirar capturas.");
+        } finally {
+            setCapturandoPortas(false);
+        }
+    };
+
+    const menuPortas: MenuProps = { items: [{ key: "capturar", label: "Capturar prints das portas" }], onClick: () => capturarPortas() };
 
     return (
         <DashboardContainer>
@@ -96,7 +123,12 @@ const VisualizarIp = () => {
             </Card>
 
             <Card>
-                <CardTitle>Portas Abertas</CardTitle>
+                <LinhaTitulo>
+                    <CardTitle>Portas Abertas</CardTitle>
+                    <Dropdown menu={menuPortas} trigger={["hover"]}>
+                        <Button size="small" icon={<PictureOutlined />} loading={capturandoPortas}>Capturas</Button>
+                    </Dropdown>
+                </LinhaTitulo>
                 <VisualizarPortas portas={ip.portas || []} />
             </Card>
 

@@ -263,7 +263,7 @@ interface DefaceRecord {
     fonte: string;
     createdAt: string;
     captura?: string | null;
-    capturadoEm?: string | null;
+    capturadoEm?: Date | null;
     dominioId: number;
     dominio: {
         endereco: string;
