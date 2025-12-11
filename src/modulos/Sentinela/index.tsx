@@ -62,82 +62,82 @@ const opcoesModulos = [
     { valor: 'CTI' as SentinelaModulo, rotulo: 'CTI' },
 ];
 
-const camposFerramentas: Record<SentinelaModulo, Record<string, { chave: string; rotulo: string; tipo?: 'numero' | 'booleano' | 'textoLongo' }[]>> = {
+const camposFerramentas: Record<SentinelaModulo, Record<string, { chave: string; rotulo: string; tipo?: 'numero' | 'booleano' | 'textoLongo'; origem?: 'dominio' | 'ip' }[]>> = {
     RECON: {
         amass: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'timeoutMinutos', rotulo: 'Timeout em minutos', tipo: 'numero' },
         ],
         subfinder: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'todasFontes', rotulo: 'Todas as fontes', tipo: 'booleano' },
             { chave: 'modoSilencioso', rotulo: 'Modo silencioso', tipo: 'booleano' },
         ],
         dnsenum: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'threads', rotulo: 'Threads', tipo: 'numero' },
             { chave: 'wordlist', rotulo: 'Wordlist' },
         ],
         nslookup: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'servidorDns', rotulo: 'Servidor DNS' },
         ],
         nmap: [
-            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero', origem: 'ip' },
             { chave: 'faixaPortas', rotulo: 'Faixa de portas' },
         ],
         rustscan: [
-            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero', origem: 'ip' },
             { chave: 'faixaPortas', rotulo: 'Faixa de portas' },
         ],
         ffuf: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'rota', rotulo: 'Rota' },
             { chave: 'wordlist', rotulo: 'Wordlist' },
             { chave: 'statusDesejados', rotulo: 'Status desejados' },
         ],
         gobuster: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'wordlist', rotulo: 'Wordlist' },
         ],
         wgetRecursivo: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         whatweb: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         detectarServico: [
-            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero', origem: 'ip' },
             { chave: 'faixaPortas', rotulo: 'Faixa de portas' },
         ],
         identificarLinguagem: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'rota', rotulo: 'Rota' },
         ],
         identificarFramework: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'rota', rotulo: 'Rota' },
         ],
         enum4linux: [
-            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero' },
+            { chave: 'idIp', rotulo: 'ID do IP', tipo: 'numero', origem: 'ip' },
         ],
         whoisDominio: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         recon_capturar: [
-            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'idDominio', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'rota', rotulo: 'Rota' },
         ],
     },
     CTI: {
         phishing_dnstwist_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         phishing_dnstwist_termo: [
             { chave: 'termo', rotulo: 'Termo' },
         ],
         phishing_crtsh_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         phishing_crtsh_termo: [
             { chave: 'termo', rotulo: 'Termo' },
@@ -146,35 +146,35 @@ const camposFerramentas: Record<SentinelaModulo, Record<string, { chave: string;
             { chave: 'id', rotulo: 'ID da captura', tipo: 'numero' },
         ],
         phishing_capturar: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'ids', rotulo: 'IDs das capturas' },
         ],
         phishing_catcher_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         phishing_analise_pagina: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'alvo', rotulo: 'URL alvo' },
             { chave: 'html', rotulo: 'HTML', tipo: 'textoLongo' },
         ],
         deface_capturar: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
             { chave: 'ids', rotulo: 'IDs das capturas' },
         ],
         deface_dork_check: [
             { chave: 'termos', rotulo: 'Termos' },
         ],
         deface_forum_zone_xsec_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         deface_forum_hack_db_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         takedown_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         info_disclosure_check: [
-            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero' },
+            { chave: 'dominioId', rotulo: 'ID do domínio', tipo: 'numero', origem: 'dominio' },
         ],
         info_disclosure_paste: [
             { chave: 'url', rotulo: 'URL' },
@@ -217,6 +217,8 @@ const Sentinela = () => {
 
     const projetoId = projeto?.get()?.id;
     const ferramentaSelecionada = useWatch('ferramenta', form);
+    const consultaDominios = api.dominios.getDominios(projetoId);
+    const consultaIps = api.ips.getIps(projetoId);
 
     useEffect(() => {
         form.setFieldsValue({ modulo: 'RECON', habilitado: true, parametrosTexto: '{}' });
@@ -227,7 +229,34 @@ const Sentinela = () => {
         return base.map(valor => ({ value: valor }));
     }, [moduloSelecionado]);
 
-    const renderizarCampo = (campo: { chave: string; rotulo: string; tipo?: 'numero' | 'booleano' | 'textoLongo' }) => {
+    const opcoesDominios = useMemo(() =>
+        (consultaDominios.data ?? [])
+            .map(item => ({ valor: item.id, rotulo: item.alias ? `${item.endereco} (${item.alias})` : item.endereco }))
+            .filter((item): item is { valor: number; rotulo: string } => !!item.valor && !!item.rotulo),
+    [consultaDominios.data]);
+
+    const opcoesIps = useMemo(() =>
+        (consultaIps.data ?? [])
+            .map(item => ({ valor: item.id, rotulo: item.endereco }))
+            .filter((item): item is { valor: number; rotulo: string } => !!item.valor && !!item.rotulo),
+    [consultaIps.data]);
+
+    const renderizarCampo = (campo: { chave: string; rotulo: string; tipo?: 'numero' | 'booleano' | 'textoLongo'; origem?: 'dominio' | 'ip' }) => {
+        const opcoesOrigem = campo.origem === 'dominio' ? opcoesDominios : campo.origem === 'ip' ? opcoesIps : [];
+        const carregandoOrigem = campo.origem === 'dominio' ? consultaDominios.isLoading : campo.origem === 'ip' ? consultaIps.isLoading : false;
+        if (campo.origem) {
+            return (
+                <Form.Item key={campo.chave} name={["parametros", campo.chave]} label={campo.rotulo} rules={[{ required: true, message: 'Informe ' + campo.rotulo.toLowerCase() }]}>
+                    <Select
+                        options={opcoesOrigem.map(item => ({ value: item.valor, label: item.rotulo }))}
+                        loading={carregandoOrigem}
+                        showSearch
+                        optionFilterProp="label"
+                        allowClear
+                    />
+                </Form.Item>
+            );
+        }
         if (campo.tipo === 'booleano') {
             return (
                 <Form.Item key={campo.chave} name={["parametros", campo.chave]} label={campo.rotulo} valuePropName="checked">
