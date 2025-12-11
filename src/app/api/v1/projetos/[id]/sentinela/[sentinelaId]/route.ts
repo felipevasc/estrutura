@@ -8,9 +8,10 @@ const validarModulo = (valor: unknown) => valor === 'RECON' || valor === 'CTI';
 
 const respostaErro = (mensagem: string, status = 400) => NextResponse.json({ mensagem }, { status });
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string, sentinelaId: string } }) {
-    const projetoId = Number(params.id);
-    const id = Number(params.sentinelaId);
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string, sentinelaId: string }> }) {
+    const { id: projeto, sentinelaId } = await params;
+    const projetoId = Number(projeto);
+    const id = Number(sentinelaId);
     if (!projetoId || !id) return respostaErro('Dados inválidos', 400);
     const existente = await prisma.sentinela.findUnique({ where: { id } });
     if (!existente || existente.projetoId !== projetoId) return respostaErro('Registro não encontrado', 404);
@@ -32,9 +33,10 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ registro });
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { id: string, sentinelaId: string } }) {
-    const projetoId = Number(params.id);
-    const id = Number(params.sentinelaId);
+export async function DELETE(_: NextRequest, { params }: { params: Promise<{ id: string, sentinelaId: string }> }) {
+    const { id: projeto, sentinelaId } = await params;
+    const projetoId = Number(projeto);
+    const id = Number(sentinelaId);
     if (!projetoId || !id) return respostaErro('Dados inválidos', 400);
     const existente = await prisma.sentinela.findUnique({ where: { id } });
     if (!existente || existente.projetoId !== projetoId) return respostaErro('Registro não encontrado', 404);
