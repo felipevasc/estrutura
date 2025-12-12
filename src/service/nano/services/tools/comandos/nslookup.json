@@ -40,5 +40,12 @@
       "inbtec.com.br",
       "8.8.8.8"
     ]
+  },
+  "8603": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
   }
 }
