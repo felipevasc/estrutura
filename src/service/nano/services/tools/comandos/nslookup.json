@@ -47,5 +47,47 @@
       "ufu.br",
       "1.1.1.1"
     ]
+  },
+  "8604": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
+  },
+  "8605": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
+  },
+  "8606": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
+  },
+  "8607": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
+  },
+  "8608": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
+  },
+  "8610": {
+    "comando": "nslookup",
+    "argumentos": [
+      "ufu.br",
+      "1.1.1.1"
+    ]
   }
 }
