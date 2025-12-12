@@ -23,7 +23,7 @@ export const AreaConteudo = styled.div`
 
 export const CartaoFormulario = styled.div`
     background: ${({ theme }) => theme.colors.background};
-    border: 1px solid ${({ theme }) => theme.colors.border};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
@@ -31,7 +31,7 @@ export const CartaoFormulario = styled.div`
 
 export const CartaoLista = styled.div`
     background: ${({ theme }) => theme.colors.background};
-    border: 1px solid ${({ theme }) => theme.colors.border};
+    border: 1px solid ${({ theme }) => theme.colors.borderColor};
     border-radius: 12px;
     padding: 16px;
     box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
