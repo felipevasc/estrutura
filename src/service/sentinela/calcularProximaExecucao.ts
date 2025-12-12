@@ -1,9 +1,9 @@
-import parser from 'cron-parser';
+import { CronExpressionParser } from 'cron-parser';
 
 export const calcularProximaExecucao = (expressao: string) => {
     try {
-        const iterador = parser.parseExpression(expressao.trim());
-        return iterador.next().toDate();
+        const cron = CronExpressionParser.parse(expressao.trim());
+        return cron.next().toDate();
     } catch {
         return null;
     }
