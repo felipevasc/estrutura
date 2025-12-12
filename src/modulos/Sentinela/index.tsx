@@ -214,6 +214,7 @@ const Sentinela = () => {
     const [registros, definirRegistros] = useState<SentinelaRegistro[]>([]);
     const [carregando, definirCarregando] = useState(false);
     const [criando, definirCriando] = useState(false);
+    const [executando, definirExecutando] = useState<number | null>(null);
 
     const projetoId = projeto?.get()?.id;
     const ferramentaSelecionada = useWatch('ferramenta', form);
@@ -366,6 +367,20 @@ const Sentinela = () => {
         }
     };
 
+    const executarAgora = async (registro: SentinelaRegistro) => {
+        if (!projetoId) return;
+        definirExecutando(registro.id);
+        try {
+            await api.sentinela.executar(projetoId, registro.id);
+            await carregar();
+            message.success('Execução iniciada');
+        } catch (erro) {
+            message.error(erro instanceof Error ? erro.message : 'Falha ao executar agendamento');
+        } finally {
+            definirExecutando(null);
+        }
+    };
+
     const formatarData = (valor: string | null) => valor ? dayjs(valor).format('DD/MM/YYYY HH:mm') : '-';
 
     const colunas = [
@@ -407,6 +422,9 @@ const Sentinela = () => {
             key: 'acoes',
             render: (_: unknown, registro: SentinelaRegistro) => (
                 <Space>
+                    <Button type="primary" onClick={() => executarAgora(registro)} loading={executando === registro.id}>
+                        Executar agora
+                    </Button>
                     <Popconfirm title="Remover agendamento?" okText="Sim" cancelText="Não" onConfirm={() => remover(registro)}>
                         <Button danger>Remover</Button>
                     </Popconfirm>

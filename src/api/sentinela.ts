@@ -38,7 +38,14 @@ const useSentinela = () => {
         }
     }, []);
 
-    return useMemo(() => ({ listar, criar, atualizar, remover }), [listar, criar, atualizar, remover]);
+    const executar = useCallback(async (projetoId: number, id: number) => {
+        const resposta = await fetch(`/api/v1/projetos/${projetoId}/sentinela/${id}/executar`, { method: 'POST' });
+        const corpo = await resposta.json();
+        if (!resposta.ok) throw new Error(corpo.mensagem || 'Falha ao executar registro');
+        return corpo.registro as SentinelaRegistro;
+    }, []);
+
+    return useMemo(() => ({ listar, criar, atualizar, remover, executar }), [listar, criar, atualizar, remover, executar]);
 };
 
 export default useSentinela;
