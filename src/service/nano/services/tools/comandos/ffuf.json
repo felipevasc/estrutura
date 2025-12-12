@@ -28,5 +28,35 @@
       "-e",
       ".php,.html,.txt,.js,.bak,.zip,.conf"
     ]
+  },
+  "8675": {
+    "comando": "ffuf",
+    "argumentos": [
+      "-u",
+      "https://hc.ufu.br/FUZZ",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/ffuf_results_8675_1765560769971.json",
+      "-of",
+      "json",
+      "-k"
+    ]
+  },
+  "8676": {
+    "comando": "ffuf",
+    "argumentos": [
+      "-u",
+      "https://hc.ufu.br/FUZZ",
+      "-w",
+      "/usr/share/wordlists/dirb/common.txt",
+      "-o",
+      "/tmp/ffuf_results_8676_1765560831706.json",
+      "-of",
+      "json",
+      "-k",
+      "-e",
+      ".php,.html,.txt,.js,.bak,.zip,.conf"
+    ]
   }
 }

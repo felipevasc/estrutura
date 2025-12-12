@@ -4,5 +4,23 @@
     "argumentos": [
       "{\"idDominio\":\"5592\"}"
     ]
+  },
+  "8625": {
+    "comando": "identificarFramework",
+    "argumentos": [
+      "{\"idDominio\":\"6851\"}"
+    ]
+  },
+  "8631": {
+    "comando": "identificarFramework",
+    "argumentos": [
+      "{\"idPorta\":\"62\"}"
+    ]
+  },
+  "8680": {
+    "comando": "identificarFramework",
+    "argumentos": [
+      "{\"idDominio\":\"6809\"}"
+    ]
   }
 }

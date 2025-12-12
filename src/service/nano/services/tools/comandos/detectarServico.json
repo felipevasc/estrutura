@@ -4,5 +4,35 @@
     "argumentos": [
       "{\"idDominio\":\"5592\"}"
     ]
+  },
+  "8623": {
+    "comando": "detectarServico",
+    "argumentos": [
+      "{\"idDominio\":\"6851\"}"
+    ]
+  },
+  "8629": {
+    "comando": "detectarServico",
+    "argumentos": [
+      "{\"idPorta\":\"62\"}"
+    ]
+  },
+  "8634": {
+    "comando": "detectarServico",
+    "argumentos": [
+      "{\"idPorta\":\"63\"}"
+    ]
+  },
+  "8636": {
+    "comando": "detectarServico",
+    "argumentos": [
+      "{\"idPorta\":\"64\"}"
+    ]
+  },
+  "8678": {
+    "comando": "detectarServico",
+    "argumentos": [
+      "{\"idDominio\":\"6809\"}"
+    ]
   }
 }

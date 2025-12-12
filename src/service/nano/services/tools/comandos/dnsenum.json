@@ -63,5 +63,18 @@
       "/opt/estrutura/db/wordlists/subdomains.txt",
       "inbtec.com.br"
     ]
+  },
+  "8612": {
+    "comando": "dnsenum",
+    "argumentos": [
+      "--noreverse",
+      "-o",
+      "/tmp/dnsenum_1_8612_1765557307210.xml",
+      "--threads",
+      "5",
+      "-f",
+      "/opt/estrutura/db/wordlists/subdomains.txt",
+      "gmail.com"
+    ]
   }
 }

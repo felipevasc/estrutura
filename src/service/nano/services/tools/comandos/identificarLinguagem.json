@@ -4,5 +4,29 @@
     "argumentos": [
       "{\"idDominio\":\"5592\"}"
     ]
+  },
+  "8624": {
+    "comando": "identificarLinguagem",
+    "argumentos": [
+      "{\"idDominio\":\"6851\"}"
+    ]
+  },
+  "8630": {
+    "comando": "identificarLinguagem",
+    "argumentos": [
+      "{\"idPorta\":\"62\"}"
+    ]
+  },
+  "8635": {
+    "comando": "identificarLinguagem",
+    "argumentos": [
+      "{\"idPorta\":\"64\"}"
+    ]
+  },
+  "8679": {
+    "comando": "identificarLinguagem",
+    "argumentos": [
+      "{\"idDominio\":\"6809\"}"
+    ]
   }
 }
