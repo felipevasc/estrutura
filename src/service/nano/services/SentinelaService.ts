@@ -27,6 +27,11 @@ export class SentinelaService extends NanoService {
         const agendamentos = await prisma.sentinela.findMany({ where: { habilitado: true, proximaExecucao: null } });
         for (const agendamento of agendamentos) {
             const proxima = calcularProximaExecucao(agendamento.cron);
+            if (!proxima) {
+                await prisma.sentinela.update({ where: { id: agendamento.id }, data: { habilitado: false } });
+                this.error(`Cron inválido para sentinela ${agendamento.id}`);
+                continue;
+            }
             await prisma.sentinela.update({ where: { id: agendamento.id }, data: { proximaExecucao: proxima } });
         }
     }
@@ -40,6 +45,11 @@ export class SentinelaService extends NanoService {
             for (const agendamento of agendamentos) {
                 await queueCommand(agendamento.ferramenta, agendamento.parametros, agendamento.projetoId);
                 const proxima = calcularProximaExecucao(agendamento.cron);
+                if (!proxima) {
+                    await prisma.sentinela.update({ where: { id: agendamento.id }, data: { habilitado: false, proximaExecucao: null } });
+                    this.error(`Cron inválido para sentinela ${agendamento.id}`);
+                    continue;
+                }
                 await prisma.sentinela.update({ where: { id: agendamento.id }, data: { ultimaExecucao: agora, proximaExecucao: proxima } });
             }
         } catch (erro) {

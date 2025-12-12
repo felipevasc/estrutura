@@ -27,6 +27,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const habilitado = corpo.habilitado === undefined ? existente.habilitado : corpo.habilitado;
     const cron = corpo.cron ?? existente.cron;
     dados.proximaExecucao = habilitado ? calcularProximaExecucao(cron) : null;
+    if (habilitado && !dados.proximaExecucao) return respostaErro('Cron inválido', 422);
     if (!habilitado) dados.ultimaExecucao = existente.ultimaExecucao;
     const registro = await prisma.sentinela.update({ where: { id }, data: dados });
     NanoSystem.process();

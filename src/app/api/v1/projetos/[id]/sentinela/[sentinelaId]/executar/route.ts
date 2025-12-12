@@ -12,9 +12,10 @@ export async function POST(_: NextRequest, { params }: { params: Promise<{ id: s
     if (!projetoId || !id) return respostaErro('Dados inválidos', 400);
     const registro = await prisma.sentinela.findUnique({ where: { id } });
     if (!registro || registro.projetoId !== projetoId) return respostaErro('Registro não encontrado', 404);
+    const proximaExecucao = registro.habilitado ? calcularProximaExecucao(registro.cron) : null;
+    if (registro.habilitado && !proximaExecucao) return respostaErro('Cron inválido', 422);
     await queueCommand(registro.ferramenta, registro.parametros, projetoId);
     const agora = new Date();
-    const proximaExecucao = registro.habilitado ? calcularProximaExecucao(registro.cron) : null;
     const atualizado = await prisma.sentinela.update({ where: { id }, data: { ultimaExecucao: agora, proximaExecucao } });
     return NextResponse.json({ registro: atualizado });
 }

@@ -26,6 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (!nome || !ferramenta || !cron || !validarModulo(modulo)) return respostaErro('Preencha todos os campos obrigatórios', 422);
     const parametrosNormalizados = normalizarParametros(parametros);
     const proximaExecucao = habilitado === false ? null : calcularProximaExecucao(cron);
+    if (habilitado !== false && !proximaExecucao) return respostaErro('Cron inválido', 422);
     const registro = await prisma.sentinela.create({
         data: {
             nome,
