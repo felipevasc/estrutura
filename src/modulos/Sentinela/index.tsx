@@ -10,7 +10,11 @@ import useApi from "@/api";
 import StoreContext from "@/store";
 import { AreaConteudo, CartaoFormulario, CartaoLista, ContainerSentinela } from "./styles";
 
-type FormularioSentinela = NovoSentinela & { parametrosTexto?: string };
+type FormularioSentinela = NovoSentinela & {
+    parametrosTexto?: string;
+    cronModo?: 'texto' | 'campos';
+    cronCampos?: { minuto?: string; hora?: string; diaMes?: string; mes?: string; diaSemana?: string };
+};
 
 const ferramentasRecon = [
     'amass',
@@ -218,11 +222,12 @@ const Sentinela = () => {
 
     const projetoId = projeto?.get()?.id;
     const ferramentaSelecionada = useWatch('ferramenta', form);
+    const cronModoSelecionado = useWatch('cronModo', form);
     const consultaDominios = api.dominios.getDominios(projetoId);
     const consultaIps = api.ips.getIps(projetoId);
 
     useEffect(() => {
-        form.setFieldsValue({ modulo: 'RECON', habilitado: true, parametrosTexto: '{}' });
+        form.setFieldsValue({ modulo: 'RECON', habilitado: true, parametrosTexto: '{}', cronModo: 'texto', cronCampos: { minuto: '*', hora: '*', diaMes: '*', mes: '*', diaSemana: '*' } });
     }, [form]);
 
     const opcoesFerramentas = useMemo(() => {
@@ -323,6 +328,9 @@ const Sentinela = () => {
             message.error('Selecione um projeto para agendar comandos');
             return;
         }
+        const cron = (valores.cronModo ?? 'texto') === 'campos'
+            ? [valores.cronCampos?.minuto ?? '*', valores.cronCampos?.hora ?? '*', valores.cronCampos?.diaMes ?? '*', valores.cronCampos?.mes ?? '*', valores.cronCampos?.diaSemana ?? '*'].join(' ')
+            : valores.cron;
         let parametros: Record<string, unknown>;
         try {
             parametros = camposSelecionados.length > 0 ? valores.parametros ?? {} : tratarParametrosLivres(valores.parametrosTexto);
@@ -331,11 +339,13 @@ const Sentinela = () => {
         }
         definirCriando(true);
         try {
-            const dadosEnvio = { ...valores, parametros } as Record<string, unknown>;
+            const dadosEnvio = { ...valores, parametros, cron } as Record<string, unknown>;
             delete dadosEnvio.parametrosTexto;
+            delete dadosEnvio.cronCampos;
+            delete dadosEnvio.cronModo;
             await api.sentinela.criar(projetoId, dadosEnvio as NovoSentinela);
             message.success('Agendamento criado');
-            form.resetFields(['nome', 'ferramenta', 'cron']);
+            form.resetFields(['nome', 'ferramenta', 'cron', 'cronCampos', 'cronModo']);
             await carregar();
         } catch (erro) {
             message.error(erro instanceof Error ? erro.message : 'Erro ao criar agendamento');
@@ -439,7 +449,7 @@ const Sentinela = () => {
             <AreaConteudo>
                 <CartaoFormulario>
                     <Typography.Title level={5}>Novo agendamento</Typography.Title>
-                    <Form form={form} layout="vertical" onFinish={aoSubmeter} initialValues={{ habilitado: true, modulo: 'RECON', parametros: {}, parametrosTexto: '{}' }}>
+                    <Form form={form} layout="vertical" onFinish={aoSubmeter} initialValues={{ habilitado: true, modulo: 'RECON', parametros: {}, parametrosTexto: '{}', cronModo: 'texto', cronCampos: { minuto: '*', hora: '*', diaMes: '*', mes: '*', diaSemana: '*' } }}>
                         <Form.Item name="nome" label="Nome" rules={[{ required: true, message: 'Informe um nome' }]}>
                             <Input placeholder="Identificador do agendamento" />
                         </Form.Item>
@@ -462,9 +472,46 @@ const Sentinela = () => {
                                 <Input.TextArea rows={4} placeholder='{"idDominio": 1}' />
                             </Form.Item>
                         )}
-                        <Form.Item name="cron" label="Cron" rules={[{ required: true, message: 'Defina a expressão de cron' }]}>
-                            <Input placeholder="minuto hora dia mes diaSemana" />
+                        <Form.Item name="cronModo" label="Formato do cron" rules={[{ required: true, message: 'Escolha o formato' }]}>
+                            <Select
+                                options={[{ value: 'texto', label: 'Texto' }, { value: 'campos', label: 'Campos' }]}
+                                onChange={(valor: 'texto' | 'campos') => {
+                                    if (valor === 'campos') {
+                                        const cronAtual = (form.getFieldValue('cron') as string | undefined)?.trim();
+                                        const partes = cronAtual ? cronAtual.split(/\s+/) : [];
+                                        form.setFieldsValue({ cronCampos: { minuto: partes[0] ?? '*', hora: partes[1] ?? '*', diaMes: partes[2] ?? '*', mes: partes[3] ?? '*', diaSemana: partes[4] ?? '*' } });
+                                    } else {
+                                        const campos = form.getFieldValue('cronCampos') as { minuto?: string; hora?: string; diaMes?: string; mes?: string; diaSemana?: string } | undefined;
+                                        if (campos) {
+                                            form.setFieldsValue({ cron: [campos.minuto ?? '*', campos.hora ?? '*', campos.diaMes ?? '*', campos.mes ?? '*', campos.diaSemana ?? '*'].join(' ') });
+                                        }
+                                    }
+                                }}
+                            />
                         </Form.Item>
+                        {cronModoSelecionado === 'campos' ? (
+                            <Space.Compact style={{ width: '100%' }}>
+                                <Form.Item name={['cronCampos', 'minuto']} label="Minuto" rules={[{ required: true, message: 'Minuto obrigatório' }]} style={{ width: '20%' }}>
+                                    <Input placeholder="*" />
+                                </Form.Item>
+                                <Form.Item name={['cronCampos', 'hora']} label="Hora" rules={[{ required: true, message: 'Hora obrigatória' }]} style={{ width: '20%' }}>
+                                    <Input placeholder="*" />
+                                </Form.Item>
+                                <Form.Item name={['cronCampos', 'diaMes']} label="Dia do mês" rules={[{ required: true, message: 'Dia do mês obrigatório' }]} style={{ width: '20%' }}>
+                                    <Input placeholder="*" />
+                                </Form.Item>
+                                <Form.Item name={['cronCampos', 'mes']} label="Mês" rules={[{ required: true, message: 'Mês obrigatório' }]} style={{ width: '20%' }}>
+                                    <Input placeholder="*" />
+                                </Form.Item>
+                                <Form.Item name={['cronCampos', 'diaSemana']} label="Dia da semana" rules={[{ required: true, message: 'Dia da semana obrigatório' }]} style={{ width: '20%' }}>
+                                    <Input placeholder="*" />
+                                </Form.Item>
+                            </Space.Compact>
+                        ) : (
+                            <Form.Item name="cron" label="Cron" rules={[{ required: true, message: 'Defina a expressão de cron' }]}>
+                                <Input placeholder="minuto hora dia mes diaSemana" />
+                            </Form.Item>
+                        )}
                         <Form.Item name="habilitado" label="Habilitado" valuePropName="checked">
                             <Switch checkedChildren="Sim" unCheckedChildren="Não" />
                         </Form.Item>
